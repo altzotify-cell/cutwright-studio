@@ -1,0 +1,388 @@
+{
+ "test": "voice bursts (1 kHz) + music bed (300 Hz): mix, duck, normalize",
+ "fixture": "out/m2/out/audio_voice.mp4",
+ "music": "out/m2/out/music.wav",
+ "voice_bursts_s": [
+  [
+   0.5,
+   0.3
+  ],
+  [
+   1.5,
+   0.3
+  ],
+  [
+   2.5,
+   0.3
+  ],
+  [
+   3.5,
+   0.3
+  ],
+  [
+   4.5,
+   0.3
+  ]
+ ],
+ "during_window": [
+  0.55,
+  0.25
+ ],
+ "outside_window": [
+  1.05,
+  0.35
+ ],
+ "criterion": "music during voice >= 8 dB below music outside voice; -16 LUFS +/- 1.5; true peak <= -1 dBTP; onset error <= 20 ms",
+ "rows": {
+  "kinocut_mix": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "mix-audio",
+    "out/m2/out/audio_voice.mp4",
+    "--sounds",
+    "[{\"path\": \"C://Users//user//Desktop//Cutwright-kinocut-handoff//cutwright//out//m2//out//music.wav\", \"volume\": 0.35}]",
+    "-o",
+    "out/m2/out/au_kino_mix.mp4"
+   ],
+   "exit": 0,
+   "seconds": 3.77,
+   "json": {
+    "success": true,
+    "operation": "mix_audio",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\au_kino_mix.mp4",
+    "duration": 6.0
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "has_audio": true,
+   "audio_seconds": 6.0,
+   "music_band": {
+    "during_voice_db": -25.42,
+    "outside_voice_db": -25.46
+   },
+   "duck_db": -0.04,
+   "voice_onsets": [
+    0.5006,
+    1.5006,
+    2.5006,
+    3.5006,
+    4.5006
+   ],
+   "voice_onset_error_s": 0.0006,
+   "loudness": {
+    "integrated_lufs": -10.1,
+    "true_peak_dbfs": -5.5,
+    "lra": 1.6,
+    "exit": 0
+   },
+   "clipped_samples": 0,
+   "gaps_over_10ms": []
+  },
+  "kinocut_duck": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "duck-audio",
+    "out/m2/out/audio_voice.mp4",
+    "out/m2/out/music.wav",
+    "-o",
+    "out/m2/out/au_kino_duck.mp4"
+   ],
+   "exit": 0,
+   "seconds": 2.81,
+   "json": {
+    "success": true,
+    "operation": "duck_audio",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\au_kino_duck.mp4",
+    "duration": 6.016
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "has_audio": true,
+   "audio_seconds": 6.016,
+   "music_band": {
+    "during_voice_db": -34.94,
+    "outside_voice_db": -18.58
+   },
+   "duck_db": 16.36,
+   "voice_onsets": [
+    0.5003,
+    1.5003,
+    2.5003,
+    3.5003,
+    4.5003
+   ],
+   "voice_onset_error_s": 0.0003,
+   "loudness": {
+    "integrated_lufs": -11.9,
+    "true_peak_dbfs": -3.2,
+    "lra": 1.6,
+    "exit": 0
+   },
+   "clipped_samples": 0,
+   "gaps_over_10ms": [
+    [
+     5.44,
+     0.576
+    ]
+   ]
+  },
+  "kinocut_duck_tuned": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "duck-audio",
+    "out/m2/out/audio_voice.mp4",
+    "out/m2/out/music.wav",
+    "-o",
+    "out/m2/out/au_kino_duck_tuned.mp4",
+    "--music-volume",
+    "0.35",
+    "--threshold",
+    "0.02",
+    "--ratio",
+    "8",
+    "--attack",
+    "5",
+    "--release",
+    "250"
+   ],
+   "exit": 0,
+   "seconds": 2.16,
+   "json": {
+    "success": true,
+    "operation": "duck_audio",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\au_kino_duck_tuned.mp4",
+    "duration": 6.016
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "has_audio": true,
+   "audio_seconds": 6.016,
+   "music_band": {
+    "during_voice_db": -40.27,
+    "outside_voice_db": -24.2
+   },
+   "duck_db": 16.07,
+   "voice_onsets": [
+    0.5003,
+    1.5003,
+    2.5003,
+    3.5003,
+    4.5003
+   ],
+   "voice_onset_error_s": 0.0003,
+   "loudness": {
+    "integrated_lufs": -10.9,
+    "true_peak_dbfs": -4.0,
+    "lra": 1.6,
+    "exit": 0
+   },
+   "clipped_samples": 0,
+   "gaps_over_10ms": [
+    [
+     5.803,
+     0.213
+    ]
+   ]
+  },
+  "kinocut_normalize": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "normalize-audio",
+    "out/m2/out/au_kino_duck_tuned.mp4",
+    "-l",
+    "-16",
+    "--true-peak-dbtp",
+    "-1.5",
+    "-o",
+    "out/m2/out/au_kino_norm.mp4"
+   ],
+   "exit": 0,
+   "seconds": 2.72,
+   "json": {
+    "success": true,
+    "operation": "normalize_audio",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\au_kino_norm.mp4",
+    "duration": 6.016
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "has_audio": true,
+   "audio_seconds": 6.016,
+   "music_band": {
+    "during_voice_db": -45.29,
+    "outside_voice_db": -29.21
+   },
+   "duck_db": 16.08,
+   "voice_onsets": [
+    0.5006,
+    1.5006,
+    2.5006,
+    3.5006,
+    4.5006
+   ],
+   "voice_onset_error_s": 0.0006,
+   "loudness": {
+    "integrated_lufs": -15.9,
+    "true_peak_dbfs": -9.0,
+    "lra": 1.6,
+    "exit": 0
+   },
+   "clipped_samples": 0,
+   "gaps_over_10ms": [
+    [
+     0.8,
+     0.062
+    ],
+    [
+     1.803,
+     0.059
+    ],
+    [
+     2.8,
+     0.057
+    ],
+    [
+     3.8,
+     0.057
+    ],
+    [
+     4.8,
+     0.062
+    ],
+    [
+     5.803,
+     0.213
+    ]
+   ]
+  },
+  "current": {
+   "exists": true,
+   "has_audio": true,
+   "audio_seconds": 6.016,
+   "music_band": {
+    "during_voice_db": -13.55,
+    "outside_voice_db": -13.33
+   },
+   "duck_db": 0.22,
+   "voice_onsets": [
+    0.5216,
+    1.5216,
+    2.5216,
+    3.5216,
+    4.5216
+   ],
+   "voice_onset_error_s": 0.0216,
+   "loudness": {
+    "integrated_lufs": -10.5,
+    "true_peak_dbfs": -0.3,
+    "lra": 0.8,
+    "exit": 0
+   },
+   "clipped_samples": 0,
+   "gaps_over_10ms": []
+  },
+  "ffmpeg_duck": {
+   "exists": true,
+   "has_audio": true,
+   "audio_seconds": 6.016,
+   "music_band": {
+    "during_voice_db": -40.7,
+    "outside_voice_db": -26.76
+   },
+   "duck_db": 13.94,
+   "voice_onsets": [
+    0.5003,
+    1.5003,
+    2.5003,
+    3.5003,
+    4.5003
+   ],
+   "voice_onset_error_s": 0.0003,
+   "loudness": {
+    "integrated_lufs": -10.5,
+    "true_peak_dbfs": -4.0,
+    "lra": 1.7,
+    "exit": 0
+   },
+   "clipped_samples": 0,
+   "gaps_over_10ms": [
+    [
+     5.419,
+     0.597
+    ]
+   ],
+   "exit": 0
+  },
+  "ffmpeg_norm": {
+   "exists": true,
+   "has_audio": true,
+   "audio_seconds": 6.1,
+   "music_band": {
+    "during_voice_db": -44.29,
+    "outside_voice_db": -30.37
+   },
+   "duck_db": 13.92,
+   "voice_onsets": [
+    0.5006,
+    1.5006,
+    2.5006,
+    3.5006,
+    4.5006
+   ],
+   "voice_onset_error_s": 0.0006,
+   "loudness": {
+    "integrated_lufs": -15.3,
+    "true_peak_dbfs": -7.8,
+    "lra": 3.3,
+    "exit": 0
+   },
+   "clipped_samples": 0,
+   "gaps_over_10ms": [
+    [
+     0.8,
+     0.107
+    ],
+    [
+     1.802,
+     0.116
+    ],
+    [
+     2.8,
+     0.147
+    ],
+    [
+     3.8,
+     0.147
+    ],
+    [
+     4.8,
+     0.147
+    ],
+    [
+     5.419,
+     0.597
+    ]
+   ],
+   "exit": 0
+  }
+ },
+ "area": "audio",
+ "generated_utc": "2026-10-29T23:29:30Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

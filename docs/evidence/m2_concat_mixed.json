@@ -1,0 +1,102 @@
+{
+ "test": "48 frames @24fps 160x90 + 60 frames @30fps 320x180 joined",
+ "rows": {
+  "inputs": [
+   48,
+   59
+  ],
+  "expected_frames_if_normalised": 95,
+  "kinocut": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "merge",
+    "out/m2/fixtures/counter_48_24fps_off0.mp4",
+    "out/m2/out/mix_320x180_30fps.mp4",
+    "-o",
+    "out/m2/out/cc_mix_kino.mp4"
+   ],
+   "exit": 0,
+   "seconds": 3.27,
+   "json": {
+    "success": true,
+    "operation": "merge",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\cc_mix_kino.mp4",
+    "duration": 4.033243
+   },
+   "stderr_tail": "sers\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\.venvs\\kinocut\\Lib\\site-packages\\kinocut\\engine_merge.py:148: UserWarning: [MERGE GUARDRAIL] Clips have different frame rates: [24.0, 30.0]. Output may stutter or drop frames.\r\n  _emit_merge_guardrails(infos, transition_duration, has_transitions)",
+   "exists": true,
+   "frames": 119,
+   "audio_seconds": 4.0332,
+   "expected_frames": 95,
+   "frames_exact": false,
+   "first": [
+    0,
+    0,
+    1
+   ],
+   "last": [
+    45,
+    45,
+    46
+   ],
+   "beep_drift_s": 0.0666,
+   "drift_per_block": {
+    "0": 0.045
+   }
+  },
+  "current": {
+   "exists": true,
+   "frames": 82,
+   "audio_seconds": 4.0267,
+   "expected_frames": 95,
+   "frames_exact": false,
+   "first": [
+    0,
+    0,
+    1
+   ],
+   "last": [
+    25,
+    25,
+    26
+   ],
+   "beep_drift_s": 0.0267,
+   "drift_per_block": {
+    "0": 0.024
+   }
+  },
+  "ffmpeg_normalised": {
+   "exists": true,
+   "frames": 93,
+   "audio_seconds": 4.01,
+   "expected_frames": 95,
+   "frames_exact": false,
+   "first": [
+    0,
+    1,
+    2
+   ],
+   "last": [
+    43,
+    44,
+    45
+   ],
+   "beep_drift_s": 0.0054,
+   "drift_per_block": {
+    "0": 0.0027
+   },
+   "exit": 0,
+   "ids_contiguous": false
+  }
+ },
+ "area": "concat_mixed",
+ "generated_utc": "2026-10-29T23:29:51Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

@@ -1,0 +1,44 @@
+{
+ "test": "trim into a directory the user cannot write to",
+ "rows": {
+  "dir": "out/m2/out/readonly",
+  "user": "user",
+  "icacls_exit": 0,
+  "icacls_error": "processed file: C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\readonly\r\nSuccessfully processed 1 files; Failed processing 0 files",
+  "kinocut": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "trim",
+    "out/m2/fixtures/counter_120_24fps_off0.mp4",
+    "-s",
+    "0",
+    "-d",
+    "1",
+    "-o",
+    "out/m2/out/readonly/blocked.mp4"
+   ],
+   "exit": 1,
+   "seconds": 0.99,
+   "json": {
+    "success": false,
+    "error": {
+     "type": "validation_error",
+     "code": "unsafe_path",
+     "message": "Atomic output could not preserve directory identity: PermissionError"
+    }
+   },
+   "stderr_tail": "{\r\n  \"success\": false,\r\n  \"error\": {\r\n    \"type\": \"validation_error\",\r\n    \"code\": \"unsafe_path\",\r\n    \"message\": \"Atomic output could not preserve directory identity: PermissionError\"\r\n  }\r\n}",
+   "wrote_file": false
+  }
+ },
+ "area": "reliability_readonly",
+ "generated_utc": "2026-10-29T23:32:28Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

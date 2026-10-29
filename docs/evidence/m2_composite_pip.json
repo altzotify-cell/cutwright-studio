@@ -1,0 +1,74 @@
+{
+ "test": "overlay-video (picture in picture) over a clip that has audio",
+ "rows": {
+  "kinocut": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "overlay-video",
+    "out/m2/out/comp/base.mp4",
+    "out/m2/out/cp_pip_src.mp4",
+    "-p",
+    "top-right",
+    "-o",
+    "out/m2/out/cp_kino_pip.mp4"
+   ],
+   "exit": 0,
+   "seconds": 2.27,
+   "json": {
+    "success": true,
+    "operation": "overlay_video",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\cp_kino_pip.mp4",
+    "duration": 2.005
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "frames": 48,
+   "has_audio": true,
+   "audio_seconds": 2.005,
+   "region_luma": {
+    "start_minus_1": 0.0,
+    "start": 0.0,
+    "end_minus_1": 0.02,
+    "end": 0.0
+   },
+   "region_luma_all": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.02,
+    0.02,
+    0.02,
+    0.02,
+    0.02,
+    0.02,
+    0.02,
+    0.02,
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "area": "composite_pip",
+ "generated_utc": "2026-10-29T23:29:38Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

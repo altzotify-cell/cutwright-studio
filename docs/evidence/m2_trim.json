@@ -1,0 +1,383 @@
+{
+ "test": "trim a 240-frame 24 fps counter clip; ids must equal range(start, start+length)",
+ "fixture": {
+  "clip": "out/m2/fixtures/counter_240_24fps_off0.mp4",
+  "frames": 240,
+  "fps": 24,
+  "size": [
+   160,
+   90
+  ]
+ },
+ "combos": [
+  [
+   0,
+   1
+  ],
+  [
+   1,
+   50
+  ],
+  [
+   37,
+   120
+  ],
+  [
+   119,
+   50
+  ]
+ ],
+ "rows": [
+  {
+   "start_frame": 0,
+   "length_frames": 1,
+   "start_s": 0.0,
+   "kinocut": {
+    "cmd": [
+     ".venvs/kinocut/Scripts/kino.exe",
+     "--format",
+     "json",
+     "--overwrite",
+     "trim",
+     "out/m2/fixtures/counter_240_24fps_off0.mp4",
+     "-s",
+     "0.000000",
+     "-d",
+     "0.041667",
+     "-o",
+     "out/m2/out/trim_kino_0_1.mp4"
+    ],
+    "exit": 0,
+    "seconds": 1.52,
+    "json": {
+     "success": true,
+     "operation": "trim",
+     "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\trim_kino_0_1.mp4",
+     "duration": 0.041667
+    },
+    "stderr_tail": null,
+    "exists": true,
+    "frames": 1,
+    "expected_frames": 1,
+    "first": [
+     0
+    ],
+    "last": [
+     0
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": 0.041,
+    "has_audio": true
+   },
+   "current": {
+    "exists": true,
+    "frames": 1,
+    "expected_frames": 1,
+    "first": [
+     0
+    ],
+    "last": [
+     0
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.58,
+    "exit": 0
+   },
+   "ffmpeg": {
+    "exists": true,
+    "frames": 1,
+    "expected_frames": 1,
+    "first": [
+     0
+    ],
+    "last": [
+     0
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.49,
+    "exit": 0
+   }
+  },
+  {
+   "start_frame": 1,
+   "length_frames": 50,
+   "start_s": 0.0417,
+   "kinocut": {
+    "cmd": [
+     ".venvs/kinocut/Scripts/kino.exe",
+     "--format",
+     "json",
+     "--overwrite",
+     "trim",
+     "out/m2/fixtures/counter_240_24fps_off0.mp4",
+     "-s",
+     "0.041667",
+     "-d",
+     "2.083333",
+     "-o",
+     "out/m2/out/trim_kino_1_50.mp4"
+    ],
+    "exit": 0,
+    "seconds": 1.48,
+    "json": {
+     "success": true,
+     "operation": "trim",
+     "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\trim_kino_1_50.mp4",
+     "duration": 2.083333
+    },
+    "stderr_tail": null,
+    "exists": true,
+    "frames": 50,
+    "expected_frames": 50,
+    "first": [
+     1,
+     2,
+     3
+    ],
+    "last": [
+     48,
+     49,
+     50
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": 2.083,
+    "has_audio": true
+   },
+   "current": {
+    "exists": true,
+    "frames": 50,
+    "expected_frames": 50,
+    "first": [
+     2,
+     3,
+     4
+    ],
+    "last": [
+     49,
+     50,
+     50
+    ],
+    "ids_match": false,
+    "first_mismatch_index": 0,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.51,
+    "exit": 0
+   },
+   "ffmpeg": {
+    "exists": true,
+    "frames": 50,
+    "expected_frames": 50,
+    "first": [
+     1,
+     2,
+     3
+    ],
+    "last": [
+     48,
+     49,
+     50
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.56,
+    "exit": 0
+   }
+  },
+  {
+   "start_frame": 37,
+   "length_frames": 120,
+   "start_s": 1.5417,
+   "kinocut": {
+    "cmd": [
+     ".venvs/kinocut/Scripts/kino.exe",
+     "--format",
+     "json",
+     "--overwrite",
+     "trim",
+     "out/m2/fixtures/counter_240_24fps_off0.mp4",
+     "-s",
+     "1.541667",
+     "-d",
+     "5.000000",
+     "-o",
+     "out/m2/out/trim_kino_37_120.mp4"
+    ],
+    "exit": 0,
+    "seconds": 1.61,
+    "json": {
+     "success": true,
+     "operation": "trim",
+     "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\trim_kino_37_120.mp4",
+     "duration": 5.0
+    },
+    "stderr_tail": null,
+    "exists": true,
+    "frames": 120,
+    "expected_frames": 120,
+    "first": [
+     37,
+     38,
+     39
+    ],
+    "last": [
+     154,
+     155,
+     156
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": 5.0,
+    "has_audio": true
+   },
+   "current": {
+    "exists": true,
+    "frames": 120,
+    "expected_frames": 120,
+    "first": [
+     38,
+     39,
+     40
+    ],
+    "last": [
+     155,
+     156,
+     156
+    ],
+    "ids_match": false,
+    "first_mismatch_index": 0,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.82,
+    "exit": 0
+   },
+   "ffmpeg": {
+    "exists": true,
+    "frames": 120,
+    "expected_frames": 120,
+    "first": [
+     37,
+     38,
+     39
+    ],
+    "last": [
+     154,
+     155,
+     156
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.62,
+    "exit": 0
+   }
+  },
+  {
+   "start_frame": 119,
+   "length_frames": 50,
+   "start_s": 4.9583,
+   "kinocut": {
+    "cmd": [
+     ".venvs/kinocut/Scripts/kino.exe",
+     "--format",
+     "json",
+     "--overwrite",
+     "trim",
+     "out/m2/fixtures/counter_240_24fps_off0.mp4",
+     "-s",
+     "4.958333",
+     "-d",
+     "2.083333",
+     "-o",
+     "out/m2/out/trim_kino_119_50.mp4"
+    ],
+    "exit": 0,
+    "seconds": 1.46,
+    "json": {
+     "success": true,
+     "operation": "trim",
+     "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\trim_kino_119_50.mp4",
+     "duration": 2.083333
+    },
+    "stderr_tail": null,
+    "exists": true,
+    "frames": 50,
+    "expected_frames": 50,
+    "first": [
+     119,
+     120,
+     121
+    ],
+    "last": [
+     166,
+     167,
+     168
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": 2.083,
+    "has_audio": true
+   },
+   "current": {
+    "exists": true,
+    "frames": 50,
+    "expected_frames": 50,
+    "first": [
+     119,
+     120,
+     121
+    ],
+    "last": [
+     166,
+     167,
+     167
+    ],
+    "ids_match": false,
+    "first_mismatch_index": 49,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.56,
+    "exit": 0
+   },
+   "ffmpeg": {
+    "exists": true,
+    "frames": 50,
+    "expected_frames": 50,
+    "first": [
+     119,
+     120,
+     121
+    ],
+    "last": [
+     166,
+     167,
+     168
+    ],
+    "ids_match": true,
+    "first_mismatch_index": null,
+    "audio_seconds": null,
+    "has_audio": false,
+    "seconds": 0.53,
+    "exit": 0
+   }
+  }
+ ],
+ "area": "trim",
+ "generated_utc": "2026-10-29T23:34:20Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

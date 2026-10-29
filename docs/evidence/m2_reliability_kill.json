@@ -1,0 +1,18 @@
+{
+ "test": "terminate a trim 1.2 s in; look for orphaned temp files",
+ "rows": {
+  "killed_while_running": true,
+  "exit": 1,
+  "files_left": [
+   ".kinocut_tmp_8dc3646e58f727943a17e2835a8918f6.mp4"
+  ],
+  "output_usable": false
+ },
+ "area": "reliability_kill",
+ "generated_utc": "2026-10-29T23:32:27Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

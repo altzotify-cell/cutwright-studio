@@ -1,0 +1,155 @@
+{
+ "test": "lower-third PNG (50% alpha) over footage on frames [12, 24)",
+ "spec": {
+  "canvas": {
+   "width": 160,
+   "height": 90,
+   "fps": 24,
+   "duration": 2.0,
+   "background": "#000000"
+  },
+  "layers": [
+   {
+    "id": "base",
+    "type": "video",
+    "src": "base.mp4",
+    "position": {
+     "x": 0,
+     "y": 0
+    }
+   },
+   {
+    "id": "lowerthird",
+    "type": "image",
+    "src": "overlay.png",
+    "position": {
+     "x": 50,
+     "y": 30
+    },
+    "opacity": 0.8,
+    "start": 0.5,
+    "duration": 0.5
+   }
+  ]
+ },
+ "box": [
+  50,
+  110,
+  30,
+  55
+ ],
+ "rows": {
+  "kinocut": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "composite-layers",
+    "--spec",
+    "out/m2/out/comp/comp.json",
+    "-o",
+    "out/m2/out/cp_kino.mp4"
+   ],
+   "exit": 0,
+   "seconds": 2.24,
+   "json": {
+    "success": true,
+    "operation": "composite_layers",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\cp_kino.mp4",
+    "duration": 2.0
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "frames": 48,
+   "has_audio": false,
+   "audio_seconds": null,
+   "region_luma": {
+    "start_minus_1": 0.0,
+    "start": 33.67,
+    "end_minus_1": 33.57,
+    "end": 33.57
+   },
+   "region_luma_all": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    33.67,
+    33.67,
+    33.67,
+    33.67,
+    33.57,
+    33.57,
+    33.57,
+    33.57,
+    33.57,
+    33.57,
+    33.57,
+    33.57,
+    33.57,
+    0.03
+   ]
+  },
+  "ffmpeg": {
+   "exists": true,
+   "frames": 48,
+   "has_audio": true,
+   "audio_seconds": 2.0,
+   "region_luma": {
+    "start_minus_1": 0.0,
+    "start": 41.56,
+    "end_minus_1": 41.56,
+    "end": 41.56
+   },
+   "region_luma_all": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    41.56,
+    0.02
+   ],
+   "exit": 0
+  },
+  "current": {
+   "supported": false,
+   "reason": "recap.py has no compositing pass; overlays are drawn by Remotion (Overlays.tsx) at render time"
+  }
+ },
+ "area": "composite",
+ "generated_utc": "2026-10-29T23:29:42Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

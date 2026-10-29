@@ -544,3 +544,87 @@ Docs written: `docs/KINOCUT_FINDINGS.md` (new), `PROVENANCE.md` (M1 section with
 `docs/REFERENCES.md` (licence table filled). `HANDOFF.md` status block deliberately NOT ticked yet -
 the owner has not approved committing M1, and M2 has not started.
 
+## 2026-10-29 - M2: equivalence verification (Kinocut vs current code vs direct FFmpeg)
+
+New: `tests/kinocut_vs_current/` (harness + 12 test modules, measurement only),
+`docs/CAPABILITY_MATRIX.md`, `docs/evidence/m2_*.json` (20 files). `cutwright/` and
+`recapstudio/` were NOT modified and Shotcut code was not deleted (owner constraint).
+Fixtures/outputs live under `out/m2/` (gitignored).
+
+TESTED     - whole M2 suite : `python -m unittest discover -s tests -t . -v` ->
+             "Ran 21 tests in 328.937s" / "OK" (0 failures, 0 errors, 0 skips)
+TESTED     - evidence count : `Get-ChildItem docs\evidence\m2_*.json` -> 20 files
+TESTED     - trim frame accuracy : kino trim on a 240-frame 24 fps counter clip at starts
+             0/1/37/119 -> ids exactly range(start, start+len) in 2.09-3.48 s; direct ffmpeg
+             (`-ss` after `-i`) also exact in 0.64-0.94 s; `--accurate` identical to default
+TESTED     - fit to N frames : kino speed -f 120/N -> 120/119/120 frames (no effect), kino trim
+             -> 53/97/120 (truncates at source length); current render_video_clip and direct
+             ffmpeg -> exactly 53/97/241 at 1920x1080 yuv420p 24 fps, ids monotonic, no black
+             first/last frame. Still image (PNG -> 53/97): current render_image_clip exact,
+             ffmpeg exact, kinocut has no op
+TESTED     - reframe 16:9 -> 9:16 : pad = 1080x600 centred (aspect 1.80, no stretch); blur
+             fills 1080x1920; current "crop" == pad (no crop branch); explicit ffmpeg crop
+             fills; kino resize -a 9:16 letterboxes 1080x600 centred. Anamorphic SAR 2:1
+             source: all three letterbox as 16:9 (content_h 600 instead of 304)
+TESTED     - concat : 20 x 120 frames -> kinocut 2400 frames (0 missing, 1 duplicate),
+             current join_av 2400 (0 missing), ffmpeg reference 2399 (last frame lost).
+             Mixed 24/30 fps + 160x90/320x180 -> kinocut 119 frames + "MERGE GUARDRAIL: Clips
+             have different frame rates ... may stutter"; current 82 frames with NO warning
+TESTED     - transitions : kino merge -t fade -td 0.5 -> 228/228 frames, head/tail ids intact,
+             linear 255->21 luma ramp over 12 frames, no gap > 10 ms, step at the join
+             -46.3 dB vs -42.9 dB elsewhere; wipe-left identical; ffmpeg xfade identical
+
+TESTED     - audio : kino duck-audio -> 16.36 dB of duck, onsets 0.3 ms, -3.2 dBTP;
+             kino normalize-audio -> -15.9 LUFS / -9.0 dBTP with the duck preserved;
+             kino mix-audio control -> 0.04 dB duck. ffmpeg sidechaincompress 13.94 dB,
+             loudnorm -15.3 LUFS. current join_av -> 0.22 dB duck, voice 21.6 ms late,
+             -0.3 dBTP (no ducking, near clipping)
+TESTED     - composite : kino composite-layers overlay on frames 12-23 only (region luma 0.0
+             at frame 11, 33.67 at 12, 0.03 at 24), alpha honoured, base audio DROPPED;
+             kino overlay-video keeps audio (has_audio true); ffmpeg overlay keeps audio
+TESTED     - burn-in : kino subtitles on a UTF-8 SRT with accented + Japanese text in a
+             non-ASCII directory -> bright pixels 0 before / 372 and 239 on the cues / 0 after;
+             ffmpeg subtitles 0/203/146/0
+TESTED     - export : 60 s 1080p24 -> kino export -q high 54.09 s, H.264 High yuv420p,
+             AAC 48000 Hz 2 ch, moov before mdat, `-v error` decode silent; ffmpeg reference
+             29.79 s, 24/1 fps; current copy path 1.66 s
+TESTED     - QC : kino video-quality-check -> score 35.9, all_passed false; detects clipping
+             ("Audio is clipping (-0.2 dBTP)") but NOT the black flash or the silence gap;
+             ffmpeg blackdetect 1.0-1.125, silencedetect at 2.0, max_volume -0.2 dB;
+             cutwright.frames.luma_at = 0.00 at the flash vs 82.0 on a clean frame
+TESTED     - reliability : 10/10 trim, 10/10 resize, 10/10 merge with stable frame counts
+             (1.62-6.27 s per call); read-only output dir -> exit 1
+             {"code": "unsafe_path", "message": "Atomic output could not preserve directory
+             identity: PermissionError"} and no file written; killed 1.2 s into a trim ->
+             exit 1, zero leftover files
+TESTED     - workflow : workflow-render -> exit 0, output + receipt (spec_hash, steps,
+             sources, outputs, resume_cursor, sha256 of the output); delete an intermediate
+             and --resume -> exit 0, step rebuilt; edit the spec and --resume -> exit 1
+             "resume_spec_mismatch ... this is a different job"
+FAILED     - (capability gaps, recorded in the matrix, not test failures)
+             kino has no "exactly N frames" op and `speed -f` did not change the frame count;
+             kino composite-layers is video-only; kino QC cannot see a per-frame black frame
+             or a silence gap; kino resize has no crop
+FAILED     - (defects in the current code, measured)
+             render_video_clip is one frame late at every non-zero start (`-ss` before `-i`:
+             start 1 -> ids [2,3,4]); join_av does not duck (0.22 dB) and lands the voice
+             21.6 ms late with a -0.3 dBTP peak; fit_graph has no crop branch
+FAILED     - (audio sync budget) 42 ms is missed at every merge: 13.4 ms per join with PCM,
+             26 ms per join with AAC -> 0.27-0.49 s over 20 clips
+NOT TESTED - HDR/10-bit sources, non-24 fps timelines, `kino batch`, the MCP tool surface,
+             Remotion-rendered overlay clips inside composite-layers, blend modes/masks
+NOT TESTED - whisper word timings and scene authoring: unchanged by M2
+DECISIONS  - executor per operation fixed by measurement (table: docs/CAPABILITY_MATRIX.md):
+             kinocut = trim, fade/wipe, duck, mix, normalize, subtitles, export, pad/blur
+             resize, concat join, workflow engine; ffmpeg = fit-to-N-frames, crop, per-frame QC
+             detectors, mixed-input normalisation; current = still-image clips; hybrid =
+             composite + separate audio pass, release-checkpoint + ffmpeg detectors.
+             Fixture design invalidated two measurements before they were trusted: a 300 Hz
+             music bed was masked by 1 kHz voice leakage (moved to 100 Hz -> 1 dB became
+             16.4 dB), and loudnorm had to run as a separate pass or it flattened the duck.
+             Long runs must start as background processes (30 s tool limit); on timeout the
+             scoop ffmpeg shim leaves a live child holding the pipe, so the harness kills the
+             process tree with `taskkill /T` and runs everything with stdin=DEVNULL.
+             M2 was NOT committed: the owner asked for the matrix and evidence to be reviewed
+             before anything is staged.
+

@@ -1,0 +1,97 @@
+{
+ "test": "--accurate vs default, start 37 / 120 frames",
+ "rows": {
+  "default": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "trim",
+    "out/m2/fixtures/counter_240_24fps_off0.mp4",
+    "-s",
+    "1.541667",
+    "-d",
+    "5.000000",
+    "-o",
+    "out/m2/out/trim_acc_default.mp4"
+   ],
+   "exit": 0,
+   "seconds": 1.44,
+   "json": {
+    "success": true,
+    "operation": "trim",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\trim_acc_default.mp4",
+    "duration": 5.0
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "frames": 120,
+   "expected_frames": 120,
+   "first": [
+    37,
+    38,
+    39
+   ],
+   "last": [
+    154,
+    155,
+    156
+   ],
+   "ids_match": true,
+   "first_mismatch_index": null,
+   "audio_seconds": 5.0,
+   "has_audio": true
+  },
+  "accurate": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "trim",
+    "out/m2/fixtures/counter_240_24fps_off0.mp4",
+    "-s",
+    "1.541667",
+    "-d",
+    "5.000000",
+    "-o",
+    "out/m2/out/trim_acc_accurate.mp4",
+    "--accurate"
+   ],
+   "exit": 0,
+   "seconds": 1.42,
+   "json": {
+    "success": true,
+    "operation": "trim",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\trim_acc_accurate.mp4",
+    "duration": 5.0
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "frames": 120,
+   "expected_frames": 120,
+   "first": [
+    37,
+    38,
+    39
+   ],
+   "last": [
+    154,
+    155,
+    156
+   ],
+   "ids_match": true,
+   "first_mismatch_index": null,
+   "audio_seconds": 5.0,
+   "has_audio": true
+  }
+ },
+ "area": "trim_accurate",
+ "generated_utc": "2026-10-29T23:34:07Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

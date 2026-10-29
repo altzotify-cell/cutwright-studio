@@ -1,0 +1,94 @@
+{
+ "test": "5 x 120-frame clips carrying PCM audio, joined with Kinocut merge and the ffmpeg concat demuxer (control for the AAC priming drift)",
+ "budget_s": 0.042,
+ "rows": {
+  "clips": 5,
+  "clip_seconds": 5.0,
+  "aac_drift_over_5_joins": null,
+  "kinocut_merge_pcm": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "merge",
+    "out/m2/out/pcm_0.mov",
+    "out/m2/out/pcm_1.mov",
+    "out/m2/out/pcm_2.mov",
+    "out/m2/out/pcm_3.mov",
+    "out/m2/out/pcm_4.mov",
+    "-o",
+    "out/m2/out/pcm_kino.mp4"
+   ],
+   "exit": 0,
+   "seconds": 2.15,
+   "json": {
+    "success": true,
+    "operation": "merge",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\pcm_kino.mp4",
+    "duration": 25.066667
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "frames": 600,
+   "audio_seconds": 25.0667,
+   "expected_frames": 2400,
+   "frames_exact": false,
+   "first": [
+    0,
+    1,
+    2
+   ],
+   "last": [
+    597,
+    598,
+    599
+   ],
+   "beep_drift_s": 0.0534,
+   "drift_per_block": {
+    "0": 0.0,
+    "1": 0.0134,
+    "2": 0.0267,
+    "3": 0.04,
+    "4": 0.0534
+   },
+   "per_join_drift_ms": 13.35,
+   "within_42ms_budget": false
+  },
+  "ffmpeg_concat_pcm": {
+   "exists": true,
+   "frames": 600,
+   "audio_seconds": 25.066,
+   "expected_frames": 2400,
+   "frames_exact": false,
+   "first": [
+    0,
+    1,
+    2
+   ],
+   "last": [
+    597,
+    598,
+    599
+   ],
+   "beep_drift_s": 0.0534,
+   "drift_per_block": {
+    "0": 0.0,
+    "1": 0.0134,
+    "2": 0.0267,
+    "3": 0.04,
+    "4": 0.0534
+   },
+   "exit": 0,
+   "per_join_drift_ms": 13.35,
+   "within_42ms_budget": false
+  }
+ },
+ "area": "concat_pcm",
+ "generated_utc": "2026-10-29T23:29:55Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

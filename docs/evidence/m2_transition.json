@@ -1,0 +1,225 @@
+{
+ "test": "12-frame (0.5 s) 0.500000 between a 120-frame and a 120-frame clip",
+ "expected_frames": 228,
+ "clip_a": "out/m2/fixtures/counter_120_24fps_off0.mp4",
+ "clip_b": "out/m2/fixtures/counter_120_24fps_off600.mp4",
+ "solid_pair": [
+  "out/m2/out/tr_white.mp4",
+  "out/m2/out/tr_black.mp4"
+ ],
+ "rows": {
+  "kinocut_fade": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "merge",
+    "out/m2/fixtures/counter_120_24fps_off0.mp4",
+    "out/m2/fixtures/counter_120_24fps_off600.mp4",
+    "-t",
+    "fade",
+    "-td",
+    "0.500000",
+    "-o",
+    "out/m2/out/tr_kino_fade_ids.mp4"
+   ],
+   "exit": 0,
+   "seconds": 2.39,
+   "json": {
+    "success": true,
+    "operation": "merge",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\tr_kino_fade_ids.mp4",
+    "duration": 9.526
+   },
+   "stderr_tail": null,
+   "structure": {
+    "exists": true,
+    "frames": 228,
+    "expected_frames": 228,
+    "frames_exact": true,
+    "head_ids_intact": true,
+    "tail_ids_intact": true,
+    "audio_seconds": 9.526
+   },
+   "blend": {
+    "exists": true,
+    "frames": 228,
+    "head_luma": 255.0,
+    "tail_luma": 0.0,
+    "overlap_luma": [
+     255.0,
+     233.0,
+     212.0,
+     191.0,
+     169.0,
+     148.0,
+     127.0,
+     106.0,
+     84.0,
+     63.0,
+     42.0,
+     21.0
+    ],
+    "overlap_steps": [
+     -22.0,
+     -21.0,
+     -21.0,
+     -22.0,
+     -21.0,
+     -21.0,
+     -21.0,
+     -22.0,
+     -21.0,
+     -21.0,
+     -21.0
+    ],
+    "overlap_is_blend": true,
+    "overlap_monotonic": true,
+    "gaps_over_10ms": [],
+    "audio_seconds": 9.484,
+    "max_step_db_at_join": -46.28,
+    "max_step_db_elsewhere": -42.85
+   },
+   "solid_exit": 0
+  },
+  "kinocut_wipe-left": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "merge",
+    "out/m2/fixtures/counter_120_24fps_off0.mp4",
+    "out/m2/fixtures/counter_120_24fps_off600.mp4",
+    "-t",
+    "wipe-left",
+    "-td",
+    "0.500000",
+    "-o",
+    "out/m2/out/tr_kino_wipe-left_ids.mp4"
+   ],
+   "exit": 0,
+   "seconds": 3.52,
+   "json": {
+    "success": true,
+    "operation": "merge",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\tr_kino_wipe-left_ids.mp4",
+    "duration": 9.526
+   },
+   "stderr_tail": null,
+   "structure": {
+    "exists": true,
+    "frames": 228,
+    "expected_frames": 228,
+    "frames_exact": true,
+    "head_ids_intact": true,
+    "tail_ids_intact": true,
+    "audio_seconds": 9.526
+   },
+   "blend": {
+    "exists": true,
+    "frames": 228,
+    "head_luma": 255.0,
+    "tail_luma": 0.0,
+    "overlap_luma": [
+     255.0,
+     234.28,
+     213.56,
+     192.84,
+     170.53,
+     149.81,
+     129.09,
+     106.56,
+     86.06,
+     65.34,
+     43.03,
+     22.28
+    ],
+    "overlap_steps": [
+     -20.72,
+     -20.72,
+     -20.72,
+     -22.31,
+     -20.72,
+     -20.72,
+     -22.53,
+     -20.5,
+     -20.72,
+     -22.31,
+     -20.75
+    ],
+    "overlap_is_blend": true,
+    "overlap_monotonic": true,
+    "gaps_over_10ms": [],
+    "audio_seconds": 9.484,
+    "max_step_db_at_join": -46.28,
+    "max_step_db_elsewhere": -42.85
+   },
+   "solid_exit": 0
+  },
+  "ffmpeg_xfade": {
+   "structure": {
+    "exists": true,
+    "frames": 228,
+    "expected_frames": 228,
+    "frames_exact": true,
+    "head_ids_intact": true,
+    "tail_ids_intact": true,
+    "audio_seconds": 9.526
+   },
+   "blend": {
+    "exists": true,
+    "frames": 228,
+    "head_luma": 255.0,
+    "tail_luma": 0.0,
+    "overlap_luma": [
+     255.0,
+     233.0,
+     212.0,
+     191.0,
+     169.0,
+     148.0,
+     127.0,
+     106.0,
+     84.0,
+     63.0,
+     42.0,
+     21.0
+    ],
+    "overlap_steps": [
+     -22.0,
+     -21.0,
+     -21.0,
+     -22.0,
+     -21.0,
+     -21.0,
+     -21.0,
+     -22.0,
+     -21.0,
+     -21.0,
+     -21.0
+    ],
+    "overlap_is_blend": true,
+    "overlap_monotonic": true,
+    "gaps_over_10ms": [],
+    "audio_seconds": 9.484,
+    "max_step_db_at_join": -46.28,
+    "max_step_db_elsewhere": -42.85
+   },
+   "exit": 0,
+   "solid_exit": 0
+  },
+  "current": {
+   "supported": false,
+   "reason": "no xfade in recap.py (join_av = concat demuxer, hard cut); Remotion/transitions.tsx does picture effects only"
+  }
+ },
+ "area": "transition",
+ "generated_utc": "2026-10-29T23:34:03Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

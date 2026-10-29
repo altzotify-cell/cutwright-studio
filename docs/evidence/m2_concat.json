@@ -1,0 +1,193 @@
+{
+ "test": "20 clips x 120 frames at 24 fps, contiguous ids 0..2399",
+ "clips": 20,
+ "frames_per_clip": 120,
+ "rows": {
+  "kinocut": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "merge",
+    "out/m2/fixtures/counter_120_24fps_off0.mp4",
+    "out/m2/fixtures/counter_120_24fps_off120.mp4",
+    "out/m2/fixtures/counter_120_24fps_off240.mp4",
+    "out/m2/fixtures/counter_120_24fps_off360.mp4",
+    "out/m2/fixtures/counter_120_24fps_off480.mp4",
+    "out/m2/fixtures/counter_120_24fps_off600.mp4",
+    "out/m2/fixtures/counter_120_24fps_off720.mp4",
+    "out/m2/fixtures/counter_120_24fps_off840.mp4",
+    "out/m2/fixtures/counter_120_24fps_off960.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1080.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1200.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1320.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1440.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1560.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1680.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1800.mp4",
+    "out/m2/fixtures/counter_120_24fps_off1920.mp4",
+    "out/m2/fixtures/counter_120_24fps_off2040.mp4",
+    "out/m2/fixtures/counter_120_24fps_off2160.mp4",
+    "out/m2/fixtures/counter_120_24fps_off2280.mp4",
+    "-o",
+    "out/m2/out/cc_kino.mp4"
+   ],
+   "exit": 0,
+   "seconds": 4.53,
+   "json": {
+    "success": true,
+    "operation": "merge",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\cc_kino.mp4",
+    "duration": 100.021333
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "frames": 2400,
+   "audio_seconds": 100.0213,
+   "expected_frames": 2400,
+   "frames_exact": true,
+   "first": [
+    0,
+    0,
+    1
+   ],
+   "last": [
+    2397,
+    2398,
+    2399
+   ],
+   "frames_decoded": 2401,
+   "ordered": true,
+   "duplicates": 1,
+   "missing": 0,
+   "missing_sample": [],
+   "beep_drift_s": 0.4933,
+   "drift_per_block": {
+    "0": 0.0214,
+    "1": 0.056,
+    "2": 0.0907,
+    "3": 0.1254,
+    "4": 0.16,
+    "5": 0.1947,
+    "6": 0.2294,
+    "7": 0.264,
+    "8": 0.2987,
+    "9": 0.3334,
+    "10": 0.368,
+    "11": 0.4027,
+    "12": 0.4374,
+    "13": 0.472,
+    "14": -0.4933,
+    "15": -0.4586,
+    "16": -0.424,
+    "17": -0.3893,
+    "18": -0.3546,
+    "19": -0.32
+   },
+   "seconds_wall": 6.14
+  },
+  "current": {
+   "exists": true,
+   "frames": 2400,
+   "audio_seconds": 100.0133,
+   "expected_frames": 2400,
+   "frames_exact": true,
+   "first": [
+    0,
+    0,
+    1
+   ],
+   "last": [
+    2397,
+    2398,
+    2399
+   ],
+   "frames_decoded": 2401,
+   "ordered": true,
+   "duplicates": 1,
+   "missing": 0,
+   "missing_sample": [],
+   "beep_drift_s": 0.2747,
+   "drift_per_block": {
+    "0": 0.0214,
+    "1": 0.0347,
+    "2": 0.048,
+    "3": 0.0614,
+    "4": 0.0747,
+    "5": 0.088,
+    "6": 0.1014,
+    "7": 0.1147,
+    "8": 0.128,
+    "9": 0.1414,
+    "10": 0.1547,
+    "11": 0.168,
+    "12": 0.1814,
+    "13": 0.1947,
+    "14": 0.208,
+    "15": 0.2214,
+    "16": 0.2347,
+    "17": 0.248,
+    "18": 0.2614,
+    "19": 0.2747
+   },
+   "seconds_wall": 2.51
+  },
+  "ffmpeg": {
+   "exists": true,
+   "frames": 2399,
+   "audio_seconds": 100.0347,
+   "expected_frames": 2400,
+   "frames_exact": false,
+   "first": [
+    0,
+    0,
+    1
+   ],
+   "last": [
+    2396,
+    2397,
+    2398
+   ],
+   "frames_decoded": 2400,
+   "ordered": true,
+   "duplicates": 1,
+   "missing": 1,
+   "missing_sample": [
+    2399
+   ],
+   "beep_drift_s": 0.2747,
+   "drift_per_block": {
+    "0": 0.0214,
+    "1": 0.0347,
+    "2": 0.048,
+    "3": 0.0614,
+    "4": 0.0747,
+    "5": 0.088,
+    "6": 0.1014,
+    "7": 0.1147,
+    "8": 0.128,
+    "9": 0.1414,
+    "10": 0.1547,
+    "11": 0.168,
+    "12": 0.1814,
+    "13": 0.1947,
+    "14": 0.208,
+    "15": 0.2214,
+    "16": 0.2347,
+    "17": 0.248,
+    "18": 0.2614,
+    "19": 0.2747
+   },
+   "exit": 0,
+   "seconds_wall": 2.66
+  }
+ },
+ "area": "concat",
+ "generated_utc": "2026-10-29T23:30:07Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

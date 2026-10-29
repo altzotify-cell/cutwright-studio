@@ -1,0 +1,103 @@
+{
+ "test": "fit a PNG still to 53/97 frames at 640x360",
+ "fixture": "out/m2/fixtures/still_900.png",
+ "rows": [
+  {
+   "target_frames": 53,
+   "current_render_image_clip": {
+    "exists": true,
+    "frames": 53,
+    "expected_frames": 53,
+    "frames_exact": true,
+    "width": 640,
+    "height": 360,
+    "pix_fmt": "yuv420p",
+    "fps": "24/1",
+    "size_ok": false,
+    "fmt_ok": true,
+    "ids_monotonic": true,
+    "first_id": 900,
+    "first_luma": 63.73,
+    "last_luma": 70.08,
+    "no_black_ends": true,
+    "seconds": 1.02
+   },
+   "ffmpeg": {
+    "exists": true,
+    "frames": 53,
+    "expected_frames": 53,
+    "frames_exact": true,
+    "width": 640,
+    "height": 360,
+    "pix_fmt": "yuv420p",
+    "fps": "24/1",
+    "size_ok": false,
+    "fmt_ok": true,
+    "ids_monotonic": true,
+    "first_id": 900,
+    "first_luma": 63.71,
+    "last_luma": 63.71,
+    "no_black_ends": true,
+    "seconds": 0.83,
+    "exit": 0
+   },
+   "kinocut": {
+    "supported": false,
+    "help_exit": 0,
+    "reason": "no image->clip command; still_plates unavailable (pillow absent)"
+   }
+  },
+  {
+   "target_frames": 97,
+   "current_render_image_clip": {
+    "exists": true,
+    "frames": 97,
+    "expected_frames": 97,
+    "frames_exact": true,
+    "width": 640,
+    "height": 360,
+    "pix_fmt": "yuv420p",
+    "fps": "24/1",
+    "size_ok": false,
+    "fmt_ok": true,
+    "ids_monotonic": true,
+    "first_id": 900,
+    "first_luma": 63.73,
+    "last_luma": 70.06,
+    "no_black_ends": true,
+    "seconds": 1.11
+   },
+   "ffmpeg": {
+    "exists": true,
+    "frames": 97,
+    "expected_frames": 97,
+    "frames_exact": true,
+    "width": 640,
+    "height": 360,
+    "pix_fmt": "yuv420p",
+    "fps": "24/1",
+    "size_ok": false,
+    "fmt_ok": true,
+    "ids_monotonic": true,
+    "first_id": 900,
+    "first_luma": 63.71,
+    "last_luma": 63.71,
+    "no_black_ends": true,
+    "seconds": 0.89,
+    "exit": 0
+   },
+   "kinocut": {
+    "supported": false,
+    "help_exit": 0,
+    "reason": "no image->clip command; still_plates unavailable (pillow absent)"
+   }
+  }
+ ],
+ "area": "fit_still",
+ "generated_utc": "2026-10-29T23:32:14Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

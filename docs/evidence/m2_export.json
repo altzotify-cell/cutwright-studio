@@ -1,0 +1,141 @@
+{
+ "test": "export a 60 s 1920x1080 24 fps timeline",
+ "source": "out/m2/out/export_src_60s.mp4",
+ "source_props": {
+  "frames": 1437,
+  "seconds": 60.0,
+  "audio_seconds": 60.0,
+  "width": 1920,
+  "height": 1080,
+  "pix_fmt": "yuv420p",
+  "codec": "h264",
+  "profile": "High",
+  "fps": "479/20",
+  "audio_codec": "aac",
+  "has_audio": true
+ },
+ "rows": {
+  "kinocut": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "export",
+    "out/m2/out/export_src_60s.mp4",
+    "-q",
+    "high",
+    "-f",
+    "mp4",
+    "-o",
+    "out/m2/out/ex_kino.mp4"
+   ],
+   "exit": 0,
+   "seconds": 28.01,
+   "json": {
+    "success": true,
+    "operation": "export",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\ex_kino.mp4",
+    "duration": 60.01
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "size_mb": 0.4,
+   "video": {
+    "codec": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "width": 1920,
+    "height": 1080,
+    "fps": "479/20"
+   },
+   "audio": {
+    "codec": "aac",
+    "sample_rate": "48000",
+    "channels": 2
+   },
+   "h264_high": true,
+   "aac_48k_stereo": true,
+   "fps_constant_24": false,
+   "atoms": [
+    "ftyp",
+    "moov",
+    "free",
+    "mdat"
+   ],
+   "faststart": true,
+   "decode_clean": true,
+   "decode_stderr": null,
+   "encode_seconds": 28.01
+  },
+  "current": {
+   "exists": true,
+   "size_mb": 0.41,
+   "video": {
+    "codec": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "width": 1920,
+    "height": 1080,
+    "fps": "479/20"
+   },
+   "audio": {
+    "codec": "aac",
+    "sample_rate": "48000",
+    "channels": 2
+   },
+   "h264_high": true,
+   "aac_48k_stereo": true,
+   "fps_constant_24": false,
+   "atoms": [
+    "ftyp",
+    "moov",
+    "free",
+    "mdat"
+   ],
+   "faststart": true,
+   "decode_clean": true,
+   "decode_stderr": null,
+   "encode_seconds": 0.95
+  },
+  "ffmpeg": {
+   "exists": true,
+   "size_mb": 0.42,
+   "video": {
+    "codec": "h264",
+    "profile": "High",
+    "pix_fmt": "yuv420p",
+    "width": 1920,
+    "height": 1080,
+    "fps": "24/1"
+   },
+   "audio": {
+    "codec": "aac",
+    "sample_rate": "48000",
+    "channels": 2
+   },
+   "h264_high": true,
+   "aac_48k_stereo": true,
+   "fps_constant_24": true,
+   "atoms": [
+    "ftyp",
+    "moov",
+    "free",
+    "mdat"
+   ],
+   "faststart": true,
+   "decode_clean": true,
+   "decode_stderr": null,
+   "encode_seconds": 17.08,
+   "exit": 0,
+   "maxrss_kb": null
+  }
+ },
+ "area": "export",
+ "generated_utc": "2026-10-29T23:31:16Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

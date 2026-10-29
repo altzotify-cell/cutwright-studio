@@ -69,3 +69,30 @@ Known: Cline docs list `.clinerules/` and `.cline/rules/` as supported workspace
 Assumed: the owner wants this repo public (same as the other project repos) - switchable with `gh repo edit --visibility private`.
 Ask: nothing. Next objective is M0 (environment audit and baseline) and it waits for the owner's go.
 
+
+
+## C-005 | 2026-10-29 | agent -> owner | INFO | OPEN
+Commit: none - M2 deliberately NOT staged (the owner asked for the matrix + evidence to be reviewed first)
+Files: `docs/CAPABILITY_MATRIX.md` (new), `docs/evidence/m2_*.json` (20, new), `tests/kinocut_vs_current/`
+       (new package: harness + 12 test modules), `HANDOFF.md`, `LOG.md`. No change to `cutwright/` or
+       `recapstudio/` - M2 is measurement only.
+Goal: decide, with measurements, which executor each editing operation uses in M3.
+Observed: kinocut PASSES trim (exact ids at starts 0/1/37/119), crossfade/wipe (228/228 frames, real
+       12-frame ramp, no audio gap or click), duck-audio (16.4 dB), mix/normalize (-15.9 LUFS, -9.0 dBTP),
+       subtitles (non-ASCII SRT on exactly the cue frames), export (H.264 High / AAC 48k stereo /
+       faststart / clean decode), pad+blur resize, concat frames (2400/2400), and its workflow engine
+       (receipts with sha256, resume rebuilds a deleted step, changed spec refused with resume_spec_mismatch).
+       It CANNOT: fit a clip to exactly N frames (no op; `speed` was a no-op here), crop, burn text with
+       our karaoke style, or keep audio through `composite-layers` (video-only, but `overlay-video` keeps it).
+       Its QC is a global score - it flagged clipping (-0.2 dBTP) but MISSED a one-frame black flash and a
+       0.5 s silence gap.
+       Two defects found in the current code: `render_video_clip` seeks with `-ss` before `-i`, so every
+       non-zero start is one frame late; `join_av` does not duck (0.2 dB) and lands the voice 21.6 ms late
+       with a -0.3 dBTP peak.
+Known: all numbers are in `docs/CAPABILITY_MATRIX.md` with the evidence file per row; the 42 ms audio-drift
+       budget is MISSED at every merge (13.4 ms per join with PCM, 26 ms with AAC), so audio must be built
+       as one continuous track in M3.
+Assumed: the synthetic fixtures (160x90 counter clips, 1 kHz bursts, 100 Hz bed) stand in for real footage;
+       HDR/10-bit, non-24 fps and the MCP surface were not covered.
+Ask: review the executor column before M3 starts. Nothing else is needed - no code was changed and nothing
+       is committed.

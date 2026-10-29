@@ -1,0 +1,75 @@
+{
+ "test": "clip with a black flash at 1.0s, silence 2.0-2.5s, clipping 3.0-3.2s",
+ "fixture": "out/m2/out/qc_bad.mp4",
+ "rows": {
+  "kinocut_quality_check": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "video-quality-check",
+    "out/m2/out/qc_bad.mp4",
+    "--format",
+    "json"
+   ],
+   "exit": 0,
+   "seconds": 2.8,
+   "json": null,
+   "stderr_tail": null
+  },
+  "kinocut_release_checkpoint": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "release-checkpoint",
+    "out/m2/out/qc_bad.mp4",
+    "-o",
+    "out/m2/out/qc_receipt",
+    "--min-score",
+    "0"
+   ],
+   "exit": 0,
+   "seconds": 7.7,
+   "json": {
+    "success": true
+   },
+   "stderr_tail": null,
+   "files": [
+    "out/m2/out/qc_receipt/storyboard/frame_01_0.6s.jpg",
+    "out/m2/out/qc_receipt/storyboard/frame_02_1.1s.jpg",
+    "out/m2/out/qc_receipt/storyboard/frame_03_1.7s.jpg",
+    "out/m2/out/qc_receipt/storyboard/frame_04_2.3s.jpg",
+    "out/m2/out/qc_receipt/storyboard/frame_05_2.9s.jpg",
+    "out/m2/out/qc_receipt/storyboard/frame_06_3.4s.jpg"
+   ]
+  },
+  "ffmpeg_detectors": {
+   "black_intervals": [
+    [
+     "1",
+     "1.125"
+    ]
+   ],
+   "silence_intervals": [
+    "2"
+   ],
+   "max_volume_db": "-0.2",
+   "exit": 0
+  },
+  "current_checks": {
+   "luma_at_black_flash": 0,
+   "luma_at_clean_frame": 82,
+   "note": "cutwright/frames.py has luma/probe/cut helpers; no silence or clipping detector"
+  }
+ },
+ "area": "qc",
+ "generated_utc": "2026-10-29T23:32:25Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

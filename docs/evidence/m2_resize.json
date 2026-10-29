@@ -1,0 +1,180 @@
+{
+ "test": "160x90 (16:9) -> 1080x1920 (9:16) with pad / blur / crop",
+ "fixture": "out/m2/out/rs_src_red.mp4",
+ "rows": [
+  {
+   "fill": "pad",
+   "current": {
+    "exists": true,
+    "width": 1080,
+    "height": 1920,
+    "frames": 24,
+    "size_ok": true,
+    "content_box": [
+     0,
+     660,
+     1080,
+     1260
+    ],
+    "content_w": 1080,
+    "content_h": 600,
+    "content_aspect": 1.8,
+    "centred_x": true,
+    "centred_y": true
+   },
+   "ffmpeg": {
+    "exists": true,
+    "width": 1080,
+    "height": 1920,
+    "frames": 24,
+    "size_ok": true,
+    "content_box": [
+     0,
+     660,
+     1080,
+     1260
+    ],
+    "content_w": 1080,
+    "content_h": 600,
+    "content_aspect": 1.8,
+    "centred_x": true,
+    "centred_y": true,
+    "exit": 0
+   }
+  },
+  {
+   "fill": "blur",
+   "current": {
+    "exists": true,
+    "width": 1080,
+    "height": 1920,
+    "frames": 24,
+    "size_ok": true,
+    "content_box": [
+     0,
+     0,
+     1080,
+     1920
+    ],
+    "content_w": 1080,
+    "content_h": 1920,
+    "content_aspect": 0.562,
+    "centred_x": true,
+    "centred_y": true
+   },
+   "ffmpeg": {
+    "exists": true,
+    "width": 1080,
+    "height": 1920,
+    "frames": 24,
+    "size_ok": true,
+    "content_box": [
+     0,
+     0,
+     1080,
+     1920
+    ],
+    "content_w": 1080,
+    "content_h": 1920,
+    "content_aspect": 0.562,
+    "centred_x": true,
+    "centred_y": true,
+    "exit": 0
+   }
+  },
+  {
+   "fill": "crop",
+   "current": {
+    "exists": true,
+    "width": 1080,
+    "height": 1920,
+    "frames": 24,
+    "size_ok": true,
+    "content_box": [
+     0,
+     660,
+     1080,
+     1260
+    ],
+    "content_w": 1080,
+    "content_h": 600,
+    "content_aspect": 1.8,
+    "centred_x": true,
+    "centred_y": true
+   },
+   "ffmpeg": {
+    "exists": true,
+    "width": 1080,
+    "height": 1920,
+    "frames": 24,
+    "size_ok": true,
+    "content_box": [
+     0,
+     0,
+     1080,
+     1920
+    ],
+    "content_w": 1080,
+    "content_h": 1920,
+    "content_aspect": 0.562,
+    "centred_x": true,
+    "centred_y": true,
+    "exit": 0
+   }
+  }
+ ],
+ "kinocut_resize_9x16": {
+  "cmd": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "resize",
+    "out/m2/out/rs_src_red.mp4",
+    "-w",
+    "1080",
+    "--height",
+    "1920",
+    "-a",
+    "9:16",
+    "-o",
+    "out/m2/out/rs_kino_916.mp4"
+   ],
+   "exit": 0,
+   "seconds": 2.1,
+   "json": {
+    "success": true,
+    "operation": "resize",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\rs_kino_916.mp4",
+    "duration": 2.0
+   },
+   "stderr_tail": null
+  },
+  "shape": {
+   "exists": true,
+   "width": 1080,
+   "height": 1920,
+   "frames": 48,
+   "size_ok": true,
+   "content_box": [
+    0,
+    660,
+    1080,
+    1260
+   ],
+   "content_w": 1080,
+   "content_h": 600,
+   "content_aspect": 1.8,
+   "centred_x": true,
+   "centred_y": true
+  }
+ },
+ "area": "resize",
+ "generated_utc": "2026-10-29T23:33:40Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

@@ -1,0 +1,131 @@
+{
+ "test": "trim -> resize -> trim -> merge as a Kinocut workflow; resume; changed spec",
+ "spec": "spec.json",
+ "rows": {
+  "validate": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "workflow-validate",
+    "--spec",
+    "spec.json"
+   ],
+   "exit": 0,
+   "seconds": 1.2,
+   "json": null,
+   "stderr_tail": null
+  },
+  "render": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "workflow-render",
+    "--spec",
+    "spec.json",
+    "--save-receipt",
+    "receipt.json",
+    "--keep-intermediates"
+   ],
+   "exit": 0,
+   "seconds": 5.14,
+   "json": null,
+   "stderr_tail": "ight-kinocut-handoff\\cutwright\\.venvs\\kinocut\\Lib\\site-packages\\kinocut\\engine_merge.py:148: UserWarning: [MERGE GUARDRAIL] Clips have different resolutions: [(160, 90), (320, 180)]. Merge will normalize by re-encoding all clips.\r\n  _emit_merge_guardrails(infos, transition_duration, has_transitions)",
+   "output_exists": true,
+   "output_frames": 60,
+   "dir_after": [
+    "a.mp4",
+    "b.mp4",
+    "final.mp4",
+    "receipt.json",
+    "spec.json",
+    "work/6b733f08-8a03f8d7/mcp_video_resize_a.mp4",
+    "work/6b733f08-8a03f8d7/mcp_video_trim_a.mp4",
+    "work/6b733f08-8a03f8d7/mcp_video_trim_b.mp4"
+   ],
+   "receipt_exists": true,
+   "receipt_keys": [
+    "cleanup_manifest",
+    "feature_flags",
+    "outputs",
+    "receipt_kind",
+    "render_determinism_scope",
+    "resume_cursor",
+    "schema_version",
+    "sources",
+    "spec_hash",
+    "status",
+    "steps",
+    "tool",
+    "versions",
+    "warnings",
+    "work_dir",
+    "workflow"
+   ],
+   "receipt_has_output_sha": true
+  },
+  "resume": {
+   "deleted": "out/m2/out/wf/work/6b733f08-8a03f8d7/mcp_video_resize_a.mp4",
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "workflow-render",
+    "--spec",
+    "spec.json",
+    "--resume",
+    "receipt.json",
+    "--save-receipt",
+    "receipt2.json",
+    "--keep-intermediates"
+   ],
+   "exit": 0,
+   "seconds": 5.32,
+   "json": null,
+   "stderr_tail": "ight-kinocut-handoff\\cutwright\\.venvs\\kinocut\\Lib\\site-packages\\kinocut\\engine_merge.py:148: UserWarning: [MERGE GUARDRAIL] Clips have different resolutions: [(160, 90), (320, 180)]. Merge will normalize by re-encoding all clips.\r\n  _emit_merge_guardrails(infos, transition_duration, has_transitions)",
+   "rebuilt": true,
+   "output_exists": true
+  },
+  "changed_spec_refused": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "workflow-render",
+    "--spec",
+    "spec.json",
+    "--resume",
+    "receipt.json",
+    "--save-receipt",
+    "receipt3.json"
+   ],
+   "exit": 1,
+   "seconds": 1.57,
+   "json": {
+    "success": false,
+    "error": {
+     "type": "validation_error",
+     "code": "resume_spec_mismatch",
+     "message": "resume receipt spec_hash 'sha256:6b733f088d6c980b9d7acfb8807204fffac8708a360685f52ef76724227a4249' does not match the current spec_hash 'sha256:a5caeeee01b74d9c4ec14b241e244b912d30ac4a8c4103a2f76e29d89d36eb8f'; this is a different job",
+     "suggested_action": {
+      "auto_fix": false,
+      "description": "Resume only against a receipt whose spec_hash matches the current spec; a changed spec is a different job (re-run without --resume to start fresh)."
+     }
+    }
+   },
+   "stderr_tail": "2d30ac4a8c4103a2f76e29d89d36eb8f'; this is a different job\",\r\n    \"suggested_action\": {\r\n      \"auto_fix\": false,\r\n      \"description\": \"Resume only against a receipt whose spec_hash matches the current spec; a changed spec is a different job (re-run without --resume to start fresh).\"\r\n    }\r\n  }\r\n}"
+  }
+ },
+ "area": "workflow",
+ "generated_utc": "2026-10-29T23:34:33Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

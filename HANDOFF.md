@@ -8,22 +8,26 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M1  (Kinocut isolated install + interface discovery) status: DONE 2026-10-29
-                    (evidence: LOG.md, docs/KINOCUT_FINDINGS.md)
-Last green commit : "M1 close-out: Kinocut isolated installation and interface discovery findings" (main, pushed to
-                    origin = altzotify-cell/cutwright-studio); the hash is in LOG.md / the session report.
-                    Before it: a973d96 (M0 hash record), e9fb668 (M0 close-out).
-Next step         : M2 - equivalence verification (Kinocut vs current code vs direct FFmpeg) -> docs/CAPABILITY_MATRIX.md;
-                    owner starts a new session
-Open COMMS        : none blocking; C-003/C-004 are INFO. No new COMMS entry was written for M1 (the owner's close-out
-                    staging list was the 5 docs only); the M1 decisions live in LOG.md + docs/KINOCUT_FINDINGS.md
-Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints, 02-testing-and-evidence,
-                    03-session-boundaries). The old single `.clinerules` file no longer exists.
+Current milestone : M2  (equivalence verification: Kinocut vs current code vs direct FFmpeg) status: DONE 2026-10-29
+                    (evidence: docs/CAPABILITY_MATRIX.md, docs/evidence/m2_*.json, LOG.md)
+Last green commit : 0b88b09 "M1 close-out: ...". M2 is NOT committed yet: the owner asked for the matrix
+                    and evidence to be written and then reviewed before anything is staged.
+Next step         : M3 - engine skeleton (executors, registry/discovery, manifest, checkpoints, gates,
+                    validators) using the executor column of docs/CAPABILITY_MATRIX.md
+Open COMMS        : C-004 is INFO. M2 decision summary goes in COMMS as C-005 (executor choices).
+Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
+                    02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
+
 Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python 3.11.9 default (3.11/3.13/3.14 installed),
                     Node v24.18.0; ffmpeg 7.1 full_build gyan (scoop shim wins over 2 others).
                     Kinocut: INSTALLED in `.venvs\kinocut` = kinocut 1.16.4 on Python 3.11.9, doctor exit 0.
                     `.venvs/` and `out/` are gitignored. All M0 numbers: docs/ENVIRONMENT.md.
-Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1 (quotes in `LOG.md`):
+Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1/M2 (quotes in `LOG.md`):
+  - M2: 13 areas measured on real outputs (`tests/kinocut_vs_current/`, 20 evidence files). Headlines:
+    kinocut trim/fade/wipe/duck/mix/normalize/subtitles/export/pad-resize PASS; no "exactly N frames"
+    op; `composite-layers` drops audio; QC is a global score (no black/silence detection); per-join
+    audio drift 13.4 ms PCM / 26 ms AAC; current `render_video_clip` is one frame late on non-zero
+    starts and `join_av` neither ducks nor keeps A/V sync (21.6 ms).
   - M1: `kino doctor` -> "Kinocut doctor - OK" (exit 0); trim 3 s -> 72/72 frames with audio; merge -t fade -td 1 on
     2 s + 2 s -> 3.000000 s / 72 frames with audio (real blend seen in frames); composite-layers output is video-only;
     release-checkpoint is a real QC gate; licences recorded with sha256 (Kinocut Apache-2.0, OpenMontage AGPL-3.0).
@@ -112,7 +116,8 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 |---|---|---|---|
 | [x] | M0 | Environment audit + baseline (git, versions, doctor, Recap regression with Remotion on Windows) | all baseline commands run and quoted; `docs/ENVIRONMENT.md` + baseline numbers; commit hash recorded |
 | [x] | M1 | Kinocut isolated install + interface discovery (Windows) | `kino doctor` OK in `.venvs\kinocut`; `docs/KINOCUT_FINDINGS.md` has no assumptions; licences recorded |
-| [ ] | M2 | Equivalence tests: Kinocut vs current code vs direct FFmpeg (frame accuracy, fitting, concat, transitions, audio mix, export, QC, workflow/resume) | `docs/CAPABILITY_MATRIX.md` + `docs/evidence/m2_*.json`; every row measured |
+| [x] | M2 | Equivalence tests: Kinocut vs current code vs direct FFmpeg (frame accuracy, fitting, concat, transitions, audio mix, export, QC, workflow/resume) | `docs/CAPABILITY_MATRIX.md` + `docs/evidence/m2_*.json`; every row measured |
+
 | [ ] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | `tools/validate/run/resume/status` work on real media; resume skips done steps |
 | [ ] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | Regression pack unchanged; 60-90 s real job reviewed frame by frame |
 | [ ] | M5 | Remove Shotcut completely | `git grep` check empty; doctor clean; tests + regression pass |

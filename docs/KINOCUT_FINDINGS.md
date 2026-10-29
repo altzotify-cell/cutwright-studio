@@ -274,3 +274,33 @@ Open questions for M2 (equivalence tests): do the other transition types keep ex
 audio layer; are `mix-audio` / `duck-audio` comparable to our FFmpeg chains; does
 `release-checkpoint` scoring make sense on real footage (the synthetic bar fixture scored 59 as
 "desaturated" - the metric is measuring the test pattern, not a defect).
+
+## 11. M2 addendum - contracts confirmed by equivalence testing (2026-10-29)
+
+Everything here was observed while running the M2 tests; the numbers live in
+`docs/CAPABILITY_MATRIX.md` and `docs/evidence/m2_*.json`, not repeated here.
+
+**CLI contracts that were wrong or unknown before M2**
+
+| op | fact |
+|---|---|
+| `mix-audio --sounds` | takes **JSON track descriptions**, not a file path: `--sounds "[{\"path\": \"music.wav\", \"volume\": 0.35}]"`. A path is rejected with `invalid_parameter: sounds must be valid UTF-8 JSON track descriptions`. Allowed track keys: `path, start, volume, fade_in, fade_out`. |
+| `workflow-validate/render` | spec shape `{schema_version, name, sources{id:path}, steps[{id, op, inputs{src|srcs}, params, output}], outputs{id:path}}` with refs `@sources.<id>`, `@work/<f>`, `@outputs.<id>`. `params` are validated against the **engine signature** (`start`/`duration`, not `-s`/`-d`). |
+| workflow paths | sources must be **relative paths inside the workspace**: an absolute input path is refused with `unsafe_workflow_source`. Run with `cwd` = the spec's directory. |
+| workflow resume | `--resume receipt.json` is fail-closed: any spec change gives `resume_spec_mismatch` quoting both `spec_hash` values. A deleted intermediate is rebuilt on resume (exit 0). Receipts carry `spec_hash`, `steps`, `sources`, `outputs`, `resume_cursor` and the sha256 of each output. Intermediates land in `work/<uuid>/mcp_video_*.mp4`. |
+| `composite-layers` | still video-only (audio dropped). **`overlay-video` DOES keep the background audio** - use it when a PiP is enough, otherwise follow composite with an audio pass. |
+| `speed -f` | on a 120-frame 24 fps clip, factors 0.498 / 1.237 / 2.264 gave 120 / 119 / 120 frames - the op did not change the length as expected. Treat `speed` as unverified and do speed changes in FFmpeg (`setpts`). |
+| `video-quality-check` | a **global** score (brightness, contrast, saturation, audio_levels, color_balance, temporal_motion), not a per-frame integrity check: it caught clipping (-0.2 dBTP) but not a one-frame black flash or a 0.5 s silence gap. |
+| `trim --accurate` | identical to the default on the 240-frame counter clip (both frame-exact). |
+
+**M1 open questions now answered**
+
+- Other transition types keep exact frame counts: `fade` and `wipe-left` with `-td 0.5` both gave
+  exactly `a + b - 12` frames with a real blend and no audio gap or click.
+- `merge` re-encodes audio (AAC); concatenating 20 clips accumulates ~26 ms of offset per join
+  (~13.4 ms per join even with PCM sources), so audio must be assembled as one track.
+- `mix-audio` / `duck-audio` / `normalize-audio` are comparable to (and better than) our FFmpeg
+  chains: 16.4 dB of duck, -15.9 LUFS, -9.0 dBTP, onset error 0.3 ms.
+- `release-checkpoint` scoring still penalises synthetic test patterns (35.9 on the QC fixture);
+  use it as a release gate on real footage, not as a defect detector.
+

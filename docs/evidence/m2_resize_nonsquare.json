@@ -1,0 +1,93 @@
+{
+ "test": "SAR 2:1 source -> 1080x1920; is the anamorphic aspect handled?",
+ "fixture": "out/m2/out/src_nonsquare.mp4",
+ "rows": {
+  "current": {
+   "exists": true,
+   "width": 1080,
+   "height": 1920,
+   "frames": 12,
+   "size_ok": true,
+   "content_box": [
+    0,
+    660,
+    1080,
+    1260
+   ],
+   "content_w": 1080,
+   "content_h": 600,
+   "content_aspect": 1.8,
+   "centred_x": true,
+   "centred_y": true
+  },
+  "ffmpeg": {
+   "exists": true,
+   "width": 1080,
+   "height": 1920,
+   "frames": 12,
+   "size_ok": true,
+   "content_box": [
+    0,
+    660,
+    1080,
+    1260
+   ],
+   "content_w": 1080,
+   "content_h": 600,
+   "content_aspect": 1.8,
+   "centred_x": true,
+   "centred_y": true,
+   "exit": 0
+  },
+  "kinocut": {
+   "exists": true,
+   "width": 1080,
+   "height": 1920,
+   "frames": 48,
+   "size_ok": true,
+   "content_box": [
+    0,
+    660,
+    1080,
+    1260
+   ],
+   "content_w": 1080,
+   "content_h": 600,
+   "content_aspect": 1.8,
+   "centred_x": true,
+   "centred_y": true,
+   "cmd": {
+    "cmd": [
+     ".venvs/kinocut/Scripts/kino.exe",
+     "--format",
+     "json",
+     "--overwrite",
+     "resize",
+     "out/m2/out/src_nonsquare.mp4",
+     "-w",
+     "1080",
+     "--height",
+     "1920",
+     "-o",
+     "out/m2/out/rs_ns_kino.mp4"
+    ],
+    "exit": 0,
+    "seconds": 2.14,
+    "json": {
+     "success": true,
+     "operation": "resize",
+     "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\rs_ns_kino.mp4",
+     "duration": 2.0
+    },
+    "stderr_tail": null
+   }
+  }
+ },
+ "area": "resize_nonsquare",
+ "generated_utc": "2026-10-29T23:33:45Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "test": "burn a 2-cue UTF-8 SRT (Café Ñandú / 字幕) at 24 fps on a non-ASCII Windows directory",
+ "srt": "1\n00:00:00,500 --> 00:00:01,500\nCafé Ñandú\n\n2\n00:00:01,500 --> 00:00:02,500\n字幕テスト\n",
+ "dir": "out/m2/out/burn café",
+ "rows": {
+  "kinocut": {
+   "cmd": [
+    ".venvs/kinocut/Scripts/kino.exe",
+    "--format",
+    "json",
+    "--overwrite",
+    "subtitles",
+    "out/m2/out/burn café/black.mp4",
+    "out/m2/out/burn café/subs.srt",
+    "-o",
+    "out/m2/out/bn_kino.mp4"
+   ],
+   "exit": 0,
+   "seconds": 3.1,
+   "json": {
+    "success": true,
+    "operation": "subtitles",
+    "output_path": "C:\\Users\\user\\Desktop\\Cutwright-kinocut-handoff\\cutwright\\out\\m2\\out\\bn_kino.mp4",
+    "duration": 3.0
+   },
+   "stderr_tail": null,
+   "exists": true,
+   "frames": 72,
+   "bright_pixels": {
+    "before": 0,
+    "cue1": 372,
+    "cue2": 239,
+    "after": 0
+   },
+   "text_on_cues": true,
+   "clean_before": true
+  },
+  "ffmpeg": {
+   "exists": true,
+   "frames": 72,
+   "bright_pixels": {
+    "before": 0,
+    "cue1": 203,
+    "cue2": 146,
+    "after": 0
+   },
+   "text_on_cues": true,
+   "clean_before": true,
+   "exit": 0,
+   "stderr_tail": ""
+  },
+  "current": {
+   "supported": false,
+   "reason": "recap.py writes .srt for the player (step_srt) and draws only drawtext slates/gfx; captions are rendered by Remotion"
+  }
+ },
+ "area": "burn",
+ "generated_utc": "2026-10-29T23:29:35Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}

@@ -1,0 +1,72 @@
+{
+ "test": "10 repeats of trim / resize / merge",
+ "rows": {
+  "trim": {
+   "label": "trim",
+   "runs": 10,
+   "failures": [],
+   "seconds": [
+    1.41,
+    1.39,
+    1.48,
+    1.4,
+    1.39,
+    1.41,
+    1.4,
+    1.37,
+    1.35,
+    1.4
+   ],
+   "frames_seen": [
+    48
+   ]
+  },
+  "fit_resize": {
+   "label": "resize",
+   "runs": 10,
+   "failures": [],
+   "seconds": [
+    1.79,
+    2.0,
+    3.43,
+    1.99,
+    1.83,
+    1.85,
+    1.82,
+    1.91,
+    1.8,
+    1.83
+   ],
+   "frames_seen": [
+    120
+   ]
+  },
+  "merge": {
+   "label": "merge",
+   "runs": 10,
+   "failures": [],
+   "seconds": [
+    1.74,
+    1.6,
+    1.62,
+    1.58,
+    1.59,
+    1.69,
+    1.64,
+    2.69,
+    1.8,
+    1.74
+   ],
+   "frames_seen": [
+    96
+   ]
+  }
+ },
+ "area": "reliability_repeats",
+ "generated_utc": "2026-10-29T23:33:29Z",
+ "versions": {
+  "ffmpeg": "ffmpeg version 7.1-full_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "kinocut": "Kinocut 1.16.4",
+  "python": "3.11.9"
+ }
+}
