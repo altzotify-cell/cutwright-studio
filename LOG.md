@@ -422,6 +422,7 @@ Final M0 baseline (summary; quotes above, machine facts in `docs/ENVIRONMENT.md`
 | `recap_remotion.mp4` | "Encoded 514/514", 21.42 s, 5,915,527 B, parity vs `recap_final.mp4` within one frame | 0 (96.4 s) |
 | Remotion rate | 514 / 96.4 = 5.33 fps (derived, whole command incl. start-up) | - |
 | scene-check time | NOT CAPTURED - no timing exists anywhere; do not quote one | - |
+
 | Whisper | 'base' loads in 6.50 s, inference 0.96 s on one segment, 0 words on the fixture's tone audio -> `even`; real-speech word timing NOT verified | 0 (probe) |
 | fixtures self-test | "Ran 1 test in 0.907s", OK | 0 |
 
@@ -467,4 +468,79 @@ DECISIONS  - staged only the four M0 documents (HANDOFF.md, LOG.md, docs/ENVIRON
 Final `git status` after the close-out: only `?? recapstudio/remotion/package-lock.json` (expected,
 untracked by decision) plus this follow-up commit.
 
+
+## 2026-10-29 (M1: Kinocut isolated install and interface discovery)
+
+Scope: roadmap M1 steps 1-4, 6 and 8-9. No application code touched, no Shotcut code deleted, nothing
+staged/committed/pushed. Raw captures in `out/m1/` (gitignored).
+
+```
+TESTED     - .venvs ignored before creation : git check-ignore -v .venvs -> ".gitignore:76:/.venvs/"
+             exit 0
+TESTED     - venv : py -3.11 -m venv .venvs\kinocut -> "venv-exit=0", "=== venv seconds: 75.4 ===",
+             "venv-pip-exists=True"; pyvenv.cfg "include-system-site-packages = false", python 3.11.9
+TESTED     - install : .venvs\kinocut\Scripts\python -m pip install "kinocut==1.16.4" ->
+             "Successfully installed ... kinocut-1.16.4 ...", "kinocut-install-exit=0",
+             "=== kinocut install seconds: 199.4 ===", "=== kino.exe present: True ===";
+             venv-size-MB=95.7; pip list = 38 packages (venv only, global Python untouched)
+TESTED     - doctor : .venvs\kinocut\Scripts\kino.exe doctor -> exit 0, "Kinocut doctor - OK", 9.7 s;
+             kino --format json doctor -> success=true, summary.required_ok=true, missing_required=[],
+             total_checks=37, passed=10; required checks Kinocut 1.16.4 / mcp-server-import / ffmpeg /
+             ffprobe / mcp 1.30.0 / pydantic 2.14.2 / rich 15.0.0 all OK
+TESTED     - capabilities : kino --format json video-capabilities -> exit 0; video_edit, subtitles,
+             audio, c2pa_signing available; ai_transcribe + still_plates "unavailable"
+             (required_dep_missing openai_whisper / pillow)
+TESTED     - CLI surface : kino --help -> exit 0, ~200 subcommands, global
+             "--format {text,json,auto}" and "--overwrite"; 23 subcommand --help runs all exit 0
+TESTED     - trim : kino --format json trim out\fx\a.mp4 -s 1 -d 3 -o ... -> exit 0, 1.7 s,
+             {"success": true, "duration": 3.0, "resolution": "160x90"}; ffprobe -count_frames ->
+             "nb_read_frames=72" (24 fps x 3 s), audio 141 packets; --accurate identical
+TESTED     - merge crossfade : kino --format json merge s1 s2 -t fade -td 1 -> exit 0, 3.5 s;
+             ffprobe -> duration 3.000000, 72 frames, audio 3.01 s; frames at 0.5/1.5/2.5 s show one
+             bar -> grey 50%-blended bar -> two bars (real blend)
+TESTED     - composite-layers : --dry-run then real render of video + 35% magenta solid -> exit 0,
+             2.0 s / 48 frames, output has NO audio stream (video-only confirmed); frame at 1.0 s
+             shows the magenta band
+TESTED     - release-checkpoint : --min-score 80 -> exit 1 "quality_gate_failed: score 59.0 < 80.0";
+             --min-score 50 -> exit 0 in 7.0 s, wrote rc50\thumbnail.jpg + rc50\storyboard\frame_0*.jpg
+TESTED     - guardrails : second trim to the same -o -> exit 1 {"code": "output_exists"}; with
+             --overwrite -> exit 0; kino info missing file -> exit 1 "invalid_input"; layer src
+             "../fx/a.mp4" -> exit 1 {"code": "unsafe_layer_source"}
+TESTED     - Windows paths : "out\fx dir\café.mp4" info + trim -> both exit 0, output 9648 B on disk;
+             253-character nested path -> trim exit 0
+TESTED     - no TTY : every probe ran with piped stdout/stderr (no console), exit codes + JSON correct
+TESTED     - licences : Kinocut LICENSE (raw.githubusercontent, master) = Apache 2.0, 159 lines,
+             sha256 733474B93E5DF2016FAC0B6DDAF0471850DA64F2ABDB5B45C410C96EC170D837; pip metadata
+             "License-Expression: Apache-2.0". OpenMontage LICENSE = GNU AGPL v3, 544 lines,
+             sha256 0D96A4FF68AD6D4B6F1F30F713B18D5184912BA8DD389F86AA7710DB079ABCB0.
+             ffmpeg -version -> "7.1-full_build-www.gyan.dev", "--enable-gpl --enable-version3"
+FAILED     - first venv attempt : py -3.11 -m venv .venvs\kinocut was killed by the 30 s tool timeout
+             after ensurepip had started; the venv looked complete but "python -m pip" ->
+             "No module named pip" (exit 1) for both the upgrade and the install. Recreated the venv in
+             a background process (75.4 s) -> pip 24.0 present, install succeeded. Recorded as a rule in
+             docs/KINOCUT_FINDINGS.md 7.1.
+FAILED     - first Unicode path probe : my probe script passed the literal text "caf\u00e9.mp4" (raw
+             string), so Kinocut correctly reported "File not found (archivo no encontrado)". Not a
+             Kinocut defect; re-ran with a real "café" name -> exit 0. Also learned that printing
+             Kinocut's stderr panel to a cp1252 console raises UnicodeEncodeError (finding 7.4).
+NOT TESTED - mix-audio / duck-audio / normalize-audio / subtitles / add-text / fade / resize / crop /
+             speed / convert / export / batch / detect-scenes / workflow-validate|plan|render|inspect /
+             overlay-video / split-screen / otio-export|import: only --help was checked. Equivalence
+             tests are M2.
+NOT TESTED - the MCP tool count behind --mcp, and receipts/--resume behaviour of the workflow engine.
+NOT TESTED - HDR / 10-bit / non-24-fps sources, and audio behaviour when a composite plan has an audio
+             layer.
+DECISIONS  - A1 taken with 3.11.9 (owner approved; no 3.12 on this PC). Venv creation and pip install
+             must run in a detached/background process: both exceed the 30 s command limit here. A2
+             unchanged: subprocess CLI only, no "import kinocut" in cutwright/ (Client() used solely for
+             discovery). Global flags go BEFORE the subcommand (measured: exit 2 otherwise), so the
+             adapter must emit argv in that order. Prefer --format json (text mode garbles under
+             cp1252). Never invoke bare kino (it starts an MCP server and exits 0 on stdin EOF).
+             composite-layers needs absolute -o / --save-layer-plan paths and inputs inside the spec
+             directory. Per-call start-up is ~1.3-1.8 s, which M3 must design around.
+```
+
+Docs written: `docs/KINOCUT_FINDINGS.md` (new), `PROVENANCE.md` (M1 section with licence sha256s),
+`docs/REFERENCES.md` (licence table filled). `HANDOFF.md` status block deliberately NOT ticked yet -
+the owner has not approved committing M1, and M2 has not started.
 

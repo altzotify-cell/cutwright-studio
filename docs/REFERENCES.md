@@ -72,11 +72,11 @@ Old plan G1-G3 (crossfade, recon, adopt `cli-anything-shotcut`) is cancelled. No
 
 | Component | Licence (claimed) | LICENSE text read by DeepSeek? | Used as |
 |---|---|---|---|
-| Kinocut | Apache-2.0 | todo | pip dependency in isolated venv |
-| FFmpeg (Gyan build) | LGPL/GPL depending on build (`ffmpeg -version` shows `--enable-gpl`) | todo | external binary, called as a process |
+| Kinocut | Apache-2.0 | **yes, 2026-10-29** - Apache License 2.0 text, sha256 `733474B9...D837` (`PROVENANCE.md`) | pip dependency in isolated venv |
+| FFmpeg (Gyan build) | LGPL/GPL depending on build (`ffmpeg -version` shows `--enable-gpl`) | **yes, 2026-10-29** - 7.1-full_build-www.gyan.dev, `--enable-gpl --enable-version3` = GPL build | external binary, called as a process |
 | Remotion 4.0.539 | Remotion licence (free for individuals / <=3-person teams) | checked 2026-10, re-read once | npm dependency |
 | HyperFrames | Apache-2.0 | todo (M9 only) | benchmark only |
-| OpenMontage | AGPL-3.0 | todo | ideas only, no code |
+| OpenMontage | AGPL-3.0 | **yes, 2026-10-29** - GNU AGPL v3 text (544 lines), sha256 `0D96A4FF...BCB0` (`PROVENANCE.md`) | ideas only, no code |
 | Whisper.cpp / faster-whisper | MIT (claimed) | existing PROVENANCE | existing |
 | Edge-TTS | n/a (uses a Microsoft online service; existing) | existing | existing |
 

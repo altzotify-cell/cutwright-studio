@@ -197,4 +197,27 @@ cd C:\Users\user\Desktop\Cutwright
 * **FFmpeg**: installed by `winget Gyan.FFmpeg` (SETUP.bat). M1 must record the `ffmpeg -version` build line (GPL/LGPL flags).
 * **OpenMontage** (AGPL-3.0 per repo page): ARCHITECTURAL REFERENCE ONLY. No file, schema, prompt or skill text copied. Any reuse requires the owner's written approval recorded here.
 * **FireRed-OpenStoryline**: excluded; nothing used.
-* **HyperFrames**: not installed (benchmark M9 only; Apache-2.0 per its page).
+  * **HyperFrames**: not installed (benchmark M9 only; Apache-2.0 per its page).
+
+## M1 2026-10-29: Kinocut installed and verified (agent, on the owner's PC)
+
+* **Kinocut `1.16.4`** (pip, exact pin) installed into `.venvs\kinocut` (Python 3.11.9, venv,
+  `include-system-site-packages = false`). Not vendored; `.venvs/` is gitignored. Install took
+  199.4 s; the venv is 95.7 MB. Full `pip list` (38 packages) is recorded in
+  `docs/KINOCUT_FINDINGS.md` section 1.
+* **Kinocut LICENSE**: read from
+  `https://raw.githubusercontent.com/KyaniteLabs/kinocut/master/LICENSE` on 2026-10-29. Text is the
+  Apache License 2.0 (159 lines, "Apache License / Version 2.0, January 2004").
+  sha256 = `733474B93E5DF2016FAC0B6DDAF0471850DA64F2ABDB5B45C410C96EC170D837`.
+  Wheel metadata agrees: `License-Expression: Apache-2.0`. Home-page `https://kinocut.dev/`.
+* **FFmpeg** used by Kinocut and by us: `ffmpeg version 7.1-full_build-www.gyan.dev`,
+  configuration contains `--enable-gpl --enable-version3` -> **GPL-licensed build**, called only as
+  an external process, never linked or redistributed.
+* **OpenMontage LICENSE**: read from
+  `https://raw.githubusercontent.com/calesthio/OpenMontage/main/LICENSE` on 2026-10-29. Text is
+  "GNU AFFERO GENERAL PUBLIC LICENSE Version 3, 19 November 2007" (544 lines).
+  sha256 = `0D96A4FF68AD6D4B6F1F30F713B18D5184912BA8DD389F86AA7710DB079ABCB0`.
+  Clean-room policy unchanged: ideas only, no file copied, no source read beyond the LICENSE.
+* Nothing from Kinocut or OpenMontage was copied into this repository. No `keys.env`, `voices\`,
+  `models\` or `.venvs\` content is committed.
+
