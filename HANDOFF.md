@@ -9,10 +9,15 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 
 ```
 Current milestone : M0  (environment audit and baseline)        status: NOT STARTED
-Last green commit : none (this ZIP has no .git history; M0 step 1 creates the first commit)
-Next step         : M0 step 1 - check git state, then record versions, then run the baseline
-Open COMMS        : none required; C-003 (handoff note) is INFO
-Verified on this PC so far : NOTHING. The consultant that prepared this ZIP had no network and ran only a Linux sandbox:
+Last green commit : none yet. Last commit f621e5f on main (initial import, pushed 2026-10-29 to
+                    github.com/altzotify-cell/cutwright-studio)
+Next step         : M0 step 1 - record versions (py -0p, python, node, ffmpeg, doctor), then run the baseline
+Open COMMS        : none required; C-003 (handoff note) and C-004 (new repo + rules split) are INFO
+Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints, 02-testing-and-evidence,
+                    03-session-boundaries). The old single `.clinerules` file no longer exists.
+Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python 3.11.9 default (3.11/3.13/3.14 installed),
+                    Node v24.18.0. ffmpeg, Kinocut, Remotion: NOT checked yet.
+Verified on this PC so far : git/GitHub only. The consultant that prepared this ZIP had no network and ran only a Linux sandbox:
   - Python half of Recap Studio (demo -> video -> timeline) ran there: 514 frames / 21.4 s. Remotion, Kinocut, Windows: NOT run.
   - tests/media_fixtures.py round-trip passed on Linux (ffmpeg 6.1). Not run on Windows.
 Latest recorded cost: $6.00 DeepSeek to 25 Oct (before the merge). Log each milestone's cost.
@@ -141,7 +146,7 @@ DECISIONS  - <what you chose, which assumption it relied on, how it was verified
 ## Kickoff message (print when asking for a new session)
 
 ```
-New session. Read .clinerules, then HANDOFF.md, then the last 3 entries of COMMS.md and the last 40 lines of LOG.md.
+New session. Read `.clinerules/` (4 files: 00-03), then HANDOFF.md, then the last 3 entries of COMMS.md and the last 40 lines of LOG.md.
 Tell me in 3 lines: current milestone, next step, anything blocked. Wait for my go.
 Then read only the current milestone's section of docs/ROADMAP.md.
 ```

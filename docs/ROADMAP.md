@@ -63,6 +63,10 @@ Steps
    (HANDOFF names `altzotify-cell/cutwright`; confirm with the owner only if `git remote -v` disagrees or is empty). Commit the tree
    as one commit "arch: Kinocut-first handoff (docs + tests fixtures)" BEFORE other edits. Check `git status` shows no
    `keys.env`, `Projects/*`, `node_modules`, `models/`, `bin/`, `shotcut/`, `.venvs/`.
+   Status 2026-10-29: DONE (objective 1) - no repo existed, so `git init -b main` + first commit `f621e5f` were made and pushed
+   to the NEW remote `altzotify-cell/cutwright-studio` (the old `altzotify-cell/cutwright` repo is untouched). `git status` clean,
+   no `keys.env`/`Projects/*`/`node_modules`/`models/`/`bin/`/`shotcut/`/`.venvs/` staged. Do not repeat this step; M0 resumes at step 2.
+
 2. Record versions into `LOG.md`: `py -0p`, `python --version`, `node --version`, `npm --version`, `ffmpeg -version` (first 3 lines),
    `where.exe ffmpeg`, `ffprobe -version`, `git --version`, Windows version (`[System.Environment]::OSVersion.VersionString`), free disk, RAM.
 3. FFmpeg feature check (needed later): `ffmpeg -hide_banner -encoders | findstr /i "libx264 aac"`,

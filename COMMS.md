@@ -55,3 +55,17 @@ Observed: the consultant had NO network and no Windows. It ran only the Python h
 Known: Kinocut facts come from its README (claims) - see docs/REFERENCES.md. OpenMontage is AGPL-3.0 per its repo page (LICENSE text not read).
 Assumed: Python 3.11+ may be missing on the PC; Kinocut's CLI may or may not offer machine-readable output; repo state/remote unknown.
 Ask: supersedes C-001 (Shotcut crossfade now CANCELLED) and C-002. Start with M0. Report with TESTED / FAILED / NOT TESTED.
+
+## C-004 | 2026-10-29 | agent -> owner | INFO | OPEN
+Commit: f621e5f (pushed, main)
+Goal: put the merged project under version control in a NEW repo and migrate the rules file, nothing else.
+Tried: 1) split the old root `.clinerules` file into `.clinerules/{00-core-workflow,01-architecture-and-constraints,
+02-testing-and-evidence,03-session-boundaries}.md`, then deleted the old file; 2) audited the tree for secrets/caches/large
+assets; 3) `git init -b main`, first commit; 4) `gh repo create altzotify-cell/cutwright-studio --public --source .
+--remote origin --push`.
+Observed: "210 files changed, 38069 insertions(+)"; "branch 'main' set up to track 'origin/main'"; git ls-remote main
+= f621e5f (== local HEAD); remote `.clinerules/` holds the four files; old `cutwright` and `RecapStudio` repos unchanged.
+Known: Cline docs list `.clinerules/` and `.cline/rules/` as supported workspace rule directories and combine all files in them.
+Assumed: the owner wants this repo public (same as the other project repos) - switchable with `gh repo edit --visibility private`.
+Ask: nothing. Next objective is M0 (environment audit and baseline) and it waits for the owner's go.
+

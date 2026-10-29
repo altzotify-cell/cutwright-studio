@@ -213,3 +213,41 @@ proof   python3 -m unittest discover -s tests -t . -v -> "Ran 1 test ... OK" (fr
 not run Windows anything; Remotion; Kinocut install/CLI/Windows; HyperFrames; any Shotcut check; git (ZIP has no .git); whisper.
 note    Kinocut could not be installed in the sandbox (no network). Every Kinocut statement is a README claim until M1/M2 verify it.
 ```
+
+## 2026-10-29 (objective 1: rules migration + new GitHub repo; agent)
+
+Scope: project housekeeping only. No dependencies installed, no implementation started.
+```
+TESTED      - rules split : Get-ChildItem .clinerules -> "d----- .clinerules" with 00-core-workflow.md (1805 B),
+              01-architecture-and-constraints.md (1630 B), 02-testing-and-evidence.md (792 B), 03-session-boundaries.md (1594 B);
+              old root file gone (Remove-Item, then Rename-Item .clinerules.new -> .clinerules).
+TESTED      - every old rule kept : Select-String over .clinerules\*.md for 60 keywords from the old file
+              (session start, pre-flight, editing, executor rule, exclusions, done steps, stuck, cost) -> no "MISSING:" lines,
+              "coverage check done".
+TESTED      - Cline support : docs.cline.bot Rules -> ".clinerules/ , .cline/rules/ Supported workspace rule directories";
+              "Cline processes rule files inside either directory, combining them into a unified set of rules";
+              "Numeric prefixes (like 01-coding.md) help organize files but are optional."
+TESTED      - secret/asset audit before commit : 208 files / 1.83 MB, 0 files > 200 KB, 0 __pycache__, no venv/node_modules,
+              no keys.env/.env/*.key/*.pem; `git grep --cached` for sk-/ghp_/github_pat_/AKIA/AIza/xox/PRIVATE KEY/password=
+              -> no matches (exit 1).
+TESTED      - first commit : git init -b main; git add -A; "210 files changed, 38069 insertions(+)",
+              f621e5fde82d2fe89e4a04570fa6a447534475cd "Initial import: merged Cutwright + Recap Studio (Kinocut-first handoff)".
+TESTED      - new repo + push : gh repo create altzotify-cell/cutwright-studio --public --source . --remote origin --push ->
+              "https://github.com/altzotify-cell/cutwright-studio", "branch 'main' set up to track 'origin/main'",
+              "* [new branch]      HEAD -> main".
+TESTED      - remote URL + push verified : git remote -v -> "origin https://github.com/altzotify-cell/cutwright-studio.git
+              (fetch|push)"; git ls-remote origin refs/heads/main -> f621e5f... (== local HEAD); git status -sb ->
+              "## main...origin/main"; gh api .../contents/.clinerules -> the four .md files.
+TESTED      - old repos untouched : gh repo list altzotify-cell -> cutwright pushedAt 2026-10-26T21:59:31Z,
+              RecapStudio 2026-10-28T12:13:47Z (both unchanged).
+FAILED      - none.
+NOT TESTED  - Cline Rules panel listing the four files : no claude-dev extension in %USERPROFILE%\.vscode\extensions,
+              so it cannot be inspected from this session. Path is the documented one; owner can confirm in the panel.
+NOT TESTED  - everything else (M0 baseline, Kinocut, FFmpeg, Remotion, ffmpeg -version, python -m cutwright doctor).
+DECISIONS   - repo name cutwright-studio, public (matches the owner's other project repos; flip with
+              `gh repo edit --visibility private` if wanted).
+DECISIONS   - one file stays untracked by design: recapstudio/Projects/_projects_go_here.txt, because recapstudio/.gitignore
+              "Projects/*" overrides the root negation (`git check-ignore -v` quote). Not fixed; not needed.
+DECISIONS   - commit message file kept outside the repo (..\commitmsg-initial.txt) so it is not part of the tree.
+```
+
