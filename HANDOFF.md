@@ -11,7 +11,7 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 Current milestone : M0  (environment audit and baseline)        status: NOT STARTED
 Last green commit : none yet. Last commit f621e5f on main (initial import, pushed 2026-10-29 to
                     github.com/altzotify-cell/cutwright-studio)
-Next step         : M0 step 1 - record versions (py -0p, python, node, ffmpeg, doctor), then run the baseline
+Next step         : M0 step 2 - record versions (py -0p, python, node, npm, ffmpeg, ffprobe, doctor), then the baseline (step 1 git is done)
 Open COMMS        : none required; C-003 (handoff note) and C-004 (new repo + rules split) are INFO
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints, 02-testing-and-evidence,
                     03-session-boundaries). The old single `.clinerules` file no longer exists.
