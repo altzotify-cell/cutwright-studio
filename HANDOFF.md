@@ -9,7 +9,7 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 
 ```
 Current milestone : M0  (environment audit and baseline)        status: DONE 2026-10-29 (evidence: LOG.md)
-Last green commit : the M0 close-out commit - exact SHA in the M0 close-out entry of LOG.md (main,
+Last green commit : e9fb668 "M0 close-out: environment facts, baseline numbers, checklist" (main,
                     pushed to origin = altzotify-cell/cutwright-studio). Before it: c1ba7df, b9bf336, f621e5f.
 Next step         : M1 - Kinocut isolated install (.venvs\kinocut) + interface discovery; owner starts a new session
 Open COMMS        : none required; C-003 (handoff note) and C-004 (new repo + rules split) are INFO

@@ -443,3 +443,28 @@ Commit: the close-out commit's hash, the push result and the final `git status` 
 short entry appended below, because a commit cannot contain its own hash.
 
 
+## 2026-10-29 (M0 close-out commit recorded)
+
+```
+TESTED     - commit : git commit -F msg.txt (msg.txt written with the editor, deleted after use, never
+             committed) -> "[main e9fb668] M0 close-out: environment facts, baseline numbers, checklist",
+             "4 files changed, 427 insertions(+), 20 deletions(-)",
+             "create mode 100644 docs/ENVIRONMENT.md"; git rev-parse HEAD ->
+             e9fb66808de8fe3870fc94cda5296a9fb19e2199
+TESTED     - push : git push origin main -> "To https://github.com/altzotify-cell/cutwright-studio.git"
+             (PowerShell rendered git's progress lines as error text and returned exit 1, so the exit
+             code alone was NOT trusted). Confirmed on the server instead:
+             git ls-remote origin refs/heads/main -> "e9fb66808de8fe3870fc94cda5296a9fb19e2199
+             refs/heads/main" (exit 0); git status -sb -> "## main...origin/main" (no ahead/behind);
+             origin/main = e9fb668.
+NOT TESTED - nothing beyond the commit/push above: no code changed, no test re-run.
+DECISIONS  - staged only the four M0 documents (HANDOFF.md, LOG.md, docs/ENVIRONMENT.md,
+             docs/MIGRATION_CHECKLIST.md). recapstudio/remotion/package-lock.json stays UNTRACKED: no
+             project rule requires it for M0 and the lockfile policy is the owner's decision.
+             recapstudio/remotion/src/generated/registry.ts is unmodified (not in the commit).
+```
+
+Final `git status` after the close-out: only `?? recapstudio/remotion/package-lock.json` (expected,
+untracked by decision) plus this follow-up commit.
+
+
