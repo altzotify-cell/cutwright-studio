@@ -1,0 +1,32 @@
+RECAP STUDIO v2
+===============
+First time only:   double-click SETUP.bat   (Python packages incl. yt-dlp + FFmpeg)
+
+THE UI (recommended):   double-click START_UI.bat
+                   -> opens a browser tab that drives the whole workflow:
+                      projects, run steps (live logs), edit the script,
+                      collect footage (drag & drop), voice settings, preview outputs.
+                   Everything below still works if you prefer the old terminal flow.
+
+Terminal flow (legacy):
+   New video:      double-click NEW_PROJECT.bat (or drag a film onto it)
+                   -> a project folder opens. Run MENU.bat there.
+Voices: SETUP.bat is the ONLY installer. It asks which engines you want (Edge, Kokoro, Pocket TTS,
+                   Chatterbox) and, for Chatterbox, which model (Nano 110M light / Turbo 350M / Original / Multilingual).
+                   Run it again any time to add more. Clone a voice: put a clip in the voices folder.
+                   Use a 16-bit WAV (.wav). The app's Upload button converts mp3/m4a/flac/ogg to WAV for you.
+                   If you see "soundfile is required to read non-WAV ... audio files" (Pocket TTS), either
+                   1) install it:  venvs\pocket\Scripts\python -m pip install soundfile   (then restart START_UI.bat), or
+                   2) convert the clip:  ffmpeg -i myclip.mp3 -ac 1 -ar 24000 -c:a pcm_s16le myclip.wav
+API keys:          in the UI click "API keys" (or edit keys.env). Edge-TTS needs no key.
+Pocket TTS CLONING: needs a free Hugging Face token (built-in Pocket voices do not).
+                   1) Accept the terms at https://huggingface.co/kyutai/pocket-tts ("Agree and access repository")
+                   2) Make a Read token at https://huggingface.co/settings/tokens
+                   3) In the UI: API keys -> Hugging Face token -> paste -> Save (or put HF_TOKEN=hf_... in keys.env)
+                   4) Restart START_UI.bat. The first clone downloads the weights (internet once), then it works offline.
+GUIDE:             in the UI click "Step-by-step guide" - how to make every video type.
+
+Video types: movie recap, show recap, NBA mini-doc, NBA story, real story, ranking.
+Each project is self-contained (own scripts, config.json, project.json, segments.json).
+Existing projects keep working - nothing is required to change.
+

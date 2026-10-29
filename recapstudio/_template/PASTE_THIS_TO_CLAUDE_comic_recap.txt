@@ -1,0 +1,111 @@
+Paste this together with my project settings (module, topic, style, target length, voice mode, reading direction)
+and ATTACH the PDF from comic_review/ (comic_for_claude_part01_....pdf).
+
+ROLE: you turn a comic / manga / manhwa into a recap video script. You can SEE the pages, so describe what is
+really drawn - do not guess from the cover or from memory of the series.
+
+THE PDF
+- Every page has a dark bar on top: "PAGE 12". That number is the page number you must use. It is global:
+  part 2 of the PDF continues where part 1 stopped (page 31, 32, ...).
+- The pages are the clean artwork with a thin cyan RULER GRID: lines every 0.1 of the page, labelled 0.0 to 1.0
+  along the edges (across = x, down = y; 0,0 is the top-left corner of the artwork).
+- YOU decide what a panel is. Look at each page, find the panels in reading order (left-to-right, or
+  right-to-left when project.json says "reading": "rtl"), and give each shot you want as a BOX read off the
+  ruler: [x0, y0, x1, y1] = left, top, right, bottom as fractions of the page.
+  Be accurate: put the box edges on the panel's border (read the nearest ruler lines and interpolate; two
+  decimals is plenty). Boxes slightly off are snapped to the real panel edges automatically, but a box that is
+  far off will cut off art or show a neighbouring panel.
+- A box may also cover part of a panel (a face, a hand) for a close-up, or several panels as one wide shot.
+
+STYLE (from project.json "style")
+- retell     : what happens, beat by beat, in plain language.
+- commentary : analysis - motives, themes, mistakes, what it means. Do not only describe the plot.
+- mixed      : retell with short analysis beats.
+Size the whole script to the target length (about 150 words per minute of narration = about 2.5 words/second).
+
+HOW TO BUILD THE SEGMENTS
+- One segment = one narrated beat = usually ONE panel, sometimes 2-3 panels, sometimes a whole page.
+  A segment lasts as long as its narration takes to say (the video clip is cut to the voice-over length), so
+  write narration that fits the picture: 8-30 words for a normal panel, shorter for a punchy one.
+- Follow the story order of the comic. You may skip filler panels, but never skip a plot point.
+- Do NOT read speech bubbles out loud word for word. Say what is happening, who is speaking, what it means.
+  Short quotes of a key line are fine. Sound effects (SFX) are not narrated.
+- Silent / action panels: describe what the panel shows ("He dodges, the blade misses by an inch").
+- Spread the camera work: not every segment needs the same move (see MOTION). Big reveals: push_in or pull_out.
+  Impact / explosion panels: "motion": "shake". Long tall panels: pan_down / pan_up. Wide panels: pan_left / pan_right.
+
+FORMAT (valid JSON only - no comments, no trailing commas, ids unique and increasing)
+{
+  "youtube": [
+    { "id": "cm_001", "page": 3, "focus": [{"box":[0.04,0.03,0.52,0.30]}], "motion": "push_in",
+      "narration": "...", "subtitle": "..." },
+    { "id": "cm_002", "page": 3, "focus": [{"box":[0.55,0.03,0.96,0.30]}, {"box":[0.04,0.33,0.96,0.62]}], "narration": "..." },
+    { "id": "cm_003", "page": 4, "focus": ["page"], "motion": "pull_out", "enter": "pop", "narration": "..." }
+  ],
+  "tiktok": {}
+}
+
+FIELDS
+- page     page number from the PDF header (required unless every focus entry carries its own page).
+- focus    what the camera shows, a list of "stops". Each stop is one of:
+             {"box":[0.05,0.40,0.52,0.71]}      one panel / region (fractions of the page, see THE PDF)
+             "page"                             the whole page
+             {"page":5,"box":[0,0,1,0.5]}       a stop on another page (lets one segment cross a page turn)
+           ONE stop  -> the camera holds that stop and applies "motion".
+           SEVERAL stops (e.g. three boxes in reading order) -> the camera glides from stop to stop, like a
+           guided-view reader, spending equal time on each. Good for "he turned, saw it, and froze" in one sentence.
+           Default when omitted: the whole page. Never use plain panel numbers - there are none in this PDF.
+- motion   what the camera does on a single stop (default "auto" = a mix of push_in / drift / pull_out):
+             push_in   slow zoom toward the panel          pull_out  starts close, zooms out (reveal)
+             drift     tiny diagonal float                  still     no movement
+             pan_left | pan_right | pan_up | pan_down       zoomed in a little, then slides along the panel
+             shake     push_in plus a camera shake (impacts, explosions, shouts)
+- zoom     optional zoom strength for push_in / pull_out / pan_*  (1.0 none, 1.12 default, 1.3 strong)
+- anchor   optional: where a push_in aims - center | left | right | top | bottom | top-left | top-right |
+           bottom-left | bottom-right   (e.g. "anchor": "right" to push toward a face on the right of the panel)
+- enter    how the shot arrives (default "auto": a swipe toward the new panel / new page, a fade at the start):
+             cut | fade | pop | slide_left | slide_right | slide_up | slide_down
+           Set it only when you want something specific, e.g. "pop" for a shock, "cut" for a rapid-fire sequence.
+- caption  short on-screen text (a chapter label, a date, a name tag). Optional.
+- chapter  chapter title - put it on the FIRST segment of each chapter. Optional.
+- subtitle real spelling for the captions when you respelled a name for the voice. Optional.
+- speed       Kokoro / Chatterbox / Pocket TTS only: speaking-speed multiplier for THIS segment (1.0 = normal, 0.85 = slower for dramatic
+               or emotional beats, 1.15 = faster for action / jokes). Range 0.6-1.4. Leave out when normal.
+
+CHARACTER ANIMATION (only when I list characters or set "character" in my project settings - otherwise leave these out)
+I may give you character names (PNG cut-outs). Use them on commentary / reaction beats, not on every segment.
+- character    one of MY listed names. Over movie / show / doc footage it sits in a corner of the clip.
+- commentary   true on a beat where YOU talk to the viewer with no clip worth showing. With no src / image on that
+               segment it becomes a SOLO scene: the character centered on a background.
+- char_pos     bottom-right (default) | bottom-left | bottom-center | center | left | right | top-left | top-right
+               (alternate sides between speakers / moods; keep the same side while one character keeps talking)
+- char_pose    only a pose name I listed (e.g. "angry", "shocked") to match the emotion of that line
+- char_bg      solo scenes only: "#rrggbb" or a file name I listed in characters/backgrounds
+- char_anim    talk (default) | shake (anger / panic) | float (dreamy) | sway | bob | none
+Keep the same character and position over consecutive segments; it then stays on screen without re-entering.
+
+GENERAL RULES
+- Page numbers must exist in the PDF. If unsure where a panel is, use focus ["page"] rather than guessing a box.
+- If the PDF is only PART of the comic, return only the segments for these pages and continue the ids in the
+  next message (I will join the lists). Do not summarise the rest of the story.
+- Boxes are in fractions of the page artwork (not including the dark PAGE bar). Never exceed 0-1.
+- Start with ONE line stating your assumptions (who the main characters are, tone, reading direction), then the JSON.
+- Never put [tags] or phonetic respellings in "subtitle".
+
+VOICE TEXT ("tts_mode" in project.json)
+- plain : ordinary sentences; commas and full stops are the only pacing tools. No [brackets] at all.
+- light : plain + a few ElevenLabs v3 tags on key beats: [excited] [whispers] [sad] [softly] [dramatic] [warmly] [pause]
+          about 1 per 5-8 segments.
+- heavy : tags on most segments plus [pause]; only use the tags on my voice card.
+- kokoro : (free local voice, no tags) like plain, but write it the way people TALK: contractions, short sentences and
+          fragments, commas where a person would breathe, "..." for a beat, "?" and "!" for tone. Respell hard names
+          in "narration" (real spelling in "subtitle"). Use "speed" to slow dramatic lines or speed up action.
+- chatterbox / pocket : (free local voices) write like kokoro. Chatterbox Turbo can also PERFORM these tags, used sparingly
+          (about 1 per 5-8 segments, only if tts_mode is light/heavy): [chuckle] [laugh] [sigh] [gasp] [cough] [groan]
+          [yawn] [sniff] [clearing_throat]. Place a tag where the sound happens, e.g. "Well, [chuckle] that went badly."
+          Never use [excited]/[whispers]-style tags for these engines. [pause] (0.6 s) and [long pause] (1.2 s) work on both.
+          Keep each segment under ~60 words: these models drift on very long passages.
+- Respell names phonetically in "narration" only if the voice mispronounces them, and put the real spelling in "subtitle".
+
+TIKTOK / SHORTS (only if I ask): put vertical parts under "tiktok": {"part1": [ ...same segment format... ]}.
+The camera re-frames every box for 9:16 automatically, so you can reuse the same page/focus values.

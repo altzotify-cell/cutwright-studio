@@ -1,0 +1,16 @@
+Character animation: put TRANSPARENT PNG cut-outs of your characters here.
+
+  kratos.png                     one picture  -> character "kratos"
+  kratos/default.png             or a folder of poses named after the character:
+  kratos/talk.png                  "talk" = mouth open: it follows the voice-over automatically
+  kratos/angry.png                 any other pose: use it with "char_pose": "angry"
+  kratos__angry.png              same thing as a single file (name__pose.png)
+  kratos/character.json          optional: {"facing": "left"}  (which way the art looks; it is
+                                 flipped automatically so it faces the middle of the screen)
+  backgrounds/                   optional: images / videos for solo commentary scenes
+
+In segments.json:   "character": "kratos"                       corner over the clip (bottom-right)
+                    "character": "kratos", "char_pos": "bottom-left"
+                    "commentary": true, "character": "kratos"   no footage -> solo scene, centered, on a background
+                    "char_layout": "solo", "char_bg": "#222244"  or an image / video file name
+Run "Check characters" (2d_characters.bat) to see them in characters\_preview.png.

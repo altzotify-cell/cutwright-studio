@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "run_id": "demo-0001",
+  "pipeline": "recap",
+  "created": "2026-10-29T00:00:00Z",
+  "fps": 24,
+  "size": [1920, 1080],
+  "budget": {"mode": "cap", "cap_usd": 0.0},
+  "constraints": {"ai_generated_images": false, "allowed_asset_origins": ["footage", "user_image", "code_graphic", "stock_licensed"]},
+  "assets": [
+    {"id": "src_a", "path": "out/fx/a.mp4", "origin": "footage", "license": "owner-supplied", "probe": null},
+    {"id": "voice_1", "path": "out/fx/voice_1.wav", "origin": "user_audio", "license": "owner-supplied", "probe": null}
+  ],
+  "gates": [
+    {"id": "script_ok", "before_step": "cut_1", "approved": false},
+    {"id": "final_ok", "before_step": "export", "approved": false}
+  ],
+  "steps": [
+    {
+      "id": "cut_1",
+      "op": "trim_exact",
+      "inputs": {"src": "@asset.src_a"},
+      "params": {"start_frame": 37, "frames": 50},
+      "executor": "kinocut",
+      "executor_reason": "passed test_trim (docs/evidence/m2_trim.json)",
+      "outputs": {"video": "production/demo-0001/work/cut_1.mp4"},
+      "validation": [{"check": "frame_count", "expect": 50}, {"check": "frame_ids_contiguous"}],
+      "status": "pending",
+      "attempts": 0,
+      "cache_key": null,
+      "cost_usd": 0.0
+    },
+    {
+      "id": "fit_1",
+      "op": "fit_to_frames",
+      "inputs": {"src": "@cut_1.video"},
+      "params": {"frames": 53, "fill": "blur", "size": [1920, 1080]},
+      "executor": "ffmpeg",
+      "executor_reason": "kinocut cannot fit to an exact frame count (docs/evidence/m2_fit.json)",
+      "outputs": {"video": "production/demo-0001/work/fit_1.mp4"},
+      "validation": [{"check": "frame_count", "expect": 53}, {"check": "size", "expect": [1920, 1080]}],
+      "status": "pending",
+      "attempts": 0,
+      "cache_key": null,
+      "cost_usd": 0.0
+    },
+    {
+      "id": "export",
+      "op": "export_h264",
+      "inputs": {"video": "@fit_1.video"},
+      "params": {"crf": 20, "audio": "aac", "faststart": true},
+      "executor": "ffmpeg",
+      "executor_reason": "needs explicit faststart + cfr settings",
+      "outputs": {"video": "production/demo-0001/final.mp4"},
+      "validation": [{"check": "decodes_clean"}, {"check": "constant_fps", "expect": 24}],
+      "status": "pending",
+      "attempts": 0,
+      "cache_key": null,
+      "cost_usd": 0.0
+    }
+  ],
+  "note": "Illustrative only. Executors above are PLACEHOLDERS: the real values come from docs/CAPABILITY_MATRIX.md after M2. Refs: @asset.<id> = asset path, @<step>.<output> = another step's output."
+}

@@ -1,0 +1,26 @@
+COMIC / MANGA RECAP  (new module)
+=================================
+
+1. New project -> module "Comic / manga recap". Pick the reading direction (manga = right-to-left).
+2. Drop your .cbz / .cbr / .pdf (or a .zip of page images) into the project folder
+   (or Comic tab -> Upload).  Menu 21 / "Import comic / manga":
+     - unpacks every page to pages/p001.png ...
+     - saves pages + page sizes (pages/panels.json); Claude decides the panels (config comic.panel_mode: claude|auto)
+     - writes comic_review/comic_for_claude_partNN_pNNN-pNNN.pdf: clean pages with a 0.0-1.0 ruler grid
+       and a "PAGE N" header, 30 pages per PDF (config: comic.pdf_pages)
+3. In Claude: attach ONE PDF + paste PASTE_THIS_TO_CLAUDE.txt + your project settings.
+   Repeat for each PDF part, join the "youtube" lists, paste into segments.json.
+4. Voice-over, Premiere / VideoPad / full video / TikTok: same steps as every other module.
+   Each clip is cut to its voice-over length; the camera zooms / pans / swipes over the panels.
+
+Segment fields (all optional except page):
+  page, focus [{"box":[x0,y0,x1,y1]}] (fractions) | several boxes = glide | ["page"]  (panel numbers: auto mode only)
+  motion  auto push_in pull_out drift still pan_left pan_right pan_up pan_down shake
+  zoom, anchor, enter (auto cut fade pop slide_left/right/up/down), caption, chapter
+
+Limits you should know
+  - A speech balloon that crosses the gutter can merge two panels into one. The PDF shows it;
+    use "box" in that segment or fix pages/panels.json and run Import again WITHOUT force.
+  - .cbr = RAR. Opened with 7-Zip / Windows tar. If it fails: rename to .cbz, or install 7-Zip.
+  - Captions / rank graphics are not burned into the mp4 (same as other modules): use the Premiere XML.
+  - Rendering is about real time to 2x real time per minute of video on one CPU core.

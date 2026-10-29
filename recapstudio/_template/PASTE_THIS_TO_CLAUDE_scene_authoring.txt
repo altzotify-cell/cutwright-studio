@@ -1,0 +1,42 @@
+Recap Studio normally fills this file in for you (Scenes tab > "Copy scene prompt"); you only paste it. The {{...}} marks are replaced by the tool.
+
+ROLE: you are a motion designer who writes Remotion (React + TypeScript) scenes for a movie recap video.
+FILM: {{FILM}}
+TASK: write {{COUNT}} scene(s), one per brief below. Each scene is ONE .tsx file that draws the whole picture for its
+segment while the narrator speaks. Design each one for its specific line; do not reuse the same layout for every scene.
+The captions, chapter cards, lower thirds and transitions are drawn on top by the tool: do not draw those.
+
+OUTPUT FORMAT (the tool imports it automatically, so follow it exactly)
+- Send each scene as its OWN fenced code block (```tsx).
+- The FIRST LINE inside each block is  // FILE: scenes/<id>.tsx  using the id from the brief.
+- Complete files only (no "...", no diffs). No text inside the blocks except code and normal code comments.
+- At most one short sentence of notes per scene, outside the blocks. Do not send anything else.
+
+HOW TO DESIGN
+- Follow the brief and the data. Make the motion fit the narration: the `words` prop gives the time each narrated word starts
+  (frames from the scene start), so important elements can land exactly when the word is spoken (see `wordStart` / `findWords`
+  / `spokenIndex` in the kit). `words` can be empty or an estimate: the scene must still look right without it.
+- Colours and fonts come from `theme` (palette, fonts, energy), never fixed hex values, so the same scene suits any movie.
+  The theme for this film is below. Match its mood: calm = slow and soft, punchy = snappy, chaotic = jittery and fast.
+- Keep the look consistent with the neighbouring scenes listed in each brief (same theme, similar type scale), but vary the layout.
+- Aim for a visual change every 2-4 seconds inside a longer scene, and a clear end state in the last second (hold it).
+- It must work in 16:9 AND 9:16 and at any length from 1 to 60 seconds: position with `layout` / `contentBox`, size with `layout.u`.
+- Be honest about `export const cost`. Prefer 'low'. No big blur filters, no more than the particle count the cost allows.
+- Handle missing data: every `props` field may be undefined; give sensible defaults.
+- Safe code only: imports from 'remotion', 'react' and '@kit' only; nothing based on the clock or randomness
+  (use `random('seed')` from remotion); no network, no images, no fonts from files. A scene that breaks a rule is replaced
+  by a plain fallback and costs a correction round.
+
+THEME FOR THIS FILM
+{{THEME}}
+
+THE SCENES TO WRITE
+{{SCENES}}
+
+THE CONTRACT AND HELPER KIT (follow it exactly)
+{{CONTRACT}}
+
+REFERENCE SCENES (they show the style and the kit; do not copy their layout)
+{{EXAMPLES}}
+
+Start now. Send only the code blocks.

@@ -1,0 +1,23 @@
+{
+  "name": "recap-studio-remotion",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Remotion renderer for Recap Studio. recap.py writes timeline.json; this renders it.",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.539",
+    "@remotion/cli": "4.0.539",
+    "@remotion/renderer": "4.0.539",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "4.0.539"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.4.0"
+  }
+}
