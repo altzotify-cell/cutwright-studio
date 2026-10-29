@@ -8,18 +8,20 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M0  (environment audit and baseline)        status: NOT STARTED
-Last green commit : none yet. Last commit f621e5f on main (initial import, pushed 2026-10-29 to
-                    github.com/altzotify-cell/cutwright-studio)
-Next step         : M0 step 2 - record versions (py -0p, python, node, npm, ffmpeg, ffprobe, doctor), then the baseline (step 1 git is done)
+Current milestone : M0  (environment audit and baseline)        status: DONE 2026-10-29 (evidence: LOG.md)
+Last green commit : the M0 close-out commit - exact SHA in the M0 close-out entry of LOG.md (main,
+                    pushed to origin = altzotify-cell/cutwright-studio). Before it: c1ba7df, b9bf336, f621e5f.
+Next step         : M1 - Kinocut isolated install (.venvs\kinocut) + interface discovery; owner starts a new session
 Open COMMS        : none required; C-003 (handoff note) and C-004 (new repo + rules split) are INFO
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints, 02-testing-and-evidence,
                     03-session-boundaries). The old single `.clinerules` file no longer exists.
 Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python 3.11.9 default (3.11/3.13/3.14 installed),
-                    Node v24.18.0. ffmpeg, Kinocut, Remotion: NOT checked yet.
-Verified on this PC so far : git/GitHub only. The consultant that prepared this ZIP had no network and ran only a Linux sandbox:
-  - Python half of Recap Studio (demo -> video -> timeline) ran there: 514 frames / 21.4 s. Remotion, Kinocut, Windows: NOT run.
-  - tests/media_fixtures.py round-trip passed on Linux (ffmpeg 6.1). Not run on Windows.
+                    Node v24.18.0; ffmpeg 7.1 (scoop shim wins over 2 others). Kinocut: NOT installed (M1).
+                    All M0 numbers: docs/ENVIRONMENT.md.
+Verified on this PC so far : git/GitHub plus the whole M0 audit (facts in `docs/ENVIRONMENT.md`, quotes in `LOG.md`):
+  - Recap Studio on Windows: demo -> briefs -> video (514 frames / 21.4 s) -> timeline -> Remotion render (parity
+    within one frame) -> Premiere XML; all exit 0. Fixtures self-test passed here (0.907 s). Scene check: 3 of 6
+    scenes pass, 3 fall back to the keywords scene (expected baseline, not an M0 blocker).
 Latest recorded cost: $6.00 DeepSeek to 25 Oct (before the merge). Log each milestone's cost.
 ```
 
@@ -64,7 +66,8 @@ NOT static slides.
 
 ## Owner and machine
 
-HP EliteBook 840 G5, i5-8350U, 12 GB RAM, no GPU, Windows. Remotion renders ~5.7 frames/s (10 min of 24 fps video = ~45 min), so:
+HP EliteBook 840 G5, i5-8350U, 12 GB RAM, no GPU, Windows. Remotion was budgeted at ~5.7 frames/s; M0 measured 5.33 fps
+derived (514 frames / 96.4 s wall, whole command). Treat 10 min of 24 fps video as ~45 min, so:
 test with 5-20 second clips, preview at low resolution, cache every step, never re-render what did not change.
 The owner is not a programmer: short messages, exact steps. You run commands yourself (npm, node, ffmpeg, pip, git, Python);
 ask the owner only for: running `SETUP.bat`, installing Python 3.11+ if missing (tell first), keys, footage, and yes/no on how something looks or sounds.
@@ -99,7 +102,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 
 | | ID | Milestone | Done when (short form) |
 |---|---|---|---|
-| [ ] | M0 | Environment audit + baseline (git, versions, doctor, Recap regression with Remotion on Windows) | all baseline commands run and quoted; `docs/ENVIRONMENT.md`; first commit |
+| [x] | M0 | Environment audit + baseline (git, versions, doctor, Recap regression with Remotion on Windows) | all baseline commands run and quoted; `docs/ENVIRONMENT.md` + baseline numbers; commit hash recorded |
 | [ ] | M1 | Kinocut isolated install + interface discovery (Windows) | `kino doctor` OK in `.venvs\kinocut`; `docs/KINOCUT_FINDINGS.md` has no assumptions; licences recorded |
 | [ ] | M2 | Equivalence tests: Kinocut vs current code vs direct FFmpeg (frame accuracy, fitting, concat, transitions, audio mix, export, QC, workflow/resume) | `docs/CAPABILITY_MATRIX.md` + `docs/evidence/m2_*.json`; every row measured |
 | [ ] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | `tools/validate/run/resume/status` work on real media; resume skips done steps |
@@ -128,11 +131,11 @@ A6 do not touch system Node. A7 repo state unknown. A8 `cutwright/` stays stdlib
 - Everything about Kinocut on Windows (installation, CLI contracts, receipts, speed, output quality) - the README claims are in `docs/REFERENCES.md`.
 - Whether Kinocut CLI commands have machine-readable output (find out; do not assume a `--json` flag).
 - Whether Kinocut can fit a clip to an exact frame count, crossfade two clips, mix/duck audio, or keep audio in `composite-layers` ("video-only" per its docs).
-- Recap Studio Phase 3 (Scenes tab, `briefs`, import of agent replies) on Windows. Remotion was not run after the merge.
-- Whisper fallback fails on the owner's PC (`open() got an unexpected keyword argument 'metadata_errors'`; try `py -3 -m pip install --upgrade av faster-whisper`).
+- Recap Studio Phase 3 (Scenes tab, import of agent replies) on Windows. Remotion DOES run now (M0: parity within one frame) and `briefs --demo` ran; the Scenes tab and agent-reply import are still unverified.
+- Whisper word timings from REAL speech: still unverified. The old `metadata_errors` crash did NOT recur in M0 (faster-whisper 1.2.1 loads `base` in 6.50 s and runs inference), but it returns 0 words on the fixture's tone audio, so timings fall back to `even`. Needs real narration to test - not an M0 blocker.
 - Remotion `OffthreadVideo` once failed at frame 71 on a cold run ("No frame found"); a retry exists but never ran.
 - Whether DeepSeek V4 Flash through Cline can SEE images (test first in M7).
-- Tests under `tests/` (fixtures only) ran on Linux, not Windows.
+- Tests under `tests/` (fixtures only): now run on this PC (M0: "Ran 1 test in 0.907s", OK, exit 0).
 
 ## Reporting format (use in every LOG entry and in your messages to the owner)
 

@@ -5,13 +5,13 @@ Rule: INSPECT -> REPLACE -> TEST -> PRESERVE -> DELETE, in that order. Never del
 
 ## A. Inspect first (M0/M1; read-only)
 
-- [ ] Git: repo? remote? branch? clean? (`git status`, `git remote -v`, `git branch --show-current`). ZIP had NO `.git`.
-- [ ] Versions: Python (`py -0p`), Node, npm, FFmpeg/ffprobe (and `where.exe ffmpeg` is NOT inside `shotcut\`), Git, Windows, RAM, disk.
-- [ ] FFmpeg features: libx264, aac, xfade, acrossfade, sidechaincompress, loudnorm, subtitles/libass, ebur128.
-- [ ] `python -m cutwright doctor` output saved.
-- [ ] Remotion installed and 4.0.539 (`recapstudio\remotion\node_modules\remotion\package.json`); render speed recorded.
-- [ ] Existing projects in `recapstudio\Projects\` (do not touch their contents; list names).
-- [ ] Is `shotcut\` present locally? is `bin\`, `models\` present? (untracked, owner's machine)
+- [x] Git: repo? remote? branch? clean? (`git status`, `git remote -v`, `git branch --show-current`). ZIP had NO `.git`. -> M0: repo created, remote `altzotify-cell/cutwright-studio`, branch `main`, clean before the audit edits.
+- [x] Versions: Python (`py -0p`), Node, npm, FFmpeg/ffprobe (and `where.exe ffmpeg` is NOT inside `shotcut\`), Git, Windows, RAM, disk. -> M0: py -0p has 3.14/3.13/3.11, `python` = 3.11.9 but `py -3` = 3.14.7; Node v24.18.0; npm 11.16.0; ffmpeg/ffprobe 7.1 (scoop shim, not Shotcut's); git 2.47.1; Windows 10.0.26200.0; RAM 11.8 GB; 36.97 GB free (`docs/ENVIRONMENT.md`).
+- [x] FFmpeg features: libx264, aac, xfade, acrossfade, sidechaincompress, loudnorm, subtitles/libass, ebur128. -> M0: all present, none missing.
+- [x] `python -m cutwright doctor` output saved. -> M0: quoted verbatim in `docs/ENVIRONMENT.md` (captured pre-install; NOT re-run after the installs, so its `[ ]` lines are stale).
+- [x] Remotion installed and 4.0.539 (`recapstudio\remotion\node_modules\remotion\package.json`); render speed recorded. -> M0: "version": "4.0.539"; rate is DERIVED 5.33 fps (514 frames / 96.4 s wall), `LOG.md` + `docs/ENVIRONMENT.md`.
+- [x] Existing projects in `recapstudio\Projects\` (do not touch their contents; list names). -> M0: only `.gitkeep` + `_projects_go_here.txt` at audit time; `regress\` created from `_template` for the baseline (git-ignored).
+- [ ] Is `shotcut\` present locally? is `bin\`, `models\` present? (untracked, owner's machine) - M0: `shotcut\` -> False and `shotcut\Shotcut\melt.exe` -> False; `bin\` and `models\` were NOT probed, so this stays open.
 - [ ] Kinocut installed in `.venvs\kinocut`, `kino doctor` output saved, interface table written (M1).
 - [ ] Licence texts read and recorded in `PROVENANCE.md`: Kinocut, FFmpeg build, OpenMontage (ideas only), Remotion.
 

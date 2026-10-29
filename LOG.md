@@ -251,3 +251,195 @@ DECISIONS   - one file stays untracked by design: recapstudio/Projects/_projects
 DECISIONS   - commit message file kept outside the repo (..\commitmsg-initial.txt) so it is not part of the tree.
 ```
 
+## 2026-10-29 (M0: environment audit + baseline; agent)
+
+Scope: M0 steps 2-7 only. Installed local, free dependencies (Python 3.11 packages + Remotion packages);
+no application code edited. Facts table: `docs/ENVIRONMENT.md`. M0 is NOT complete (see NOT TESTED).
+```
+TESTED      - git : git status -sb -> "## main...origin/main"; git log --oneline -5 -> "c1ba7df", "b9bf336",
+              "f621e5f"; git rev-parse --show-toplevel -> the repo root; remote = altzotify-cell/cutwright-studio.
+TESTED      - versions : py -0p -> "-V:3.14 *", "-V:3.13", "-V:3.11"; python --version -> "Python 3.11.9";
+              py -3 -c -> "3.14.7" (so `py -3` != `python`); node -> "v24.18.0"; npm -> "11.16.0";
+              git -> "2.47.1.windows.2"; OSVersion.VersionString -> "Microsoft Windows NT 10.0.26200.0";
+              RAM 11.8 GB; C: Free 36,969,922,560 B.
+TESTED      - ffmpeg : where.exe ffmpeg -> "C:\Users\user\scoop\shims\ffmpeg.exe", "C:\ffmpeg\bin\ffmpeg.exe",
+              winget Links; (Get-Command ffmpeg).Source -> the scoop shim; ffmpeg -version ->
+              "7.1-full_build-www.gyan.dev"; ffprobe -> "7.1-full_build-www.gyan.dev". Not Shotcut's build
+              (Test-Path shotcut -> False; shotcut\Shotcut\melt.exe -> False).
+TESTED      - ffmpeg features : -encoders -> libx264, aac; -filters -> xfade, acrossfade, sidechaincompress,
+              loudnorm, ebur128, subtitles, ass -> nothing from the M0 list is missing.
+TESTED      - doctor : python -m cutwright doctor -> "[+] ffmpeg", "[+] ffprobe", "disk free 34.4 GB",
+              guard "[+] inside the fork / refuses RecapStudio_v2_ui_videopad / refuses videopad / refuses
+              outside the fork"; "[ ] whisper.cpp", "[ ] Shotcut" (expected). Full output in ENVIRONMENT.md.
+TESTED      - fixtures : python -m unittest discover -s tests -t . -v -> "Ran 1 test in 0.907s", "OK", exit 0.
+TESTED      - recap demo/briefs : python recap.py demo -> "Demo media + audio + segments.json created.";
+              python recap.py briefs --demo -> "Added 3 motion briefs (d_02, d_04, d_06) and a demo theme."
+TESTED      - recap video : "Done. recap_final.mp4  (21.4s, expected 21.4s)"; ffprobe -> nb_frames=514,
+              1920x1080, r_frame_rate=24/1, h264 + aac 48000/2, size=6834110, duration=21.416667. Equal to the
+              Linux baseline (21.4 s / 514 frames / 6.8 MB).
+TESTED      - recap timeline + scene test : "Test render (5 scene(s); the first run downloads a headless
+              browser)...", "tested d_01/d_02/d_03/d_04/d_06", "[ok] d_01", "[ok] d_02", "[ok] d_03",
+              "[FAILED] d_04 - x.toUpperCase is not a function", "[BLOCKED] d_05 - line 10: uses 'fetch'
+              (network access)", "[FAILED] d_06 - the scene draws nothing",
+              "3 scene(s) passed, 3 replaced by the keywords scene.", "timeline.json: 6 segments, 514 frames
+              (21.4s at 24fps, 1920x1080)", "Timeline check passed: every file exists and every clip matches
+              its frame count."
+              Completion evidence (exit code NOT captured - launched detached): stdout ends with "Next: run
+              'Render with Remotion'" (mtime 21:51:48), stderr 0 bytes, scenes\_work removed at the end,
+              22 check PNGs written 21:51:27-21:51:45, timeline.json + scenes\_cache.json at 21:51:47.
+TESTED      - dependencies : python -m pip install --upgrade requests pillow numpy edge-tts ->
+              "Successfully installed ... edge-tts-7.3.1 ... numpy-2.4.6 pillow-13.0.0 requests-2.34.2";
+              python -m pip install --upgrade av faster-whisper -> "... av-18.1.0 ... ctranslate2-4.8.4
+              faster-whisper-1.2.1 ... onnxruntime-1.31.1"; import check on 3.11 -> "faster_whisper 1.2.1",
+              "av 18.1.0".
+TESTED      - remotion packages : cd recapstudio\remotion; npm install --no-audit --no-fund -> "added 259
+              packages in 3m"; node_modules\remotion\package.json -> "version": "4.0.539" (pin unchanged).
+TESTED      - headless browser : first render downloaded Chrome Headless Shell (47.0 -> 52.3 MB in 20 s,
+              >=97 MB sampled); after unpacking the zip is gone and
+              ...\.remotion\chrome-headless-shell\win64\chrome-headless-shell-win64\chrome-headless-shell.exe
+              exists. So "zip absent" means installed, not failed.
+FAILED      - nothing failed outright. Two tool-level interruptions occurred, neither produced an error from
+              recap.py: (a) the first `video` run was killed by a 30 s tool timeout at segment 4/6 and was
+              re-run to completion; (b) a polling loop was stopped as repetitive after the scene run had
+              already finished.
+NOT TESTED  - WHISPER (M0 step 7) : faster-whisper is installed but was NEVER EXECUTED. The scene run printed
+              "[+] word timings: 6 cached" - those are the 'even' timings cached from the pre-install run, so
+              cached output is NOT proof of Whisper. The line "word timings ...: whisper" was never seen.
+NOT TESTED  - PREMIERE EXPORT : `python recap.py premiere` was not run.
+NOT TESTED  - REMOTION PARITY : `python recap.py remotion` ("PARITY CHECK PASSED") was not run.
+NOT TESTED  - M0 step 8 : shotcut\Shotcut\melt.exe is absent, so the Shotcut check table is skipped by design.
+NOT TESTED  - exit codes of recap.py steps; edge_tts synthesis (installed, imports, never used); Kinocut (M1);
+              yt-dlp + pymupdf (deliberately not installed).
+DECISIONS   - installed Recap's Python packages with `python -m pip` (3.11), not ROADMAP's `py -3`, because
+              `py -3` is 3.14 on this PC while recap.py runs on 3.11. Verified by importing every package on 3.11.
+DECISIONS   - ran the installs myself instead of asking the owner to run SETUP.bat (rule: never ask the owner to
+              run what the agent can run). SETUP.bat's yt-dlp + pymupdf were skipped as unused by the pack.
+DECISIONS   - created recapstudio\Projects\regress by copying _template (git-ignored via recapstudio/.gitignore
+              "Projects/*"), as the regression pack's "create once" step asks.
+DECISIONS   - reverted recapstudio/remotion/src/generated/registry.ts to HEAD. scenes.py had regenerated it with
+              regress-project data ("demo noir" theme, d_01-d_03 metas) importing the git-ignored s_d_*.tsx files,
+              so committing it would break typecheck and leak scratch state. Verified: `git diff` empty, file
+              size 287 B == HEAD.
+DECISIONS   - package-lock.json (146,002 B, lockfileVersion 3, remotion pins 4.0.539 == package.json) is left
+              UNTRACKED and unmodified: lockfile policy is the owner's decision (DEFERRED, not decided here).
+```
+
+## 2026-10-29 (M0 follow-up: Premiere / Remotion / Whisper; agent; accepted by the owner)
+
+Runs on the regress project (`recapstudio\Projects\regress`, `python` 3.11.9), one check at a time, each
+launched so its real exit code landed in a file (this shell kills its process tree at ~30 s).
+Logs: `%TEMP%\m0\*.out.txt|.err.txt|.code.txt`. This entry SUPERSEDES the "NOT TESTED - PREMIERE
+EXPORT" and "NOT TESTED - REMOTION PARITY" lines of the entry above, and PARTLY SUPERSEDES its "NOT
+TESTED - WHISPER (M0 step 7)" line: Whisper now runs, but the `word timings ...: whisper` mode still never
+appeared (see below). It also narrows that entry's "exit codes of recap.py steps" note: premiere, remotion
+and timeline exit codes are now captured (0), while demo, briefs, video and the standalone `scenes` run
+still are not. M0 is still NOT complete.
+
+```
+TESTED     - Premiere XML export : python recap.py premiere -> exit 0 (3.6 s), stderr 0 bytes,
+             "Done. 'premiere_sequence.xml' written: 6 segments, 0:21."; file 54,023 B, 22:03:36. PASS
+TESTED     - Remotion parity : python recap.py remotion -> exit 0 (96.4 s; render 1.2 min),
+             "Encoded 514/514", "Done. ...recap_remotion.mp4  (21.42s, expected 21.42s ...)",
+             "[+] PARITY CHECK PASSED: length matches the timeline within one frame.",
+             "vs recap_final.mp4: 21.42s -> within one frame"; output 5,915,527 B, 22:07:25.
+             Duration matches the timeline within one frame. PASS
+TESTED     - Whisper EXECUTION only : the same runs printed "[i] loading the Whisper 'base' model for
+             word timings (first time downloads it)...", and a read-only probe on d_01 gave
+             "WhisperModel('base') loaded (6.50s)", "info: lang=nn p=0.22 dur=3.21 (0.96s)",
+             "total segments=0" (identical on audio\d_01.mp3). Model loaded and inference ran; ZERO
+             words returned because the fixture's narration is synthetic tone audio (recap.py:4502,
+             step_demo: aevalsrc=0.6*sin(2*PI*220*t)...). So faster-whisper 1.2.1 + av 18.1.0 do work
+             on this PC, and the old `metadata_errors` failure did not recur.
+TESTED     - Timeline check : python recap.py timeline -> exit 0 (26.6 s), "[+] Timeline check passed:
+             every file exists and every clip matches its frame count."; all six words/<id>.json stayed
+             byte-identical (SHA-256) to the pre-run backup in %TEMP%\m0\backup_words; timeline.json
+             differs from the backup only in its "generated" timestamp. PASS
+NOT TESTED - WHISPER WORD-TIMING GENERATION FROM REAL SPEECH. The line "word timings <id>: whisper" was
+             never produced; the `whisper` timing path is NOT verified and must not be claimed as passed.
+             It is unreachable with the current fixture: the audio is a tone, Whisper correctly returns
+             no words, and wordtimes falls back to "even" ("[+] word timings: 6 even"). Needs real
+             narration - an owner decision, not something M0 could settle.
+SKIPPED    - Shotcut / melt check : NOT AVAILABLE - shotcut\Shotcut\melt.exe is absent (Test-Path ->
+             False), so the M0 step 8 table is skipped by design (Shotcut is deleted in M5 anyway).
+
+Baseline numbers (M0 step 6; machine facts live in docs/ENVIRONMENT.md):
+
+- Remotion render rate: 514 frames / 96.4 s = 5.33 fps  (derived: frame count from "Encoded 514/514"
+  in the run above, wall time from the same run's 96.4 s; recap.py printed no rate, so this is arithmetic
+  over two quoted numbers. Whole-command wall time, so it includes Node/Remotion start-up. ROADMAP's
+  expectation for this PC is "~5.7 fps" - same order, not a discrepancy to chase.)
+- Scene-check duration: NOT CAPTURED. No duration exists in any log: the `scenes` step in the entry above
+  was launched detached, so its start time and exit code were never recorded (only file mtimes), and no
+  recap.py step prints per-phase timings. Bounds that do exist, none of them a scene-check figure: the 22
+  check PNGs of that run span 21:51:27-21:51:45 (that run spent >= 18 s there), and the later `timeline`
+  run - which runs the same 6-scene check - took 26.6 s in total (segment build + Whisper load + scene
+  check + timeline check). Do not report 18 s or 26.6 s as the scene-check time.
+
+Limitations to carry forward:
+- Cache bypass used, nothing deleted: wordtimes.ensure() ignores an existing "even" entry once
+  faster_whisper is importable and captions.whisper_model != "off" (here "base") - wordtimes.py:228-230.
+  Cache unit = words/<id>.json (CACHE_VERSION|mp3 size+mtime|caption text|model|frames|fps|raw-edge).
+  No other cache invalidated; the fixture, audio/ and audio_trim/ were left as they were.
+- The `remotion` and `timeline` steps regenerate the tracked recapstudio/remotion/src/generated/
+  registry.ts; restored to HEAD after each run (git diff empty).
+- The scene check inside the remotion step still replaces 3 of 6 demo scenes with the keywords scene
+  (d_04 "x.toUpperCase is not a function", d_05 uses 'fetch', d_06 "draws nothing"): pre-existing demo
+  state, not an M0 result.
+- Not done here: no installs, no lockfile policy change, no HANDOFF milestone change, no stage/commit/push.
+```
+
+
+## 2026-10-29 (M0 CLOSED: documentation close-out; agent)
+
+Closes M0 against `docs/ROADMAP.md:84` (all commands run and quoted; every failure listed; commit
+hash recorded), using the evidence already in this file. **No test was re-run, nothing was
+reinstalled, no cache invalidated** - every figure below is quoted from the two entries above, and
+arithmetic says "derived". The two entries above stand as written; only the status closing here.
+
+```
+TESTED     - (no new runs) This entry adds no measurements. Sources: the entry above (premiere,
+             remotion, whisper probe, timeline) and the entry before it (git, versions, ffmpeg,
+             doctor, fixtures, demo/briefs, video, scene test, dependencies).
+DECISIONS  - M0 accepted as complete although Whisper word timing FROM REAL SPEECH is NOT verified.
+             Basis: ROADMAP step 7 is explicitly "not a blocker", step 8 is "optional, skip if absent"
+             (melt.exe absent), and ROADMAP:84 asks only that every failure be listed. The gap is
+             stated in three places: LOG (below), docs/ENVIRONMENT.md ("Still unknown"),
+             HANDOFF.md ("Known unverified").
+DECISIONS  - `recapstudio/remotion/package-lock.json` stays UNTRACKED: the lockfile policy is the
+             owner's decision and no rule requires it for M0, so it is not part of this commit.
+DECISIONS  - the diff is documentation only; no application or generated file was edited, and
+             recapstudio/remotion/src/generated/registry.ts remains at HEAD.
+```
+
+Final M0 baseline (summary; quotes above, machine facts in `docs/ENVIRONMENT.md`):
+
+| Item | Result | Exit code |
+|---|---|---|
+| `recap_final.mp4` | 514 frames, 1920x1080, 24/1 fps, 6,834,110 B, 21.416667 s | not captured (detached run) |
+| `timeline.json` | 6 segments, 514 frames (21.4 s), karaoke captions, 2 chapters, cut x5 + whip x1 | 0 (`timeline` step, 26.6 s) |
+| scene check | 3 of 6 pass; d_04 + d_06 FAILED, d_05 BLOCKED -> those 3 use the keywords scene (expected baseline) | not captured (same detached run) |
+| `premiere_sequence.xml` | 54,023 B, "6 segments, 0:21" | 0 (3.6 s) |
+| `recap_remotion.mp4` | "Encoded 514/514", 21.42 s, 5,915,527 B, parity vs `recap_final.mp4` within one frame | 0 (96.4 s) |
+| Remotion rate | 514 / 96.4 = 5.33 fps (derived, whole command incl. start-up) | - |
+| scene-check time | NOT CAPTURED - no timing exists anywhere; do not quote one | - |
+| Whisper | 'base' loads in 6.50 s, inference 0.96 s on one segment, 0 words on the fixture's tone audio -> `even`; real-speech word timing NOT verified | 0 (probe) |
+| fixtures self-test | "Ran 1 test in 0.907s", OK | 0 |
+
+Documentation updated in this close-out:
+- `docs/ENVIRONMENT.md` - new "Recap regression baseline" section (all numbers above); the stale
+  "render speed unknown" and "exit code not captured" claims replaced; `recapstudio\Projects` now
+  records that `regress\` exists. Nothing probed for `bin\`/`models\` was invented.
+- `HANDOFF.md` - status DONE, M0 row ticked, next step M1, Whisper wording corrected (executes,
+  real-speech timing still unverified), 3-of-6 scene fallback kept as the expected baseline.
+- `docs/MIGRATION_CHECKLIST.md` - section A 8-13 ticked with evidence; 14 left open.
+- `LOG.md` - this entry. Entries above unchanged.
+
+Explicitly outstanding, non-blocking: real-speech Whisper word timings (needs owner narration);
+scene-check-only duration never captured; 3 of 6 demo scenes still fall back to the keywords scene;
+`doctor` not re-run after the installs; lockfile policy undecided; Kinocut untouched (M1);
+`shotcut\`, `bin\`, `models\` presence only partly probed (checklist A:14).
+
+Commit: the close-out commit's hash, the push result and the final `git status` are recorded in the
+short entry appended below, because a commit cannot contain its own hash.
+
+
