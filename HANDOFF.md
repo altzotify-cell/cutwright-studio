@@ -24,8 +24,11 @@ Current milestone : M8 "Production blueprint + autonomous run" COMPLETE (2026-10
                     80). Ask: C-017 item 4. KNOWN GAP: `docs/ROADMAP.md` M8 as written (G6: five scenes,
                     16:9 + 9:16, owner approves 4 of 5) is NOT done - it is now "M8b" in the roadmap.
                     Before it: M7 DONE, M6 DONE, M5.5 DONE, M5 DONE.
-Last green commit : <filled by this close-out> (see `git log -1` and the line below it). Before it:
-                    f5b4328 (M7 close-out), 43fa769 (M7), d070fbb, fcae302 (M6), 66c1b97 (M5.5C),
+Last green commit : c6548b4 "M8: the production blueprint, and one production executed end to end by the
+                    engine" (26 files, +2736/-38) on main, pushed to origin main; `git ls-remote origin
+                    refs/heads/main` -> c6548b4b49ba1113f8a77654201fa1ce67824f4b. The commit that follows
+                    it only records that hash in this line. Before it: f5b4328 (M7 close-out),
+                    43fa769 (M7), d070fbb, fcae302 (M6), 66c1b97 (M5.5C),
                     20a5052, d55c114, 5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd, 4528c51 (M5 close-out),
                     7a8184c, 0755d92, 498aed1, d072280.
 Next step         : the owner picks ONE of: (a) M8b = the G6 five-scene benchmark at 16:9 and 9:16

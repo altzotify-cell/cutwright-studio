@@ -1765,6 +1765,12 @@ DECISIONS  - 1. The narration is the clock. edge-tts reports one `WordBoundary` 
              6. `recapstudio/Projects/*` is ignored; the M8 project's TEXT artefacts are re-included
              by explicit rules in both `.gitignore` files (and its wav/mp3/mp4 stay local). Without
              that, the milestone's own evidence would not be in the repo.
-Commit     - PENDING (filled in by the close-out commit below)
+Commit     - c6548b4 "M8: the production blueprint, and one production executed end to end by the
+             engine" (26 files, +2736/-38) on main, pushed to origin main; `git ls-remote origin
+             refs/heads/main` -> c6548b4b49ba1113f8a77654201fa1ce67824f4b. The commit that follows
+             this entry only records that hash in HANDOFF.md. Left untracked on purpose:
+             recapstudio/remotion/package-lock.json (existed before this session; whether the lock is
+             committed is the owner's call). The project's media (narration wav/mp3, the final mp4)
+             is gitignored by explicit rules; its brief/blueprint/manifest/script/word timings are in.
 
 
