@@ -21,10 +21,12 @@ Current milestone : M6 "Agent bridge and focused tool discovery" COMPLETE (2026-
                     Stages are now plan, edit, graphics, review, deliver (`qc` was renamed `review`, `assets`
                     deleted - no op, test or code used it). Before it: M5.5 DONE (5.5A/B/C), M5 DONE (the old
                     editor backend is out of the code).
-Last green commit : recorded by the docs commit that follows the M6 commit; both are on origin main and
-                    `git ls-remote origin refs/heads/main` is the check. Previous: 66c1b97 (M5.5C), 20a5052,
-                    d55c114, 5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd, 4528c51 (M5 close-out), 7a8184c,
-                    0755d92, 498aed1, d072280.
+Last green commit : fcae302 "M6: the agent bridge (recap <step> --json) and one focused tool set per stage"
+                    (13 files, +1160/-77) on main, pushed to origin main; `git ls-remote origin
+                    refs/heads/main` -> fcae302292aa0841bf1ba0ab713fd13bdd84d58a. The commit that follows it
+                    only records that hash in this line. Before it: 66c1b97 (M5.5C), 20a5052, d55c114,
+                    5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd, 4528c51 (M5 close-out), 7a8184c, 0755d92,
+                    498aed1, d072280.
 Next step         : M6 is closed with ONE known gap: the G4 "Done when" render line - `recap timeline` then
                     `recap remotion` on a fresh project - was NOT run (both outran the 30 s foreground command
                     cap and that session forbade background runs / polling loops; `timeline` was killed

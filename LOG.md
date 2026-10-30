@@ -1598,10 +1598,11 @@ DECISIONS  - 1. The envelope's unit is a TOOL, not an op: an op (params schema, 
              5. `problems[]` is parsed from known lines ([!], Error, "MISSING SHOT", tracebacks), not guessed.
              6. `next_step()` counts SEGMENTS, not the existence of segments.json: the template ships an
              empty one, and the first version therefore told a brand-new project to run `tts`.
-Commit     - this session's M6 commit (files: cutwright/recap.py new, cutwright/engine/envelopes.py new,
-             cli.py, engine/ops.py, engine/registry.py, tests x2, docs x5) on main, pushed to origin main;
-             the hash and the `git ls-remote` answer are written into HANDOFF.md by the commit that follows
-             this entry. Left untracked on purpose: recapstudio/remotion/package-lock.json (existed before
-             this session; whether the lock is committed is the owner's call).
+Commit     - fcae302 "M6: the agent bridge (recap <step> --json) and one focused tool set per stage"
+             (13 files, +1160/-77) on main, pushed to origin main; `git ls-remote origin refs/heads/main`
+             -> fcae302292aa0841bf1ba0ab713fd13bdd84d58a. The commit that follows this entry only records
+             that hash in HANDOFF.md. Left untracked on purpose:
+             recapstudio/remotion/package-lock.json (existed before this session; whether the lock is
+             committed is the owner's call).
 ```
 
