@@ -1537,4 +1537,9 @@ DECISIONS  - 1. Frame the footage at PREP time (crop 1588x893, keeping the botto
              7. The footage is NOT tracked by git: recapstudio/.gitignore ignores Projects/* (project media
              is per-machine). docs/evidence/m55c_footage.md carries the licence, the URL and the exact
              command to re-create the clip on a fresh checkout.
+Commit     - 66c1b97 "M5.5C: KineticText + MaskWipe (kit/3), one directed benchmark shot, the critic loop"
+             (13 files, +779/-53) on main, pushed to origin main; `git ls-remote origin refs/heads/main`
+             -> 66c1b976ffc6cd87daae5cddd5fc97b4f9a76a81. The commit that follows this entry only records
+             that hash in HANDOFF.md. Left untracked on purpose: recapstudio/remotion/package-lock.json
+             (existed before this session; whether the lock is committed is the owner's call).
 ```

@@ -26,13 +26,14 @@ Current milestone : M5.5 "Creative rendering slice" COMPLETE (2026-10-30, three 
                     `git grep` for the removed backend's name over code -> no matches. The recapstudio
                     regression pack (roadmap M5 acceptance line 3) was NOT re-run in the M5 session; it was
                     re-run in M5.5A and is byte-identical (see the M5.5A line below).
-Last green commit : d55c114 (M5.5B - footage by handle, kit/2), pushed to origin main; verified with
-                    `git ls-remote origin refs/heads/main` -> d55c11402e95f873c7c96c0eed554a7a83b7e2b4.
-                    Before it: 5dbda9e (M5.5A docs), facc015 (M5.5A - the Remotion executor), 2ae8f60
-                    (M5.5 docs), c97d7fd (M5 close-out docs), 4528c51 (M5 close-out,
-                    whose message is in `LOG.md` and `git log -1` rather than here so the M5 acceptance
-                    grep stays empty), 7a8184c, 0755d92, 498aed1, d072280. This session's own commits
-                    are recorded in this line and in `LOG.md`.
+Last green commit : 66c1b97 "M5.5C: KineticText + MaskWipe (kit/3), one directed benchmark shot, the critic
+                    loop" (13 files, +779/-53) on main, pushed to origin main; verified with
+                    `git ls-remote origin refs/heads/main` -> 66c1b976ffc6cd87daae5cddd5fc97b4f9a76a81.
+                    Before it: 20a5052 (M5.5B docs), d55c114 (M5.5B - footage by handle, kit/2), 5dbda9e,
+                    facc015 (M5.5A), 2ae8f60 (M5.5 docs), c97d7fd (M5 close-out docs), 4528c51 (M5
+                    close-out, whose message is in `LOG.md` and `git log -1` rather than here so the M5
+                    acceptance grep stays empty), 7a8184c, 0755d92, 498aed1, d072280. This session's own
+                    commits are recorded in this line and in `LOG.md`.
 Next step         : M5.5 is COMPLETE (2026-10-30, three sessions). 5.5C closed it: `KineticText` + `MaskWipe`
                     in `kit/kinetic.tsx` (kit 2 -> 3), the `bench-directed-shot` benchmark over real
                     public-domain footage (NASA Perseverance pre-sunrise, 1588x892, 8 s,
