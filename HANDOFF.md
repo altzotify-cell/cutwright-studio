@@ -14,8 +14,9 @@ Current milestone : M4 DONE (2026-10-30). 4A put Recap's picture join on the eng
                     mix_audio, re-ran the regress project BYTE-IDENTICALLY (514 frames, same
                     stream md5s, same file sha256) and built + reviewed a 79.2 s real job
                     (1900 frames; Kinocut's mix left the video packets untouched).
-Last green commit : <HASH> "M4 4B: ..." (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M4 phase
-                    4B"), pushed to main. Before it: 498aed1, d072280, 4f7291c, b831112.
+Last green commit : 0755d92 "M4 4B: the ffmpeg music mix is deleted; mix_audio mixes the bed"
+                    (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M4 phase 4B"), pushed to main.
+                    Before it: 498aed1, d072280, 4f7291c, b831112.
 Next step         : M5 - remove Shotcut (docs/MIGRATION_CHECKLIST.md section F, one commit per item,
                     Regression pack after each). Nothing of M5 starts without the owner's go.
 Open COMMS        : C-009 = 4B decisions, the two Kinocut findings, one cosmetic pad/blur

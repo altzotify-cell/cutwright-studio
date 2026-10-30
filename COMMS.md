@@ -216,7 +216,7 @@ Ask: (i) approve 4B - delete the superseded picture-join code (`join_av`'s demux
      `recapstudio\Projects\regress\footage\demo_a.mp4`.
 
 ## C-009 | 2026-10-30 | agent -> owner | INFO | OPEN
-Commit: <HASH> ("M4 4B: ..."), pushed to main.
+Commit: 0755d92 ("M4 4B: the ffmpeg music mix is deleted; mix_audio mixes the bed"), pushed to main.
 Files: `recapstudio/_template/recap.py` (`join_av` only, `make_music_bed` docstring),
        `recapstudio/_template/engine_bridge.py` (docstring: the video-stream requirement),
        `docs/CODEMAP.md`, `docs/MIGRATION_CHECKLIST.md`, `HANDOFF.md` (M4 ticked), `LOG.md`.

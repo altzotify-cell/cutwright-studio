@@ -1071,4 +1071,11 @@ DECISIONS  - 1. What 4B deletes, and why only that: the roadmap's "delete the su
              run is the ENGINE path at length, not art. 7. Parity of the mix was judged on video
              PACKET md5 (identical) plus loudness and two tone magnitudes, because the container
              bytes legitimately change when `mix_audio` rewrites the mux.
+Commit     - 0755d92 "M4 4B: the ffmpeg music mix is deleted; mix_audio mixes the bed" (7 files,
+             +224/-34), pushed to origin main; `git ls-remote origin refs/heads/main` -> see the
+             commit that follows this entry, which only records that hash in HANDOFF.md, COMMS.md
+             and here. `recapstudio/remotion/package-lock.json` stays UNTRACKED as instructed
+             (C-006). The job under `recapstudio/Projects/m4job` and the stills under `out/m4b/` are
+             gitignored: they are working evidence, not source.
+
 
