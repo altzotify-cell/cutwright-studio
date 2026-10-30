@@ -3429,7 +3429,11 @@ def build_items(segments, fps, W, H, clips_dir, fill, render=True, gfx=True, lab
 
 
 def make_music_bed(total_frames, fps, name="music_bed"):
-    """First track in music/ -> one quiet bed exactly as long as the video (fade in/out). None if off."""
+    """First track in music/ -> one quiet bed exactly as long as the video (fade in/out). None if off.
+
+    The bed is a PREPARED track: looped to the video length, level applied, fades baked in. `join_av`
+    hands it to the engine's `mix_audio` (M4 4B) - it is not mixed by ffmpeg any more.
+    """
     if not PROJECT.get("music"):
         return None
     tracks = sorted(f for f in glob.glob(os.path.join(MUSIC_DIR, "*")) if f.lower().endswith(MUSIC_EXTS))
@@ -4089,14 +4093,18 @@ def join_av(items, out, vlist_name, music=None):
                 files.append(silent_wav(i["frames"], i["fps"], sf))
         write_concat_list(olist, files)
 
+    # M4 4B: the music bed is NO LONGER a third ffmpeg input - that amix arm was a second
+    # implementation of the engine's `mix_audio` op. The program audio (narration [+ original]) is
+    # muxed first, then `mix_audio` (Kinocut) mixes the bed under it and STREAM-COPIES the picture,
+    # so the frames are untouched (identical video-packet md5, out\runs\m4demo). The mix needs a
+    # video stream in its source ("mix_audio requires a video stream"), which is why the mux comes
+    # first instead of mixing a bare wav.
+    muxed = os.path.join(TIKTOK_TEMP, f"{vlist_name}_picture_av.mp4") if music else out
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", picture,
            "-f", "concat", "-safe", "0", "-i", alist]
     n_audio = 1
     if use_orig:
         cmd += ["-f", "concat", "-safe", "0", "-i", olist]
-        n_audio += 1
-    if music:
-        cmd += ["-i", music]
         n_audio += 1
     if n_audio == 1:
         cmd += ["-map", "0:v:0", "-map", "1:a:0"]
@@ -4105,10 +4113,12 @@ def join_av(items, out, vlist_name, music=None):
         cmd += ["-filter_complex", f"{ins}amix=inputs={n_audio}:duration=longest:dropout_transition=0,"
                                    f"volume={n_audio}[a]", "-map", "0:v:0", "-map", "[a]"]
     cmd += ["-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", str(SAMPLE_RATE),
-            "-shortest", "-movflags", "+faststart", out]
+            "-shortest", "-movflags", "+faststart", muxed]
     res = run(cmd)
-    if res.returncode != 0 or not os.path.exists(out):
+    if res.returncode != 0 or not os.path.exists(muxed):
         die(f"Could not join the clips:\n{tail(res.stderr)}")
+    if music:
+        engine_bridge.mix_tracks(muxed, out, [{"path": music}], keep_source=True)
 
 
 def step_video(args):

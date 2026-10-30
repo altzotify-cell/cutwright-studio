@@ -119,6 +119,11 @@ def mix_tracks(src, output, tracks, keep_source=True):
     `tracks` is a list of paths or {path, ...} dicts. The FILE becomes the op's `tracks` input
     (digested, so it is part of the cache key); the rest of each dict stays params, exactly as
     `cutwright/engine/ops.py` declares them.
+
+    `src` must be a MEDIA file with a video stream: Kinocut 1.16.4 refuses an audio-only source
+    ("mix_audio requires a video stream", measured 2026-10-30), so Recap mixes the music bed under
+    the already-muxed picture and not under a bare narration wav. The video is stream-copied - the
+    packets came back md5-identical in the same run - so mixing cannot re-time the picture.
     """
     files, settings = [], []
     for row in tracks:

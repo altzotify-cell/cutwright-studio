@@ -215,3 +215,39 @@ Ask: (i) approve 4B - delete the superseded picture-join code (`join_av`'s demux
      (roadmap step 5) is next after 4B, and whether you supply the footage/voice or I build it from
      `recapstudio\Projects\regress\footage\demo_a.mp4`.
 
+## C-009 | 2026-10-30 | agent -> owner | INFO | OPEN
+Commit: <HASH> ("M4 4B: ..."), pushed to main.
+Files: `recapstudio/_template/recap.py` (`join_av` only, `make_music_bed` docstring),
+       `recapstudio/_template/engine_bridge.py` (docstring: the video-stream requirement),
+       `docs/CODEMAP.md`, `docs/MIGRATION_CHECKLIST.md`, `HANDOFF.md` (M4 ticked), `LOG.md`.
+       `recapstudio/remotion/package-lock.json` stays UNTRACKED as instructed (C-006).
+       The job itself (`recapstudio/Projects/m4job`) and all evidence stills (`out/m4b/`) are gitignored.
+Goal: phase 4B - delete the superseded editing code, wire `make_music_bed` -> `mix_audio`, then the
+      60-90 s real job (roadmap step 5) and a six-frame review. M4 is ticked.
+Observed: `join_av` no longer gives ffmpeg a third (music) input; the program audio is muxed first and
+      `engine_bridge.mix_tracks` -> `mix_audio` (Kinocut) mixes the bed under it. On the real job the
+      video packets are md5-identical before and after the mix (854df8a7...), audio packets change
+      (90132b3a... -> 2e343715...), loudness -20.1 -> -19.2 LUFS, and the bed's 220/277 Hz tones
+      arrive (Goertzel 21.4M/17.7M vs 3.7M/1.5M). The regress project is byte-identical to the M0
+      baseline (514 frames, 21.416667 s, 6,834,110 B, same stream md5s, same sha256). Suite: 178 tests,
+      "OK" in 424.901 s. Real job: `recap_final.mp4`, 1900 frames, 24/1, 1920x1080, 79.166667 s,
+      56,943,664 B, aac 48000/2, built from 15 Edge-TTS segments (269 words) over the looped
+      `footage\demo_a.mp4`, with a code-made music bed.
+Two Kinocut facts worth knowing:
+1. `mix-audio` REFUSES an audio-only source - "mix_audio requires a video stream" (exit 1, code
+   `missing_video_stream`) for every output extension I tried. So any future "mix a bed under a wav"
+   has to be done the way 4B does it: mux first, mix second. It stream-copies the video, so the
+   order is safe. The cost: a music-on file loses `-movflags +faststart`.
+2. Kinocut's mix warning ("Tracks sum at unity without normalization and may clip") still appears on
+   every music-on render. At 0.12 bed volume nothing clips (-19.2 LUFS), but this is the rule M12
+   (SFX) must set.
+One cosmetic finding from the frames: a four-by-three VIDEO segment is padded with real black bars
+(`config.json` "fill": "pad", measured RGB (0,0,0)) while a STILL segment next to it gets a blurred
+backdrop (`render_image_clip` hard-codes "blur"), so the cut between them jumps from black bars to
+blurred bars. Not a bug in 4B, cheap to unify in M8.
+Ask: (i) accept the 79.2 s job as the M4 step-5 evidence (frames: `out\m4b\frames\01_start.png`,
+     `02_25pct.png`, `03_50pct.png`, `04_75pct.png`, `05a_cut_before.png` + `05b_cut_after.png`,
+     `06_end.png`, plus `07_character_s09.png`; receipt `out\m4b\job_receipt.json`), and do you want
+     to listen to `recapstudio\Projects\m4job\recap_final.mp4` before I close M4 for good?
+     (ii) confirm M5 (remove Shotcut) is the next objective.
+

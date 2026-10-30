@@ -8,20 +8,20 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M4  (move Recap Studio's editing onto the engine where M2 proved parity; then
-                    delete what it replaces). Phase 4A is DONE and VERIFIED 2026-10-30: mix_audio's
-                    track files are declared inputs (C-007 finding 3 fixed, cache-key proof on real
-                    media) and Recap's picture join runs on the engine (`concat`, Kinocut merge) with
-                    byte-identical regression output. NOT started: 4B (deleting the superseded code)
-                    and the 60-90 s real job (roadmap step 5).
-Last green commit : d072280 "M4 4A: mix tracks are declared inputs; Recap's picture join runs on the
-                    engine" (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M4 phase 4A"), pushed
-                    to main. Before it: 4f7291c, b831112, 1f2f2cf, 29fb366, 3ef6c0b.
-Next step         : M4 phase 4B - delete the superseded picture-join code in recap.py in its own
-                    commit, then the 60-90 s real job. Nothing of 4B starts without the owner's go.
-Open COMMS        : C-008 = 4A decisions, parity numbers, three findings and two questions (approve
-                    4B? supply footage/voice for the real job?). C-007 = 3D decisions; its finding 3
-                    is now FIXED. C-006 answered. C-005 = M2 decisions.
+Current milestone : M4 DONE (2026-10-30). 4A put Recap's picture join on the engine and made
+                    mix_audio's track files declared inputs; 4B deleted the ffmpeg music arm in
+                    join_av (a second implementation of mix_audio), wired make_music_bed ->
+                    mix_audio, re-ran the regress project BYTE-IDENTICALLY (514 frames, same
+                    stream md5s, same file sha256) and built + reviewed a 79.2 s real job
+                    (1900 frames; Kinocut's mix left the video packets untouched).
+Last green commit : <HASH> "M4 4B: ..." (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M4 phase
+                    4B"), pushed to main. Before it: 498aed1, d072280, 4f7291c, b831112.
+Next step         : M5 - remove Shotcut (docs/MIGRATION_CHECKLIST.md section F, one commit per item,
+                    Regression pack after each). Nothing of M5 starts without the owner's go.
+Open COMMS        : C-009 = 4B decisions, the two Kinocut findings, one cosmetic pad/blur
+                    inconsistency at a cut, and two questions (accept the 79 s job? start M5?).
+                    C-008 answered (4B approved; footage = regress demo_a.mp4, looped).
+                    C-007 answered (finding 3 now fixed), C-006 answered. C-005 = M2 decisions.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -30,10 +30,16 @@ Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python
                     Kinocut: INSTALLED in `.venvs\kinocut` = kinocut 1.16.4 on Python 3.11.9, doctor exit 0.
                     `.venvs/` and `out/` are gitignored. All M0 numbers: docs/ENVIRONMENT.md.
 Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1/M2/M3 (quotes in `LOG.md`):
+  - M4 4B (2026-10-30): the ffmpeg music arm is gone and `make_music_bed` -> `mix_audio` (Kinocut).
+    Kinocut refuses an audio-only mix source ("mix_audio requires a video stream"), so the program
+    audio is muxed first and the bed is mixed under the muxed file; the video packets come back
+    IDENTICAL (854df8a7... before and after the mix on the 79.2 s job), loudness -20.1 -> -19.2 LUFS,
+    and the 220/277 Hz bed tones are measurable in the output. The regress project is byte-identical
+    to the M0 baseline again (same stream md5s, same file sha256) and the suite is 178 tests green.
   - M4 4A (2026-10-30): the regress project was re-run on the swapped path and is byte-identical to
     the M0 baseline (514 frames, 21.416667 s, 6,834,110 B, aac 48k/2, video md5 c671f7a7..., audio
     md5 0064ff59...); replacing a mix track now re-runs the mix ("cache key changed") and puts the
-    new tone in the output (Goertzel 3,526,719 @320 Hz vs 755 @1 kHz). Nothing deleted yet.
+    new tone in the output (Goertzel 3,526,719 @320 Hz vs 755 @1 kHz).
   - M3 3D (2026-10-30): the six roadmapped acceptance commands pass. `python -m cutwright run
     out\fx\demo_manifest.json --json` renders five steps (Kinocut trim -> ffmpeg fit -> Kinocut
     concat -> Kinocut mix -> Kinocut export) and the final file decodes to 60 frames, ids 24..47 then
@@ -140,7 +146,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [x] | M2 | Equivalence tests: Kinocut vs current code vs direct FFmpeg (frame accuracy, fitting, concat, transitions, audio mix, export, QC, workflow/resume) | `docs/CAPABILITY_MATRIX.md` + `docs/evidence/m2_*.json`; every row measured |
 
 | [x] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | DONE 2026-10-30: `tools/validate/run/resume/status/approve` work on real media; a five-step demo renders frame-exact (ids 24..47 then 1000..1035, beeps at 0/1/2 s) and a run killed during step 3 resumes with steps 1-2 cached. Not built (out of the confirmed scope): `executors/remotion.py`, `pipelines/*.json`, `skills/*.md` - see C-007 |
-| [ ] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | Regression pack unchanged; 60-90 s real job reviewed frame by frame |
+| [x] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | DONE 2026-10-30: picture join -> `concat` (4A), mix tracks declared inputs (4A), ffmpeg music arm deleted + `make_music_bed` -> `mix_audio` (4B); regress project byte-identical (514 frames, same stream md5s and sha256); 79.2 s real job rendered and six frames reviewed (`out\m4b\frames\`) |
 | [ ] | M5 | Remove Shotcut completely | `git grep` check empty; doctor clean; tests + regression pass |
 | [ ] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | forbidden flags refused; envelope <= 10 ops |
 | [ ] | M7 | Agent-owned scene loop (old G5) | 3 scenes written by agent, >= 2 first-try, 1 revised after viewing frames |

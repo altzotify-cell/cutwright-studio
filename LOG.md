@@ -943,3 +943,132 @@ Commit     - d072280 "M4 4A: mix tracks are declared inputs; Recap's picture joi
 
 
 
+## 2026-10-30 - M4 phase 4B: ffmpeg's music mix deleted, `mix_audio` mixes the bed, 79 s real job (agent)
+
+Objective (owner decisions C-008 / the 4B go): (1) delete the superseded editing code left in
+`recap.py` and wire `make_music_bed` -> `mix_audio`; (2) build and run a 60-90 s real job from
+`recapstudio\Projects\regress\footage\demo_a.mp4` (looped, owner's call), voice by Edge-TTS, captions
+via Remotion, final through the engine; (3) review six frames. One commit, then STOP.
+
+TESTED     - what was actually left of the picture join : `Select-String -Path
+             recapstudio\_template\recap.py -Pattern "write_concat_list|join_av|fit_graph"` (the
+             roadmap's M4 acceptance grep) -> "647: def fit_graph ... | 2467/2477: g = fit_graph(...)
+             | 4060: def write_concat_list ... | 4072: def join_av ... | 4084/4094:
+             write_concat_list(alist/olist, ...) | 4136/4330: join_av(...)". Nothing else matches:
+             the old picture demuxer branch (`vlist`, `-f concat -safe 0 -i vlist`) was already
+             deleted in 4A (`git show d072280 -- recapstudio/_template/recap.py` shows the removal),
+             so what is left is three deliberate keeps (DECISIONS 1) - `fit_graph`/`render_video_clip`
+             (no op can express them yet), `write_concat_list` (AUDIO lists only) and `join_av`
+             itself.
+TESTED     - Kinocut refuses an audio-only mix source (the assumption behind the first design) :
+             `python out\m4b\probe_mix_wav.py` -> exit 1 for .wav/.m4a/.mp4 outputs, stderr
+             `{"success": false, "error": {"type": "validation_error", "code":
+             "missing_video_stream", "message": "mix_audio requires a video stream"}}`. So the bed
+             cannot be mixed under a bare narration wav; the program audio is muxed FIRST and the
+             bed is mixed under the muxed file.
+TESTED     - the shape that 4B uses, through the bridge, before any edit : `python out\m4b\probe2.py`
+             -> `mix_tracks -> kinocut`, warning "Tracks sum at unity without normalization and may
+             clip. Listen before publishing."; 72 frames at 24/1 both sides, 3.000000 s both sides,
+             aac 48000/2 both sides, and the VIDEO PACKETS unchanged: draft md5 b41de32a... ==
+             mixed md5 b41de32a...; loudness moved -21.8 -> -18.9 LUFS (the bed arrived).
+TESTED     - the regression project after the change, byte-identical to the M0 baseline :
+             `python recap.py video` in `recapstudio\Projects\regress` (with the updated `recap.py` +
+             `engine_bridge.py` copied in) -> "Done. recap_final.mp4  (21.4s, expected 21.4s)", six
+             clips "cached". ffprobe both the before-copy and the new file: "nb_read_frames=514",
+             "r_frame_rate=24/1", "1920/1080", "duration=21.416667", "size=6834110", "aac
+             48000/2"; video packets c671f7a76da05927d9a41d4742779268 and audio packets
+             0064ff59fa0debbc9a47f17cccbb322b identical, and the two FILES have the same sha256
+             (817BA0EA4805F7F96B00D127570D6C7B67CD8E7633C63135226B17C4807E4479). The music-off path
+             is untouched by 4B, exactly as designed (DECISIONS 2).
+TESTED     - the whole suite : `python -m unittest discover -s tests -t . -v` -> "Ran 178 tests in
+             424.901s" / "OK" (0 failures, 0 errors, 0 skips). The M2 evidence JSONs were rewritten
+             by that run (wall-clock `seconds` only) and restored with `git checkout`, not committed,
+             the C-006 practice.
+
+TESTED     - the 60-90 s real job, built and rendered : `recapstudio\Projects\m4job` (new project, copied
+             from `regress`, outputs removed; 15 segments, 269 narration words, Edge-TTS
+             `en-US-ChristopherNeural`, `project.json` "music": true) -> `python recap.py tts --engine
+             edge` -> "All audio generated." / "actual narration: 1:19"; `python recap.py video` ->
+             "Done. recap_final.mp4  (79.2s, expected 79.2s)". ffprobe: "nb_read_frames=1900",
+             "r_frame_rate=24/1", "1920x1080", "duration=79.166667", "size=56943664", audio "aac
+             48000 Hz 2 ch". `python recap.py timeline` -> "timeline.json: 15 segments, 1900 frames
+             (79.2s at 24fps, 1920x1080)" / "Timeline check passed: every file exists and every clip
+             matches its frame count." The numbers live in `out\m4b\job_receipt.json`; the job folder
+             itself is gitignored (`recapstudio/Projects/*`).
+TESTED     - the bed really is mixed by Kinocut, and the picture is untouched on the real job :
+             `python out\m4b\verify_job.py` -> mix source `tiktok_temp\full_picture_av.mp4` and the
+             final: video packets BOTH 854df8a7ed5f1b631e560fb7724788db (also equal to the engine's
+             concat output `tiktok_temp\full_picture.mp4`), audio packets 90132b3a... -> 2e343715...
+             (changed: the mix happened), loudness -20.1 -> -19.2 LUFS. Goertzel over the first
+             second: final {220: 21,395,632 | 277: 17,708,382 | 330: 13,872,649 | 180: 119,195} vs
+             draft {220: 3,711,065 | 277: 1,496,660 | 330: 21,193,218 | 180: 162,005} - the 220/277 Hz
+             bed tones arrive with the mix; 330 Hz is the footage's own tone (it is a test pattern).
+TESTED     - captions via Remotion on the same timeline : `python recap.py remotion` -> "Done.
+             ...\m4job\recap_remotion.mp4  (79.17s, expected 79.17s, rendered in 8.6 min)" and
+             "[+] PARITY CHECK PASSED: length matches the timeline within one frame." / "vs
+             recap_final.mp4: 79.17s -> within one frame". ffprobe: 1900 frames, 24/1, 79.168 s,
+             69,786,262 B. Frames `08_remotion_captions_20s.png` (t=20.0) and
+             `09_remotion_cut_42s.png` (t=42.6) show the karaoke captions ("two audio sources to
+             balance" with the current word on a yellow pill) and the per-segment lower third
+             ("Original sound kept low"), so captions really are burned in the Remotion render;
+             `recap_final.mp4` is unchanged by that run (video packets still 854df8a7...).
+TESTED     - six frames looked at (I can see images in this session) : `out\m4b\frames\01_start.png`
+             (t=1.0 s), `02_25pct.png` (t=19.8), `03_50pct.png` (t=39.6), `04_75pct.png` (t=59.4),
+             `05a_cut_before.png` + `05b_cut_after.png` (last frame of `clips\s_07.mp4` / first frame
+             of `clips\s_08.mp4`, i.e. the join at frame 1020), `06_end.png` (t=78.6), plus
+             `07_character_s09.png` (t=46.5, the character beat). What they show, honestly:
+             (a) frames are complete, sharp, 1920x1080, correctly framed - no black frame, no tear,
+             no half-rendered transition at the join; (b) the four-by-three segment is padded with
+             real BLACK bars (measured RGB (0,0,0) at x=0 in `clips\s_07.mp4`, content 1440x1080
+             centred) while the still-image segment next to it uses a BLURRED backdrop
+             (`render_image_clip` hard-codes "blur", `render_video_clip` uses `config.json` fill) -
+             the cut at 1020 therefore jumps from black bars to blurred bars: a real cosmetic
+             inconsistency, code-level, cheap to fix in M8; (c) the character segment works (grey
+             robot, right side, ~1/3 frame height, no halo, transparent edges clean); (d) the demo
+             FOOTAGE burns its own timecode/counter ("00:00:03.625 / 87") and the testsrc2 grey
+             marker into the picture - that is the fixture, not the pipeline, but it means every
+             frame carries junk text in the top-left; (e) `recap_final.mp4` has NO captions or
+             graphics by design ("Number/caption graphics are NOT burned into the mp4 - use the
+             Premiere XML"), so the captioned deliverable is the Remotion render, not this file;
+             that render was checked too - `recap_remotion.mp4` (1900 frames, 79.168 s) carries the
+             karaoke captions and the per-segment lower third, and (f) two cosmetic issues there:
+             the karaoke words that are not yet spoken render in a dim grey that loses contrast over
+             the yellow/blue bars, and the character at `char_pos: "right"` sits flush against the
+             right edge (a few pixels of its body are cut). Both are M8 material, not 4B.
+NOT TESTED - the TikTok variant (`step_tiktok` -> `join_av` with `fill="blur"`) and the VideoPad /
+             Premiere exports: not re-run in 4B. They call the same (now shorter) `join_av`, but
+             "same code path" is not a test.
+NOT TESTED - a project copied OUTSIDE the fork: the bridge still raises instead of falling back;
+             nothing changed in 4B and no such project exists here.
+NOT TESTED - listening: the numbers say the bed is there and the mix sits at -19.2 LUFS, but only
+             the owner's ears can accept a mix. Kinocut's "sum at unity" warning is surfaced, not
+             auto-corrected (C-008 finding 1).
+
+DECISIONS  - 1. What 4B deletes, and why only that: the roadmap's "delete the superseded functions"
+             collided with reality - 4A had already removed the picture demuxer branch, so the only
+             superseded code left was the ffmpeg MUSIC arm in `join_av` (`-i music` + the `n_audio`
+             count feeding `amix`). That arm is a second implementation of the engine's `mix_audio`,
+             so it is gone and the bed now goes through `engine_bridge.mix_tracks` ->
+             `mix_audio` (Kinocut). Deleting more would have meant deleting code no op can replace
+             (`fit_graph`, `write_concat_list`), which the roadmap's step 3 forbids. 2. Order of
+             passes, forced by Kinocut and chosen to keep the verified baseline intact:
+             picture (engine `concat`, video-only) -> program audio (ffmpeg concat lists +
+             `amix` for narration/original) -> ONE mux (`-c:v copy`, aac 192k, 48 kHz, `-shortest`,
+             `+faststart`) -> `mix_audio` only when a bed exists. With music off, `muxed` IS `out`,
+             so the music-free path issues the exact same command as before 4B - that is why the
+             regress project is still byte-identical. 3. Kinocut cannot mix under an audio-only
+             source (`missing_video_stream`, measured), so the bed is mixed under the muxed file
+             and not under the narration wav; the price is `+faststart` on music-on projects
+             (`mix_audio`'s own muxer does not add it) - recorded, not hidden. 4. The mix level is
+             still baked into the bed by `make_music_bed` (loop to length, `music_volume`, fades),
+             not passed as `mix_audio`'s per-track volume: one op owns one decision, and the fade
+             timing needs the total length, which the op does not know. 5. The final mux stays in
+             `recap.py` rather than moving to `overlay_audio`: that op has no `-ar`, no
+             `-movflags +faststart`, and the same pass has to produce the file `mix_audio` reads.
+             A duplicated pass with different parameters is not the same op, but it is on the list
+             for M5/M13. 6. The real job reuses the demo fixtures (test pattern + grey robot) and a
+             code-made music bed: no AI media, no licensed asset on this PC, and the point of the
+             run is the ENGINE path at length, not art. 7. Parity of the mix was judged on video
+             PACKET md5 (identical) plus loudness and two tone magnitudes, because the container
+             bytes legitimately change when `mix_audio` rewrites the mux.
+

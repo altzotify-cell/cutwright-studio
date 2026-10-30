@@ -21,8 +21,8 @@ Find a function: `grep -n "def name" file`. Read a range: Read tool with offset/
 
 | file | lines | what |
 |---|---|---|
-| `recap.py` | 4,915 | the pipeline in one file (index below). `STEPS` dict at ~5449, `main()` after it |
-| `engine_bridge.py` | 132 | M4: the only bridge to `cutwright.engine` (`concat_picture`, `fit_clip`, `mix_tracks`); finds the fork root and calls one op per function |
+| `recap.py` | 5,508 | the pipeline in one file (index below). `STEPS` dict at ~5464, `main()` after it |
+| `engine_bridge.py` | 137 | M4: the only bridge to `cutwright.engine` (`concat_picture`, `fit_clip`, `mix_tracks`); finds the fork root and calls one op per function |
 | `timeline.py` | 357 | `build_timeline`, `write_timeline`, `validate_timeline`, `step_timeline`, `step_remotion` (render + parity + retry) |
 | `scenes.py` | 645 | scene requests, cache hash, staging into `remotion/src/generated`, `resolve`, `_check_generated` (runs Node tools), `_judge` (PNG verdict), `_fix_prompt`, `demo` |
 | `authoring.py` | 608 | `validate_script`, `apply_theme`/`clean_theme`, `build_prompt` (pass-2 prompt), `parse_reply`/`import_reply`, `status`, `action`, `fix_prompt_text`, `demo_briefs` |
@@ -39,9 +39,9 @@ Find a function: `grep -n "def name" file`. Read a range: Read tool with offset/
 `step_missing` 1229, `step_collect_one` 1257) | 1355 TTS engines Edge/ElevenLabs/MiniMax (local worker engines
 at 1609) | 1998 TTS v2: tag modes, manifest, preview, review (`step_tts` 2122, `step_review` 2308) |
 2383 silence-free frame-exact narration audio | 2448 **build every picture clip to match its voice-over
-(`build_items`)** | 2572 CHARACTER ANIMATION (`step_characters` 3221) | 3468 Premiere XML (`step_premiere`
-4031) | 3626 VideoPad (`step_videopad` 3947) | 4066 one finished video (`step_video` 4109) | 4135 .srt
-(`step_srt` 4280) | 4295 TikTok (`step_tiktok` 4297) | 4328 STATUS + STATE.md (`step_check` 4404) |
+(`build_items` 3305)** | 2572 CHARACTER ANIMATION (`step_characters` 3221) | 3468 Premiere XML (`step_premiere`
+4035) | 3626 VideoPad (`step_videopad` 3951) | 4060 audio concat lists + `join_av` 4072 (one finished video:
+`step_video` 4124) | 4135 .srt (`step_srt` 4295) | 4295 TikTok (`step_tiktok` 4312) | 4328 STATUS + STATE.md (`step_check` 4404) |
 4437 DEMO synthetic media (`step_demo` 4477) | 4532 COMIC/MANGA (`step_comic` 4897) | 5357 `step_say` |
 5401-5445 thin bridges: `step_timeline`, `step_remotion`, `step_scenes`, `step_briefs`, `step_preview`
 
