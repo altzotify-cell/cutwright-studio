@@ -837,3 +837,8 @@ DECISIONS  - DECISION 1 = (a): the example was rewritten to the real validator v
              state machine, same cache rule) instead of being a second implementation; it only skips
              re-deriving the plan. M3 is CLOSED here; M4 starts only on the owner's go.
 
+Commit     - b831112 "M3 close-out: engine skeleton, CLI verbs, validation gates, and manifest runner"
+             (19 files, +1921/-56), pushed to origin main; `git ls-remote origin refs/heads/main` ->
+             "b831112244f142ac12b953a8e6a2f9d16cc7892d  refs/heads/main" == local HEAD. The commit that
+             follows this entry only records that hash in HANDOFF.md + here.
+

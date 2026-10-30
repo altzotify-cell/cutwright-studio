@@ -12,7 +12,8 @@ Current milestone : M4  (move Recap Studio's editing onto the engine where M2 pr
                     what it replaces). M3 is COMPLETE and CLOSED 2026-10-30 - phase 3D added the six
                     CLI verbs, post-render validation, approval files, the production report, and ran
                     the whole acceptance ladder on real media.
-Last green commit : the M3 close-out commit (hash in LOG.md, entry 2026-10-30 phase 3D). Before it:
+Last green commit : b831112 "M3 close-out: engine skeleton, CLI verbs, validation gates, and manifest
+                    runner" (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M3 phase 3D"). Before it:
                     1f2f2cf "M3 3C close-out", 29fb366 "M3 3A+3B+3C", 3ef6c0b "M2 close-out".
 Next step         : M4 - NOT started. Nothing of M4 begins without the owner's go.
 Open COMMS        : C-007 = 3D decisions + three measured findings that matter for M4 (kino merge
