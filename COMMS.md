@@ -425,3 +425,35 @@ Not settled (say the word and I will do it, otherwise M6 starts)
 
 The stills are in `out/m55c/stills/` (frames 0, 24, 48; 1920x1080) if you want to look before answering.
 
+## C-015 | 2026-10-30 | agent -> owner | REVIEW | OPEN
+
+M6 is done. Two decisions need your eye (both are one line to reverse), plus one thing I could not test.
+
+**1. I renamed a stage and deleted one.** `ops.STAGES` was `plan, assets, edit, graphics, qc, deliver`
+and is now `plan, edit, graphics, review, deliver` - your five stages:
+- `qc` -> `review` (it is the stage that judges the cut; no op ever lived in `qc`, so nothing moved).
+- `assets` deleted. No op, no test, no code named it; the footage-handle contract is a doc
+  (`docs/ASSET_HANDLES.md`), not a stage. Say the word if you want it back for M11.
+
+**2. The envelope's unit is a TOOL, not an op.** At `plan` and `review` this catalogue has ZERO ops -
+they read and judge, they do not render. An ops-only envelope would hand those stages an empty list, so
+`tools envelope --stage S` now returns the stage's ops (with param schemas) PLUS the commands that stage
+reaches for (`probe`, `subs`, `moments`, `verify`, `validate`, `status`, `approve`, `recap`), and every
+envelope carries one `how_to_run` line so no stage spends a slot on `run`. Sizes: plan 6, edit 10,
+graphics 4, review 4, deliver 3 (cap 10, checked over ops AND commands). An op still has exactly ONE home
+stage, so `tools list --stage S` and the envelope never disagree; a command may appear in two stages
+(probe at plan and at deliver).
+
+**3. What I could not verify.** The G4 "Done when" ends with `recap timeline` then `recap remotion` on a
+fresh project. `timeline` outran the 30 s foreground cap (killed mid-run, no timeline.json) and this
+session's rules were "no background runs, no polling loops", so those two steps are NOT TESTED. What IS
+real: `recap new`, `recap demo` (6.0 s, 14 files), `recap check` (2.2 s, STATE.md) and `recap status` on
+two throwaway projects, the refusals (`--force`, `init`, `collect`, `comic`), and 74 unit tests green.
+The bridge's timeout/step_failed paths are covered by tests. If you want the render line closed, start the
+next session with: "run the M6 done-when on a fresh project, render it, and show me the frames".
+
+**4. Two smaller gates.** (a) `--force` is refused unless BOTH `--i-know-this-destroys-work` and
+`--comms <id>` are passed; the override then shows up in the JSON as `override`, so it can never happen
+quietly - if that is too easy to satisfy, say so and I will require an owner-typed code instead.
+(b) `recap.py` grew no line: the bridge is a separate module, and the project's own copy still runs.
+

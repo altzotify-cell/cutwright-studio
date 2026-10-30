@@ -4,6 +4,10 @@
 > **M3 (2026-10-30): the engine verbs are LIVE** - `tools list|describe|envelope`, `validate`, `run`,
 > `resume`, `status`, `approve` (all with `--json`). They are built on `cutwright/engine/`.
 > Editing runs through Kinocut (default) or direct FFmpeg ops; see `docs/ARCHITECTURE.md`.
+> **M6 (2026-10-30): the bridge and the stage envelopes are LIVE.** `recap ...` drives one project step
+> (`cutwright/recap.py`), and `tools envelope --stage S` returns ONE stage's focused tool set
+> (`cutwright/engine/envelopes.py`): its ops with schemas plus the commands it needs, capped at 10.
+> Stages are `plan, edit, graphics, review, deliver` (`qc` was renamed `review`; `assets` was deleted).
 
 # Tools catalogue (what the agent can call)
 
@@ -24,13 +28,13 @@ with `set RECAP_NONINTERACTIVE=1` (PowerShell: `$env:RECAP_NONINTERACTIVE=1`). A
 | `transcribe <video>` | whisper.cpp fallback transcript, then gated (needs `bin/`, `models/`, not in git) | works if installed |
 | `tools list [--stage S]` | every op (or one stage): name, stage, executor, one line. `--json` | works (M3) |
 | `tools describe <op>` | one op in full: params, defaults, executor + reason, evidence file, installed? | works (M3) |
-| `tools envelope --stage S` | at most 10 op descriptions for ONE stage - what an agent should load | works (M3) |
+| `tools envelope --stage S` | at most 10 tools for ONE stage: its ops (with schemas) + the commands it needs | works (M3, M6) |
 | `validate <manifest>` | pre-render check: ops, params, refs, budget, asset provenance (+ `--json`) | works (M3) |
 | `run <manifest>` | execute a manifest: `--dry-run`, `--only STEP`, `--json`; cached steps skipped | works (M3) |
 | `resume <run-dir>` | continue from the checkpoint; the manifest path comes from the checkpoint | works (M3) |
 | `status <run-dir>` | the cursor, every step, its outputs and whether they still match (stale) | works (M3) |
 | `approve <run-dir> <gate>` | write `approvals/<gate>.json`, releasing the step behind that gate | works (M3) |
-| `recap ...` | non-interactive, JSON bridge to the engine | **G4** |
+| `recap projects\|new\|status\|<step>` | non-interactive bridge: one project step, `--project`, `--json`; `--force`/`init`/`collect` refused without the gate | works (M6) |
 | `scene brief/write/check/sheet/metrics` | agent scene-authoring loop | **G5** |
 | `analyze`, `script check`, `profile show` | perception pack, script validation, prompt profiles | **G7** |
 | `blueprint check`, `direct` | Production Blueprint validation; Director orchestration over backends | **G8** |

@@ -16,6 +16,11 @@ Engine verbs (M3 -- every decision lives in cutwright/engine/, these only parse 
   status   What a run folder's checkpoint says, step by step
   approve  Write the approval file that opens a gate in a run folder
 
+Recap Studio bridge (M6 -- logic in cutwright/recap.py, refusals included):
+  recap    projects | new <name> | status --project X | <step> --project X     (all --json)
+           `--force`, `init` and `collect` are refused unless the caller passes both
+           --i-know-this-destroys-work and --comms <COMMS id>.
+
 The legacy steps are dry by default. The engine verbs write only inside this folder, and only
 through cutwright/guard.py.
 """
@@ -29,9 +34,10 @@ from . import guard
 from . import frames
 from . import moments
 from . import probe
+from . import recap as bridge
 from . import subs
 from . import transcribe
-from .engine import checkpoint, gates, manifest, registry, report, validate
+from .engine import checkpoint, gates, manifest, ops, registry, report, validate
 from .engine.executors import kinocut as kino
 
 VERSION = "0.1.0"
@@ -672,15 +678,22 @@ def _print_op(data):
 
 def _print_envelope(data):
     rule()
-    print("ENVELOPE %s  %d of %d ops%s" % (data["stage"], data["returned"], data["count"],
-                                           "" if not data["truncated"] else "  (truncated)"))
+    print("ENVELOPE %s  %d op(s) of %d + %d command(s)%s"
+          % (data["stage"], data["returned"], data["count"], len(data["commands"]),
+             "" if not data["truncated"] else "  (truncated)"))
     rule()
-    for row in data["ops"]:
-        print("  %-16s %s" % (row["name"], row["executor"]))
-        print("      %s" % row["description"])
-        if row["required"]:
-            print("      needs %s" % ", ".join(row["required"]))
+    print("  %s" % data["why"])
     print("")
+    for row in data["ops"]:
+        print("  op      %-16s %s" % (row["name"], row["executor"]))
+        print("          %s" % row["description"])
+        if row["required"]:
+            print("          needs %s" % ", ".join(row["required"]))
+    for row in data["commands"]:
+        print("  command %-16s %s" % (row["name"], row["description"]))
+        print("          %s" % row["usage"])
+    print("")
+    print("  run      %s" % data["how_to_run"])
     print("  installed %s" % "  ".join("%s:%s" % (name, "yes" if ok else "NO")
                                        for name, ok in data["installed"].items()))
     rule()
@@ -896,6 +909,127 @@ def cmd_approve(args):
     return 0
 
 
+# ---------------------------------------------------------------------------
+# the Recap Studio bridge (M6 / G4): one pipeline step, machine-readable
+#
+# Thin on purpose again: the refusals, the subprocess, the stale check and the file diff all live
+# in `cutwright/recap.py`. This only parses, calls and prints.
+# ---------------------------------------------------------------------------
+def _print_recap(data, action):
+    rule()
+    if action == "projects":
+        print("PROJECTS  %d  (recapstudio\\Projects)" % data["count"])
+        rule()
+        if data["projects"]:
+            print_table([{"name": row["name"], "module": row["module"],
+                          "seg": row["segments"], "audio": row["audio_files"],
+                          "next": row["next"], "stale": ",".join(row["stale"]["stale"])}
+                         for row in data["projects"]],
+                        [("name", "project", 18), ("module", "module", 13),
+                         ("seg", "segs", 4), ("audio", "audio", 5), ("next", "next", 24),
+                         ("stale", "stale", 18)])
+        rule()
+        return
+    if action == "new":
+        print("CREATED %s  (%s, %d segment(s))" % (data["project"], data["module"],
+                                                   data["segments"]))
+        print("  folder  %s" % data["path"])
+        print("  next    %s" % data["next"])
+        rule()
+        return
+    if action == "status":
+        print("PROJECT %s  (%s)  %s" % (data["project"], data["module"], data["project_dir"]))
+        rule()
+        print("  segments %d   audio %d" % (data["segments"], data["audio_files"]))
+        timeline = data.get("timeline") or {}
+        if timeline:
+            print("  timeline %s frame(s) at %s fps, %sx%s"
+                  % (timeline["total_frames"], timeline["fps"], timeline["width"],
+                     timeline["height"]))
+        print("  outputs  %s" % "  ".join("%s:%s" % (name, "yes" if ok else "-")
+                                          for name, ok in data["outputs"].items()))
+        if data["stale"]["stale"]:
+            print("  STALE    %s" % ", ".join(data["stale"]["stale"]))
+        for line in data["problems"]:
+            print("  [!] %s" % line)
+        print("  next     %s" % data["next"])
+        if data["state_md_tail"]:
+            print("")
+            print("\n".join("  " + line for line in data["state_md_tail"].splitlines()[-6:]))
+        rule()
+        return
+    print("STEP %s  in %s  ->  %s  (exit %s, %ss)"
+          % (data["step"], data["project"], "ok" if data["ok"] else data.get("code", "failed"),
+             data["exit_code"], data["seconds"]))
+    rule()
+    print("  ran      %s" % " ".join(data["command"]))
+    print("  files    %d changed" % data["files_changed_count"])
+    for name in data["files_changed"][:10]:
+        print("    + %s" % name)
+    for line in data["problems"]:
+        print("  [!] %s" % line)
+    if data.get("stdout_tail"):
+        print("")
+        print("\n".join("  " + line for line in data["stdout_tail"].splitlines()[-12:]))
+    if not data["ok"] and data.get("suggested"):
+        print("")
+        print("  fix      %s" % data["suggested"])
+    rule()
+
+
+def cmd_recap(args):
+    """projects | new | status | <step> over ONE Recap Studio project. Logic in cutwright/recap.py."""
+    action = getattr(args, "action", "") or ""
+    try:
+        if action == "projects":
+            data = bridge.projects()
+        elif action == "new":
+            data = bridge.new(args.name, module=args.module,
+                              topic=getattr(args, "topic", "") or "")
+        elif action == "status":
+            data = bridge.status(args.project)
+        else:
+            data = bridge.run(args.project, action, only=getattr(args, "only", "") or "",
+                              engine=getattr(args, "engine", "") or "",
+                              preview=getattr(args, "preview", False),
+                              yes=getattr(args, "yes", False),
+                              demo=getattr(args, "demo", False),
+                              force=getattr(args, "force", False),
+                              override=getattr(args, "i_know_this_destroys_work", False),
+                              comms=getattr(args, "comms", "") or "",
+                              timeout=getattr(args, "timeout", bridge.DEFAULT_TIMEOUT))
+    except (bridge.BridgeError, guard.GuardError) as exc:
+        return _reject(args, "recap", exc)
+    if _json_mode(args):
+        _dump(data)
+    else:
+        _print_recap(data, action)
+    return 0 if data.get("ok") else 1
+
+
+def _add_recap_step(rsub, step, help_text):
+    """One `recap <step>` parser. The flags are the bridge's surface: no `--force` without the gate."""
+    q = rsub.add_parser(step, help=help_text)
+    q.add_argument("--project", required=True, help="folder under recapstudio\\Projects")
+    q.add_argument("--only", help="tts: comma-separated segment ids to (re)voice")
+    q.add_argument("--engine", help="tts: edge|kokoro|chatterbox|pocket|elevenlabs|minimax")
+    q.add_argument("--preview", action="store_true",
+                   help="tts: voice a few segments into audio_preview/")
+    q.add_argument("--yes", action="store_true", help="auto-confirm re-voice prompts")
+    q.add_argument("--demo", action="store_true", help="scenes|briefs: use the demo set")
+    q.add_argument("--force", action="store_true",
+                   help="REFUSED unless --i-know-this-destroys-work and --comms are both given")
+    q.add_argument("--i-know-this-destroys-work", action="store_true",
+                   dest="i_know_this_destroys_work", help="first half of the --force override")
+    q.add_argument("--comms", metavar="ID", help="COMMS entry id that records the override")
+    q.add_argument("--timeout", type=int, default=bridge.DEFAULT_TIMEOUT,
+                   help="seconds before the step is stopped (default %d)"
+                        % bridge.DEFAULT_TIMEOUT)
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_recap)
+    return q
+
+
 def build_parser():
     ap = argparse.ArgumentParser(
         prog="cutwright",
@@ -978,7 +1112,7 @@ def build_parser():
     p.add_argument("--json", action="store_true", help="print JSON")
     tsub = p.add_subparsers(dest="action", metavar="ACTION")
     q = tsub.add_parser("list", help="every op, or one stage")
-    q.add_argument("--stage", help="plan|assets|edit|graphics|qc|deliver")
+    q.add_argument("--stage", help="one of: %s" % "|".join(ops.STAGES))
     q.add_argument("--json", action="store_true", help="print JSON")
     q.set_defaults(func=cmd_tools)
     q = tsub.add_parser("describe", help="one op in full: params, executor, evidence")
@@ -1022,6 +1156,33 @@ def build_parser():
     p.add_argument("--note", default="", help="what was approved, in words")
     p.add_argument("--json", action="store_true", help="print JSON")
     p.set_defaults(func=cmd_approve)
+
+    # --- the Recap Studio bridge (M6 / G4): whitelisted steps, JSON, refusals -----------------
+    p = sub.add_parser("recap", help="run ONE Recap Studio pipeline step and get JSON back")
+    rsub = p.add_subparsers(dest="action", metavar="STEP")
+    rsub.required = True
+
+    q = rsub.add_parser("projects", help="every project: module, segments, audio, outputs, stale?")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_recap)
+
+    q = rsub.add_parser("new", help="copy _template into Projects/<name> (never runs init)")
+    q.add_argument("name")
+    q.add_argument("--module", default="movie_recap",
+                   help="movie_recap|show_recap|comic_recap|nba_minidoc|nba_story|real_story|ranking")
+    q.add_argument("--topic", default="", help="what the video is about")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_recap)
+
+    q = rsub.add_parser("status", help="one project: counts, outputs, stale code, next step")
+    q.add_argument("--project", required=True, help="folder under recapstudio\\Projects")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_recap)
+
+    for step in bridge.STEPS:
+        _add_recap_step(rsub, step, "run `recap.py %s` inside the project" % step)
+    for step, why in sorted(bridge.WHY_REFUSED.items()):
+        _add_recap_step(rsub, step, "REFUSED - %s" % why)
     return ap
 
 

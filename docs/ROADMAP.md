@@ -310,6 +310,25 @@ python -m cutwright tools envelope --stage edit --json             # <= 10 ops, 
 ```
 Plus the G4 "Done when": new project -> demo -> timeline -> render using only the CLI.
 
+**Result (2026-10-30): M6 DONE.** Bridge = `cutwright/recap.py` (390 lines, stdlib only) behind
+`python -m cutwright recap projects | new <name> --module M | status --project X | <step> --project X`,
+`--json` on every call. The project's own `recap.py` runs as a subprocess with `cwd` = the project and
+`RECAP_NONINTERACTIVE=1` + `RECAP_NO_REVEAL=1`; the JSON is `{ok, step, project, exit_code, seconds,
+command, stdout_tail, stderr_tail, files_changed[], problems[]}`, and a step that exits non-zero is a
+result (`code: step_failed`), not an exception. `--force`, `init`, `collect`, `comic`, `module`,
+`collect_one`, `characters`, `tiktok` are REFUSED (exit 2, `forbidden_flag`/`forbidden_step`) unless the
+caller passes BOTH `--i-know-this-destroys-work` and `--comms <id>`; the override then travels in the JSON.
+Discovery = `cutwright/engine/envelopes.py` (154 lines, new): every production stage gets a capped tool
+set - plan 6, edit 10, graphics 4, review 4, deliver 3 (cap `ops.MAX_ENVELOPE` = 10, checked over ops AND
+commands) - each op with its param schema, each command with its usage, plus one line of intent and the
+one way to execute a plan. `ops.STAGES` is now `plan, edit, graphics, review, deliver` (`qc` renamed
+`review`, `assets` deleted: no op, test or code used it).
+Verified: `python -m unittest tests.test_engine_cli tests.test_engine_registry -v` -> "Ran 74 tests in
+15.937s" / "OK"; `recap new/check/status/demo` ran for real (demo 6.0 s / 14 files, check 2.2 s / STATE.md);
+`recap tts --force` -> exit 2 `forbidden_flag`. NOT verified this session: `recap timeline` to completion
+and `recap remotion` (the G4 done-when render) - both outran the 30 s foreground cap and this session
+forbade background runs. Details: LOG (M6), COMMS C-015.
+
 ## M7 - Agent-owned scene loop (old G5)
 
 Spec: `docs/GOALS.md` section G5 unchanged (write TSX, static check, test render, look at frames, revise max 2 rounds), plus: scenes use only code graphics/footage/user images; the validator's provenance check runs on scene output.

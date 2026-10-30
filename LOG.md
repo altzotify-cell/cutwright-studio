@@ -1543,3 +1543,65 @@ Commit     - 66c1b97 "M5.5C: KineticText + MaskWipe (kit/3), one directed benchm
              that hash in HANDOFF.md. Left untracked on purpose: recapstudio/remotion/package-lock.json
              (existed before this session; whether the lock is committed is the owner's call).
 ```
+## 2026-10-30 (M6) - the agent bridge, and one focused tool set per stage
+
+```
+~15:05  M6       An agent can now drive a Recap Studio project and discover the engine without reading the
+                 code: `python -m cutwright recap <step> --project <name> --json` on one side, `tools
+                 envelope --stage <stage>` on the other. Five production stages, cap 10 tools each.
+TESTED     - the bridge against real folders: `recap projects --json` -> "count": 2 (m4job, regress; each
+             with module/segments/audio_files/outputs/stale/next). `recap new m6probe --module movie_recap
+             --topic "bridge probe"` -> "created": true, "module": "movie_recap", project.json rewritten,
+             "stale": {"stale": []} (a fresh copy matches _template). `recap demo --project m6probe --json`
+             -> "ok": true, "exit_code": 0, "seconds": 6.0, "files_changed_count": 14. `recap check
+             --project m6fresh --json` on a fresh ranking copy (0 segments) -> "ok": true, "seconds": 2.2,
+             "files_changed": ["STATE.md"], stdout tail "segments.json: no segments yet / NEXT: 1. Get
+             segments.json from Claude". `recap status --project regress` -> "segments 6 audio 6 /
+             timeline 514 frame(s) at 24 fps, 1920x1080 / next check". Both probe projects were deleted
+             afterwards; Projects is back to m4job + regress.
+TESTED     - the refusals (the whole point of the bridge): `recap tts --force --project regress --json` ->
+             exit 2, "code": "forbidden_flag", "message": "--force is refused: it rewrites outputs that
+             already exist", suggested "pass BOTH --i-know-this-destroys-work and --comms <COMMS id>".
+             `recap init|collect|comic --project regress` -> exit 2, "code": "forbidden_step", message
+             "`recap <step>` is not an unattended step: <why>". `--project ..\..` -> "bad_project_name";
+             `--project no_such_project_here` -> "unknown_project" + suggested "recap new ...".
+TESTED     - the envelopes: `tools envelope --stage S --json` for all five -> tools 6 (plan: 6 commands,
+             0 ops) / 10 (edit: 10 ops) / 4 (graphics: 3 ops + recap) / 4 (review: 4 commands) / 3 (deliver:
+             1 op + probe, status), each with "max_tools": 10, a "why" line and "how_to_run". Every op row
+             carries params {type, required, default, choices, minimum} + inputs + outputs + required; every
+             command row carries usage + args + flags. `tools envelope --stage edit` is exactly the 10 edit
+             ops and nothing else.
+TESTED     - `python -m unittest tests.test_engine_cli tests.test_engine_registry -v` -> "Ran 74 tests in
+             15.937s" / "OK". New: StageEnvelopeTest (8), RecapBridgeTest (8), RecapBridgeContractTest (5),
+             plus CLI coverage of all five envelopes.
+FAILED     - nothing in the suite. One real step did not finish: `recap timeline --project m6probe` outran
+             the 30 s foreground command cap and the harness killed it (no timeline.json written, no report).
+             Not retried: this session's rules were no background runs and no Start-Sleep polling.
+NOT TESTED - `recap timeline` to completion and `recap remotion`, i.e. the tail of the G4 "Done when"
+             (new -> demo -> timeline -> render). Both are minutes of work here. The bridge's own timeout
+             and step_failed paths ARE covered by tests (stubbed subprocess), and `new`/`demo`/`check`/
+             `status` prove cwd, the non-interactive env, the exit code and the file diff for real.
+DECISIONS  - 1. The envelope's unit is a TOOL, not an op: an op (params schema, executor) or an agent
+             command (usage line). plan and review own no ops in this catalogue - they read and judge - so
+             an ops-only envelope would hand those two stages an empty list. `how_to_run` carries the one
+             executor line for every stage, so no stage spends a slot on `run`.
+             2. `ops.STAGES` is now plan, edit, graphics, review, deliver: `qc` renamed `review`, `assets`
+             deleted (no op, test or code named it; the footage-handle contract is docs/ASSET_HANDLES.md).
+             An op keeps ONE home stage, so `tools list --stage S` and the envelope can never disagree; a
+             command may appear in two stages (probe at plan and deliver) because that is discovery, not a
+             second implementation.
+             3. The cap is enforced in `envelopes.build()` over ops AND commands, and a stage that would
+             exceed it raises `envelope_too_big` - pinned by a test, so nobody adds an 11th tool quietly.
+             4. The bridge never forwards its own `--json` to recap.py (there it is a FILE path) and always
+             sets RECAP_NONINTERACTIVE=1 + RECAP_NO_REVEAL=1; both pinned by a test. A non-zero exit is a
+             result (`ok: false`, `code: step_failed`), never an exception: the agent has to read it.
+             5. `problems[]` is parsed from known lines ([!], Error, "MISSING SHOT", tracebacks), not guessed.
+             6. `next_step()` counts SEGMENTS, not the existence of segments.json: the template ships an
+             empty one, and the first version therefore told a brand-new project to run `tts`.
+Commit     - this session's M6 commit (files: cutwright/recap.py new, cutwright/engine/envelopes.py new,
+             cli.py, engine/ops.py, engine/registry.py, tests x2, docs x5) on main, pushed to origin main;
+             the hash and the `git ls-remote` answer are written into HANDOFF.md by the commit that follows
+             this entry. Left untracked on purpose: recapstudio/remotion/package-lock.json (existed before
+             this session; whether the lock is committed is the owner's call).
+```
+

@@ -128,7 +128,7 @@ any image generator (forbidden).
 |---|---|
 | Pipeline manifests describing stages and gates | `pipelines/*.json` (JSON, stdlib), read by `engine/manifest.py` |
 | Stage-director skills (markdown the agent reads per stage) | `skills/<stage>.md`, short, one per stage |
-| Tool registry + support envelope + discovery | `engine/registry.py`: list ops by stage, describe one op, report what is installed |
+| Tool registry + support envelope + discovery | `engine/registry.py` + `engine/envelopes.py`: list ops by stage, describe one op, and one stage's focused tool set (its ops with schemas + the commands it needs, capped at 10) |
 | Schema-checked artifacts + checkpoints, resumable | `engine/checkpoint.py`, JSON schema checks in plain Python |
 | Human approval gates (script, scene plan, final) | `approvals/<gate>.json` written by the owner or agent after owner OK; manifest refuses to proceed |
 | Pre-compose validation, post-render self-review | `engine/validate.py`: plan checks before render, ffprobe/frame/audio checks after |
@@ -167,6 +167,9 @@ The manifest schema is specified in `docs/schemas/manifest.example.json` and `do
 ## Code hygiene
 
 - Do not grow `recap.py` (5,493 lines). New code in new modules + a thin bridge.
+- The agent bridge is `cutwright/recap.py` (M6): a project's own `recap.py` runs as a subprocess with
+  `cwd` = the project and `RECAP_NONINTERACTIVE=1`; `--force`/`init`/`collect` are refused unless the
+  caller passes both `--i-know-this-destroys-work` and `--comms <id>`.
 - New agent-facing code goes in `cutwright/` (stdlib only), under `cutwright/engine/`, writing through `guard.py`.
 - Each Recap project folder has its own copy of the template modules; `_template/` changes must be synced
   (the bridge warns about stale copies).

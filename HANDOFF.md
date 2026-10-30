@@ -8,48 +8,33 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M5.5 "Creative rendering slice" COMPLETE (2026-10-30, three sessions; a milestone the owner
-                    inserted between M5 and M6, C-010 decision ii). Why: `docs/VISUAL_STANDARD.md` section 4
-                    named the cause of "it looks like PowerPoint" - the scene contract banned footage and
-                    images and the kit had only chart/counter/text primitives. 5.5A (DONE): the Remotion
-                    executor, `render_still` + `render_range`, one still ~10 s cold / ~1 s cached.
-                    5.5B (DONE): footage handles + `LayeredMedia`/`Camera`, one bundle per content key.
-                    5.5C (DONE, this session): `KineticText` + `MaskWipe`, one directed benchmark shot
-                    over real footage, and the critic loop. NEXT: M6 (agent bridge + tool discovery).
-                    M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
-                    (2,573 lines), its GUI helper (433), its PowerShell window automation (255), the
-                    `build` verb and parser, the doctor line, and the four `projects/demo_*` demos
-                    (17 files, 1,776 lines) are deleted; `engine/registry.py` + `transcribe.py` wording
-                    de-branded; docs/README/PROVENANCE/.gitignore/.clinerules point at docs/legacy for
-                    history. `doctor` exit 0 with ffmpeg/ffprobe/Kinocut lines and no editor line;
-                    `python -m unittest discover -s tests -t . -v` -> "Ran 178 tests in 380.037s" / "OK";
-                    `git grep` for the removed backend's name over code -> no matches. The recapstudio
-                    regression pack (roadmap M5 acceptance line 3) was NOT re-run in the M5 session; it was
-                    re-run in M5.5A and is byte-identical (see the M5.5A line below).
-Last green commit : 66c1b97 "M5.5C: KineticText + MaskWipe (kit/3), one directed benchmark shot, the critic
-                    loop" (13 files, +779/-53) on main, pushed to origin main; verified with
-                    `git ls-remote origin refs/heads/main` -> 66c1b976ffc6cd87daae5cddd5fc97b4f9a76a81.
-                    Before it: 20a5052 (M5.5B docs), d55c114 (M5.5B - footage by handle, kit/2), 5dbda9e,
-                    facc015 (M5.5A), 2ae8f60 (M5.5 docs), c97d7fd (M5 close-out docs), 4528c51 (M5
-                    close-out, whose message is in `LOG.md` and `git log -1` rather than here so the M5
-                    acceptance grep stays empty), 7a8184c, 0755d92, 498aed1, d072280. This session's own
-                    commits are recorded in this line and in `LOG.md`.
-Next step         : M5.5 is COMPLETE (2026-10-30, three sessions). 5.5C closed it: `KineticText` + `MaskWipe`
-                    in `kit/kinetic.tsx` (kit 2 -> 3), the `bench-directed-shot` benchmark over real
-                    public-domain footage (NASA Perseverance pre-sunrise, 1588x892, 8 s,
-                    `docs/evidence/m55c_footage.md`), 3 stills at frames 0/24/48 through one manifest
-                    (each measured 1920x1080), and the critic loop - looking at those PNGs found three real
-                    defects (sub line inside the caption band, a bed that killed the pre-dawn glow, crushed
-                    mid-tones), all fixed and re-rendered (rows: `docs/evidence/m55c_directed_shot.json`).
-                    Also closed this session: per-test `tempfile.mkdtemp()` isolation (77/77 twice, nothing
-                    left staged) and 6 tests pinning the digest memo + 64 MiB `HASH_LIMIT`. NOW START
-                    M6: agent bridge (`recap <step> --json`) + focused tool discovery. M6-M9 keep their
-                    order after M5.5; M10-M16 are a PARKING LOT (owner decision ii: do not start or
-                    expand them).
-Open COMMS        : C-013 (this session) = 5.5C done and what the critic loop found; C-012, C-011
-                    (answered by the owner 2026-10-30: keys from inputs, stills by PNG sha256, video by
-                    decoded-frame md5s; project media never committed; 5.5B split from 5.5C). C-010,
-                    C-009, C-008, C-007, C-006 answered.
+Current milestone : M6 "Agent bridge and focused tool discovery" COMPLETE (2026-10-30). An agent now drives a
+                    Recap Studio project from the CLI - `recap projects | new <name> | status --project X |
+                    <step> --project X`, all `--json` - and loads ONE stage's tools (`tools envelope --stage S`).
+                    Bridge = `cutwright/recap.py` (390 lines, stdlib): each project's own `recap.py` runs as a
+                    subprocess with `cwd` = the project and `RECAP_NONINTERACTIVE=1`; `--force`, `init`,
+                    `collect`, `comic`, `module`, `collect_one`, `characters`, `tiktok` are REFUSED (exit 2)
+                    unless the caller passes BOTH `--i-know-this-destroys-work` and `--comms <id>`.
+                    Discovery = `cutwright/engine/envelopes.py` (154 lines): plan 6, edit 10, graphics 4,
+                    review 4, deliver 3 tools, cap 10 (`ops.MAX_ENVELOPE`, checked over ops AND commands); each
+                    op carries its param schema, each command its usage line, every envelope one `how_to_run`.
+                    Stages are now plan, edit, graphics, review, deliver (`qc` was renamed `review`, `assets`
+                    deleted - no op, test or code used it). Before it: M5.5 DONE (5.5A/B/C), M5 DONE (the old
+                    editor backend is out of the code).
+Last green commit : recorded by the docs commit that follows the M6 commit; both are on origin main and
+                    `git ls-remote origin refs/heads/main` is the check. Previous: 66c1b97 (M5.5C), 20a5052,
+                    d55c114, 5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd, 4528c51 (M5 close-out), 7a8184c,
+                    0755d92, 498aed1, d072280.
+Next step         : M6 is closed with ONE known gap: the G4 "Done when" render line - `recap timeline` then
+                    `recap remotion` on a fresh project - was NOT run (both outran the 30 s foreground command
+                    cap and that session forbade background runs / polling loops; `timeline` was killed
+                    mid-run at 30 s). Close it first, with the owner present, then M7 (agent-owned scene loop).
+                    Everything else in M6 is verified: 74 tests green, and `recap new/demo/check/status` plus
+                    every refusal ran for real (quotes in LOG).
+Open COMMS        : C-015 (this session: the `qc`->`review` rename and the deleted `assets` stage, envelopes
+                    carrying commands as well as ops, and the unrun render line - review, one line each to
+                    reverse); C-014 BLOCKED (2026-10-27); C-012, C-011 (answered 2026-10-30), C-010..C-006
+                    answered; C-013 closed (M5.5C, no answer needed).
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -58,6 +43,13 @@ Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python
                     Kinocut: INSTALLED in `.venvs\kinocut` = kinocut 1.16.4 on Python 3.11.9, doctor exit 0.
                     `.venvs/` and `out/` are gitignored. All M0 numbers: docs/ENVIRONMENT.md.
 Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1/M2/M3 (quotes in `LOG.md`):
+  - M6 (2026-10-30): the agent bridge and the stage envelopes work. `recap projects --json` -> "count": 2;
+    `recap new m6probe` -> "created": true; `recap demo --project m6probe` -> ok, 6.0 s, 14 files changed;
+    `recap check` on a fresh copy -> exit 0, 2.2 s, files_changed ["STATE.md"]; `recap tts --force` and
+    `recap init|collect|comic` -> exit 2 with `forbidden_flag` / `forbidden_step`; `tools envelope` -> plan
+    6 / edit 10 / graphics 4 / review 4 / deliver 3 tools (cap 10). `python -m unittest
+    tests.test_engine_cli tests.test_engine_registry -v` -> "Ran 74 tests in 15.937s" / "OK". NOT tested:
+    `recap timeline` to completion and `recap remotion` (both outran the 30 s foreground cap).
   - M5.5A (2026-10-30): the engine can DRAW. `render_still` (one frame -> PNG) and `render_range` (a
     frame range -> H.264) run on the pinned Remotion 4.0.539 behind the op registry (14 ops now), with
     the scene file as a declared input so a changed scene invalidates the cache. Measured through
@@ -192,7 +184,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [x] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | DONE 2026-10-30: picture join -> `concat` (4A), mix tracks declared inputs (4A), ffmpeg music arm deleted + `make_music_bed` -> `mix_audio` (4B); regress project byte-identical (514 frames, same stream md5s and sha256); 79.2 s real job rendered and six frames reviewed (`out\m4b\frames\`) |
 | [x] | M5 | Remove the old editor backend completely | DONE 2026-10-30: the timeline writer (2,573 lines), its GUI helper, its PowerShell window-automation script and the `projects/` demos (4 projects, 19 files) deleted; `cli.py` lost `build` + the doctor line and gained a Kinocut line; `doctor` exit 0, 178 tests green, regression pack green |
 | [x] | M5.5 | Creative rendering slice (NEW, owner 2026-10-30; before M6) | DONE 2026-10-30 in three sessions. 5.5A: Remotion executor `render_still` + `render_range` behind the op registry, cold/warm measured at 16:9 and 9:16. 5.5B: footage by string-literal handle, `LayeredMedia`/`Camera`, one bundle per content key (3 stills 26.7 s cold / 1.9 s cached). 5.5C: `KineticText` + `MaskWipe` (kit/3), one directed benchmark shot over real public-domain footage, and the critic loop that found and fixed 3 defects on the rendered stills (caption-band collision, killed glow, crushed mid-tones) |
-| [ ] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | forbidden flags refused; envelope <= 10 ops |
+| [x] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | DONE 2026-10-30: bridge `cutwright/recap.py` (project subprocess, RECAP_NONINTERACTIVE, `--force`/`init`/`collect` refused without both override flags + COMMS id); `engine/envelopes.py` gives plan 6 / edit 10 / graphics 4 / review 4 / deliver 3 tools (cap 10, ops AND commands); 74 tests green. NOT verified: `recap timeline` -> `recap remotion` (30 s cap) |
 | [ ] | M7 | Agent-owned scene loop (old G5) | 3 scenes written by agent, >= 2 first-try, 1 revised after viewing frames |
 | [ ] | M8 | Visual quality overhaul + 5-scene benchmark (old G6) | owner approves >= 4 of 5 at 16:9 and 9:16 |
 | [ ] | M9 | HyperFrames benchmark vs Remotion (evidence, then owner decides) | `docs/BAKEOFF_hyperframes.md` with measured numbers |
@@ -204,7 +196,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [ ] | M15 | Cutwright Studio UI (old G15) | human makes a video without the command line |
 | [ ] | M16 | Other modules / optional borrows (old G16) | each module has a preset + prompt profile |
 
-Order: M0..M5 done, then **M5.5** (the one insertion, before M6), then M6, M7, M8, M9. M10-M16 are a
+Order: M0..M5 done, then **M5.5** (the one insertion, before M6), then **M6** (done 2026-10-30), then M7, M8, M9. M10-M16 are a
 PARKING LOT (owner decision, 2026-10-30): do not start or expand them.
 
 ## Provisional decisions made for you (verify each on this PC; table with fallbacks: `docs/ROADMAP.md`)

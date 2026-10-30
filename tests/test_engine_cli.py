@@ -1,19 +1,28 @@
-"""The CLI verbs: tools / validate / run / resume / status / approve (M3, phase 3D).
+"""The CLI verbs: tools / validate / run / resume / status / approve (M3), and the Recap Studio
+bridge `recap ...` (M6 / G4).
 
 Run: python -m unittest tests.test_engine_cli -v      (repo root)
 
 Called in-process (`cli.main(argv)`) so a test sees exactly what a human or an agent sees: the exit
 code, the stdout, and - with --json - the document it can parse. The media is real; nothing here is
 mocked, because the point of these verbs is that they reach the real executors.
+
+Two exceptions to "nothing is mocked", both in `RecapBridgeContractTest`: the bridge's subprocess
+contract (argv, env, cwd, timeout) is checked against a replaced `subprocess.run`, because the real
+`recap timeline`/`remotion` steps cost minutes and a test may not. The refusals need no subprocess
+at all and are checked for real.
 """
 import contextlib
 import io
 import json
 import os
 import shutil
+import subprocess
 import unittest
+from unittest import mock
 
 from cutwright import cli, guard
+from cutwright import recap as bridge
 from tests import media_fixtures as mf
 
 WORK = os.path.join(guard.OUT, "engine_cli")
@@ -109,6 +118,23 @@ class DiscoveryTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertLessEqual(data["returned"], 10)
         self.assertEqual(data["stage"], "edit")
+
+    def test_envelope_covers_every_stage_with_ops_and_commands(self):
+        """M6: one call per stage, and each tool comes with the schema needed to use it."""
+        for stage in ("plan", "edit", "graphics", "review", "deliver"):
+            code, _text, data = run("tools", "envelope", "--stage", stage, "--json")
+            self.assertEqual(code, 0, stage)
+            self.assertEqual(data["stage"], stage)
+            self.assertGreater(data["tools"], 0, stage)
+            self.assertLessEqual(data["tools"], data["max_tools"], stage)
+            self.assertTrue(data["how_to_run"].strip(), stage)
+            for row in data["ops"]:
+                self.assertIn(row["kind"], ("op",), stage)
+                self.assertIn("params", row, stage)
+                self.assertIn("inputs", row, stage)
+            for row in data["commands"]:
+                self.assertEqual(row["kind"], "command", stage)
+                self.assertIn("usage", row, stage)
 
 
 class ValidateTest(unittest.TestCase):
@@ -231,6 +257,159 @@ class ApproveTest(unittest.TestCase):
         self.assertEqual(code, 0, released)
         self.assertTrue(released["ok"], released)
         self.assertEqual([row["status"] for row in released["steps"]], ["skipped", "done"])
+
+
+class RecapBridgeTest(unittest.TestCase):
+    """`recap ...` on real folders (M6 / G4): refusals first, then one real step on a throwaway copy.
+
+    Everything except `test_a_real_step_...` is decided before a subprocess starts, so the refusals
+    cost microseconds. The real step is `check` on a fresh template copy (~3 s): enough to prove
+    the cwd, the non-interactive env, the exit code and the file diff without starting a render.
+    """
+
+    NAME = "m6_bridge_test"
+
+    def tearDown(self):
+        path = os.path.join(bridge.PROJECTS, self.NAME)
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=True)
+
+    def test_projects_lists_real_folders(self):
+        code, _text, data = run("recap", "projects", "--json")
+        self.assertEqual(code, 0)
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["count"], len(data["projects"]))
+        row = data["projects"][0]
+        for key in ("name", "module", "segments", "audio_files", "outputs", "stale", "next"):
+            self.assertIn(key, row)
+
+    def test_force_is_refused_by_default(self):
+        code, _text, data = run("recap", "tts", "--force", "--project", "regress", "--json")
+        self.assertEqual(code, 2)
+        self.assertFalse(data["ok"])
+        self.assertEqual(data["code"], "forbidden_flag")
+        self.assertIn("i-know-this-destroys-work", data["suggested"])
+
+    def test_a_destructive_step_is_refused_with_its_reason(self):
+        for step in ("init", "collect", "comic"):
+            code, _text, data = run("recap", step, "--project", "regress", "--json")
+            self.assertEqual(code, 2, step)
+            self.assertEqual(data["code"], "forbidden_step", step)
+            self.assertIn("not an unattended step", data["message"])
+
+    def test_a_path_is_not_a_project_name(self):
+        for name in ("..\\..", "a/b", ""):
+            code, _text, data = run("recap", "check", "--project", name, "--json")
+            self.assertEqual(code, 2, name)
+            self.assertIn(data["code"], ("bad_project_name", "no_project"), name)
+
+    def test_an_unknown_project_says_what_to_do(self):
+        code, _text, data = run("recap", "check", "--project", "no_such_project_here", "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(data["code"], "unknown_project")
+        self.assertIn("recap new", data["suggested"])
+
+    def test_new_writes_project_json_without_running_init(self):
+        code, _text, data = run("recap", "new", self.NAME, "--module", "ranking", "--topic", "t",
+                                "--json")
+        self.assertEqual(code, 0, data)
+        self.assertEqual(data["module"], "ranking")
+        path = os.path.join(bridge.PROJECTS, self.NAME)
+        meta = guard.read_json(os.path.join(path, "project.json"), {})
+        self.assertEqual(meta["module"], "ranking")
+        self.assertEqual(meta["topic"], "t")
+        self.assertTrue(os.path.isfile(os.path.join(path, "recap.py")))
+        self.assertEqual(data["stale"]["stale"], [])          # a fresh copy matches _template
+        code, _text, again = run("recap", "new", self.NAME, "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(again["code"], "project_exists")
+
+    def test_status_of_a_fresh_project_points_at_the_first_step(self):
+        run("recap", "new", self.NAME, "--json")
+        code, _text, data = run("recap", "status", "--project", self.NAME, "--json")
+        self.assertEqual(code, 0, data)
+        self.assertEqual(data["segments"], 0)                 # the template's segments.json is empty
+        self.assertIn("demo", data["next"])
+        self.assertFalse(data["outputs"]["timeline"])
+
+    def test_a_real_step_runs_in_the_project_and_reports_its_files(self):
+        run("recap", "new", self.NAME, "--json")
+        code, _text, data = run("recap", "check", "--project", self.NAME, "--json")
+        self.assertEqual(code, 0, data)
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["exit_code"], 0)
+        self.assertTrue(data["noninteractive"])
+        self.assertIn("recap.py", " ".join(data["command"]))
+        self.assertNotIn("--json", data["command"])           # the bridge's flag never reaches recap.py
+        self.assertIn("STATE.md", data["files_changed"])
+
+
+class RecapBridgeContractTest(unittest.TestCase):
+    """The subprocess contract with `subprocess.run` replaced: no step is really executed."""
+
+    PROJECT = "regress"          # a real project folder, so project_dir() resolves
+
+    def _fake(self, code=0, out=b"", err=b""):
+        seen = {}
+
+        def fake(argv, **kwargs):
+            seen["argv"] = list(argv)
+            seen.update(kwargs)
+            return subprocess.CompletedProcess(argv, code, out, err)
+
+        return seen, fake
+
+    def test_argv_env_and_cwd_are_what_recap_py_expects(self):
+        seen, fake = self._fake()
+        with mock.patch.object(bridge.subprocess, "run", fake):
+            data = bridge.run(self.PROJECT, "tts", only="a,b", engine="edge")
+        self.assertTrue(data["ok"], data)
+        self.assertEqual(seen["argv"][1:], ["recap.py", "tts", "--only", "a,b", "--engine", "edge"])
+        self.assertEqual(seen["env"]["RECAP_NONINTERACTIVE"], "1")
+        self.assertEqual(seen["env"]["RECAP_NO_REVEAL"], "1")
+        self.assertEqual(seen["cwd"], os.path.join(bridge.PROJECTS, self.PROJECT))
+        self.assertNotIn("--force", seen["argv"])
+        for key in ("ok", "step", "project", "exit_code", "seconds", "stdout_tail",
+                    "files_changed", "problems"):
+            self.assertIn(key, data)
+
+    def test_a_failed_step_is_a_result_not_an_exception(self):
+        seen, fake = self._fake(code=1, out=b"MISSING SHOT d_04\n[!] scene 3 fell back\n",
+                                err=b"Traceback (most recent call last):\n")
+        with mock.patch.object(bridge.subprocess, "run", fake):
+            data = bridge.run(self.PROJECT, "check")
+        self.assertFalse(data["ok"])
+        self.assertEqual(data["exit_code"], 1)
+        self.assertEqual(data["code"], "step_failed")
+        self.assertIn("MISSING SHOT d_04", data["problems"])
+        self.assertIn("[!] scene 3 fell back", data["problems"])
+        self.assertTrue(any("Traceback" in row for row in data["problems"]))
+        self.assertIn("problems[]", data["suggested"])
+
+    def test_a_timeout_is_reported_as_step_timeout(self):
+        def fake(argv, **kwargs):
+            raise subprocess.TimeoutExpired(argv, kwargs.get("timeout", 1), output=b"partial\n")
+
+        with mock.patch.object(bridge.subprocess, "run", fake):
+            data = bridge.run(self.PROJECT, "remotion", timeout=5)
+        self.assertFalse(data["ok"])
+        self.assertEqual(data["code"], "step_timeout")
+        self.assertIn("partial", data["stdout_tail"])
+
+    def test_the_force_gate_needs_both_halves(self):
+        self.assertEqual(bridge.check("tts", force=True, override=True, comms="C-013"),
+                         {"force": True, "comms": "C-013"})
+        for kwargs in ({"override": True}, {"comms": "C-013"}, {}):
+            with self.assertRaises(bridge.BridgeError) as ctx:
+                bridge.check("tts", force=True, **kwargs)
+            self.assertEqual(ctx.exception.code, "forbidden_flag")
+        self.assertEqual(bridge.check("tts"), {})
+
+    def test_an_unknown_step_lists_the_allowed_ones(self):
+        with self.assertRaises(bridge.BridgeError) as ctx:
+            bridge.check("render_everything")
+        self.assertEqual(ctx.exception.code, "unknown_step")
+        self.assertIn("timeline", ctx.exception.suggested)
 
 
 if __name__ == "__main__":

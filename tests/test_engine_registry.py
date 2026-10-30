@@ -12,6 +12,7 @@ Four layers, deliberately separated:
   * `RegistryTest`    - routing: matrix default, an override only with a reason, a missing
     executor reported instead of silently swapped, envelope capped, params checked on the way.
 """
+import argparse
 import math
 import os
 import struct
@@ -19,8 +20,8 @@ import unittest
 import wave
 from unittest import mock
 
-from cutwright import guard, probe
-from cutwright.engine import ops, registry
+from cutwright import cli, guard, probe
+from cutwright.engine import envelopes, ops, registry
 from cutwright.engine.executors import ExecutorError, ExecutorTimeout
 from cutwright.engine.executors import ffmpeg, kinocut
 from tests import media_fixtures as mf
@@ -392,6 +393,91 @@ class RegistryTest(unittest.TestCase):
         report = registry.tools_report()
         self.assertEqual(report["ops"], len(ops.OPS))
         self.assertEqual(sum(report["stages"].values()), len(ops.OPS))
+
+
+class StageEnvelopeTest(unittest.TestCase):
+    """M6: one focused tool set per production stage, capped, complete enough to write a step."""
+
+    def test_the_stages_are_the_five_production_stages(self):
+        self.assertEqual(ops.STAGES, ("plan", "edit", "graphics", "review", "deliver"))
+        self.assertEqual(tuple(envelopes.STAGE_FOCUS), ops.STAGES)
+
+    def test_every_stage_has_an_envelope_under_the_cap(self):
+        for stage in ops.STAGES:
+            data = registry.envelope(stage)
+            self.assertTrue(data["ok"], stage)
+            self.assertTrue(data["why"].strip(), stage)
+            self.assertGreater(data["tools"], 0, stage)
+            self.assertLessEqual(data["tools"], ops.MAX_ENVELOPE, stage)
+            self.assertEqual(data["tools"], len(data["ops"]) + len(data["commands"]), stage)
+            self.assertTrue(data["how_to_run"].strip(), stage)
+
+    def test_every_op_is_shown_in_exactly_one_stage(self):
+        shown = [row["name"] for stage in ops.STAGES for row in registry.envelope(stage)["ops"]]
+        self.assertEqual(sorted(shown), sorted(ops.names()))
+
+    def test_every_op_row_carries_the_schema_to_write_a_step(self):
+        for row in registry.envelope("edit")["ops"]:
+            self.assertEqual(row["kind"], "op")
+            self.assertEqual(row["stage"], "edit")
+            for key in ("name", "executor", "description", "inputs", "outputs", "params"):
+                self.assertIn(key, row, row["name"])
+            self.assertEqual(row["required"],
+                             [key for key, param in row["params"].items() if param["required"]])
+            for param in row["params"].values():
+                self.assertIn("type", param)
+                self.assertIn("required", param)
+                self.assertNotIn("doc", param)      # prose stays behind `tools describe <op>`
+
+    def test_the_edit_limit_truncates_and_is_recorded(self):
+        full = registry.envelope("edit")
+        self.assertEqual(full["returned"], len(ops.by_stage("edit")))
+        self.assertFalse(full["truncated"])
+        small = registry.envelope("edit", limit=3)
+        self.assertEqual(small["returned"], 3)
+        self.assertTrue(small["truncated"])
+        self.assertEqual(len(small["ops"]), 3)
+
+    def test_an_unknown_stage_is_refused_with_the_list(self):
+        with self.assertRaises(registry.RegistryError) as ctx:
+            registry.envelope("qc")
+        self.assertEqual(ctx.exception.code, "unknown_stage")
+        self.assertIn("review", ctx.exception.suggested)
+
+    def test_a_stage_that_would_exceed_the_cap_is_refused(self):
+        too_many = {"why": "everything at once", "commands": ("tools",)}
+        with mock.patch.dict(envelopes.STAGE_FOCUS, {"edit": too_many}):
+            with self.assertRaises(registry.RegistryError) as ctx:
+                registry.envelope("edit")
+        self.assertEqual(ctx.exception.code, "envelope_too_big")
+        self.assertIn("cap %d" % ops.MAX_ENVELOPE, ctx.exception.message)
+
+    def test_commands_are_real_cli_verbs_with_real_flags(self):
+        """A declared command, argument or flag that the CLI does not have is a lie to the agent."""
+        parser = cli.build_parser()
+        sub = [action for action in parser._actions
+               if isinstance(action, argparse._SubParsersAction)][0]
+        def options_of(parser):
+            """Every option string a parser accepts, including the leaves of its subcommands."""
+            found = {option for action in parser._actions for option in action.option_strings}
+            for action in parser._actions:
+                if isinstance(action, argparse._SubParsersAction):
+                    for leaf in action.choices.values():
+                        found |= options_of(leaf)
+            return found
+
+        for name, row in envelopes.COMMANDS.items():
+            self.assertIn(name, sub.choices, name)
+            leaf = sub.choices[name]
+            options = options_of(leaf)
+            for flag in row["flags"]:
+                self.assertIn(flag, options, "%s %s" % (name, flag))
+            positionals = [action.dest for action in leaf._actions
+                           if not action.option_strings
+                           and not isinstance(action, argparse._SubParsersAction)]
+            self.assertEqual(sorted(positionals), sorted(row["args"]), name)
+            self.assertTrue(row["usage"].startswith("python -m cutwright "), name)
+
 
 
 if __name__ == "__main__":

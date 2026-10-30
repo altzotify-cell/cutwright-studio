@@ -3,7 +3,7 @@
 Three questions, three answers, no media touched:
 
   * `list_ops()` / `describe()` - discovery behind `tools list` and `tools describe`
-  * `envelope(stage)`           - at most `MAX_ENVELOPE` op descriptions for ONE stage, so an
+  * `envelope(stage)`           - the focused tool set for ONE stage (`envelopes.py`, M6), so an
                                   agent never loads the whole catalogue into its context
   * `route(name, ...)`          - op -> executor, bound function, params checked, reason recorded
 
@@ -23,7 +23,7 @@ import shutil
 import subprocess
 
 from cutwright import guard
-from cutwright.engine import ops
+from cutwright.engine import envelopes, ops
 from cutwright.engine.executors import ffmpeg, kinocut, remotion
 
 MODULES = {"kinocut": kinocut, "ffmpeg": ffmpeg, "remotion": remotion}   # "current" (recap helpers) is wired in M4
@@ -128,25 +128,24 @@ def describe(name):
 
 
 def envelope(stage, limit=ops.MAX_ENVELOPE):
-    """At most `limit` op descriptions for ONE stage - the only catalogue an agent should get."""
+    """ONE stage's focused tool set: at most `limit` ops, plus the commands that stage needs.
+
+    Built in `envelopes.py` (M6): ops by their home stage with the schema needed to write a step,
+    the agent commands that stage reaches for, and one line of intent. The cap is checked over ops
+    AND commands together, so no stage can hand an agent more than `MAX_ENVELOPE` tools.
+    """
     if stage not in ops.STAGES:
-        raise RegistryError("-", "unknown stage %r" % (stage,), code="unknown_stage",
+        raise RegistryError("stage", "unknown stage %r" % (stage,), code="unknown_stage",
                             suggested="one of: %s" % ", ".join(ops.STAGES))
-    specs = ops.by_stage(stage)
-    shown = specs[:max(1, int(limit))]
-    return {
-        "stage": stage,
-        "count": len(specs),
-        "returned": len(shown),
-        "truncated": len(shown) < len(specs),
-        "ops": [{"name": spec.name, "description": spec.description,
-                 "executor": spec.executor, "inputs": list(spec.inputs),
-                 "outputs": list(spec.outputs),
-                 "required": [key for key, param in spec.params.items() if param.required],
-                 "params": {key: param.type for key, param in spec.params.items()}}
-                for spec in shown],
-        "installed": {name: row["ok"] for name, row in installed().items()},
-    }
+    try:
+        out = envelopes.build(stage, limit=limit)
+    except envelopes.EnvelopeError as exc:
+        raise RegistryError(stage, str(exc), code="envelope_too_big",
+                            suggested="narrow STAGE_FOCUS in cutwright/engine/envelopes.py")
+    data = {"ok": True}
+    data.update(out)
+    data["installed"] = {name: row["ok"] for name, row in installed().items()}
+    return data
 
 
 def tools_report():

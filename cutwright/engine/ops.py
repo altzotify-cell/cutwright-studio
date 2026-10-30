@@ -14,7 +14,9 @@ so a typo costs microseconds instead of a render. Deterministic, never retried.
 """
 import dataclasses
 
-STAGES = ("plan", "assets", "edit", "graphics", "qc", "deliver")
+# M6: the production stages an agent works in. `qc` is named `review` (it is the stage that judges
+# the cut) and `assets` is gone: no op ever lived there and the footage-handle contract is docs.
+STAGES = ("plan", "edit", "graphics", "review", "deliver")
 MAX_ENVELOPE = 10          # roadmap: never hand an agent the whole catalogue in one call
 
 
