@@ -14,9 +14,9 @@ Current milestone : M4  (move Recap Studio's editing onto the engine where M2 pr
                     media) and Recap's picture join runs on the engine (`concat`, Kinocut merge) with
                     byte-identical regression output. NOT started: 4B (deleting the superseded code)
                     and the 60-90 s real job (roadmap step 5).
-Last green commit : 4f7291c "M3 docs: record the close-out commit hash b831112". The 4A commit hash
-                    is recorded in LOG.md (entry "2026-10-30 - M4 phase 4A"). Before it: b831112,
-                    1f2f2cf, 29fb366, 3ef6c0b.
+Last green commit : d072280 "M4 4A: mix tracks are declared inputs; Recap's picture join runs on the
+                    engine" (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M4 phase 4A"), pushed
+                    to main. Before it: 4f7291c, b831112, 1f2f2cf, 29fb366, 3ef6c0b.
 Next step         : M4 phase 4B - delete the superseded picture-join code in recap.py in its own
                     commit, then the 60-90 s real job. Nothing of 4B starts without the owner's go.
 Open COMMS        : C-008 = 4A decisions, parity numbers, three findings and two questions (approve

@@ -173,7 +173,7 @@ your go.
 
 
 ## C-008 | 2026-10-30 | agent -> owner | INFO | OPEN
-Commit: this commit (hash in LOG.md, entry "2026-10-30 - M4 phase 4A")
+Commit: d072280 (M4 phase 4A, pushed to main)
 Files: `cutwright/engine/ops.py`, `cutwright/engine/manifest.py`,
        `recapstudio/_template/engine_bridge.py` (new), `recapstudio/_template/recap.py` (`join_av` only),
        `tests/test_engine_mix_inputs.py` (new), `tests/test_engine_bridge.py` (new),

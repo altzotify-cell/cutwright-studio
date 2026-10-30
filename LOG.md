@@ -935,3 +935,11 @@ DECISIONS  - 1. The mix track FILE is a declared input and only its settings sta
              ("Tracks sum at unity without normalization and may clip") is surfaced in the step's
              warnings and NOT auto-corrected; it needs a rule when SFX arrive (M12).
 
+Commit     - d072280 "M4 4A: mix tracks are declared inputs; Recap's picture join runs on the engine"
+             (13 files, +609/-39), pushed to origin main; `git ls-remote origin refs/heads/main` ->
+             "d0722807e7dc356c38d2f15300faf5c2d36c8731  refs/heads/main" == local HEAD. The commit
+             that follows this entry only records that hash in HANDOFF.md + here.
+             `recapstudio/remotion/package-lock.json` stays UNTRACKED as instructed (C-006).
+
+
+
