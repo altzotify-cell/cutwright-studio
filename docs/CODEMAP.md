@@ -1,4 +1,6 @@
-> **NOTE (2026-10-29).** `cutwright/mlt.py` and `cutwright/gui.py` are scheduled for deletion (M5); `cutwright/engine/` is added in M3.
+> **NOTE (2026-10-30).** `cutwright/mlt.py`, `cutwright/gui.py` and `cutwright/tools/` are GONE (M5):
+> the old editor backend, its window automation and the demo `projects/` are deleted. `cutwright/engine/`
+> (M3) is the only layer that calls Kinocut or editing ffmpeg.
 > Line numbers for `recap.py` drift: re-grep before reading a range.
 
 # Code map (read ranges, not whole files)
@@ -70,15 +72,13 @@ tools/test_scenes.mjs       bundle once + render sample frames
 
 | file | lines | what |
 |---|---|---|
-| `cli.py` | 775 | argparse entry; `cmd_doctor` (now includes `_doctor_recap`), probe, subs, moments, verify, transcribe, build |
+| `cli.py` | ~750 | argparse entry; `cmd_doctor` (includes `_doctor_recap`, Kinocut line), probe, subs, moments, verify, transcribe, and the M3 engine verbs |
 | `guard.py` | 150 | the write invariant (`assert_writable`, `write_text/json`), `RECAP` path constant, hashing |
 | `probe.py` `subs.py` `moments.py` `frames.py` `transcribe.py` | | perception tools |
-| `mlt.py` | 2,573 | plan -> Shotcut `.mlt` + checks. HUGE: never read whole; see legacy HANDOFF_FULL |
-| `gui.py` | | small Windows helper UI |
-| `tools/shotcut_window.ps1` | | Shotcut window automation |
+| `engine/` | | `ops.py` (op data: stage, executor, params), `registry.py` (discovery + routing), `manifest.py` (run/resume/checkpoints), `checkpoint.py`, `gates.py`, `validate.py`, `report.py`, `ids.py`, `executors/{kinocut,ffmpeg}.py` |
 
-Other: `projects/demo_*` (Cutwright demo plans + checks), `vendor/videopad/` (VideoPad automation research,
-PowerShell), `docs/`, `LOG.md`, `COMMS.md`, `PROVENANCE.md`, `REPORT.md`, `README.md` (Cutwright details).
+Other: `vendor/videopad/` (VideoPad automation research, PowerShell), `docs/`, `LOG.md`, `COMMS.md`,
+`PROVENANCE.md`, `README.md`, `docs/legacy/` (superseded reports and handoffs).
 
 ## Greps worth knowing
 

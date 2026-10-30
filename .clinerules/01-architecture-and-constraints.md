@@ -4,7 +4,7 @@ Project = one repo, two halves: `cutwright/` (agent tools, stdlib only: percepti
 `cutwright/engine/` executor layer) and `recapstudio/` (the video engine: Python + Remotion).
 Goal: an AI agent (you) makes ANY kind of video by calling typed tools. Architecture: `docs/ARCHITECTURE.md`.
 Editing infrastructure = Kinocut first, FFmpeg direct where justified by tests. Graphics = Remotion.
-Shotcut is being REMOVED.
+The old editor backend was deleted in M5 (2026-10-30) and must not return.
 
 ## Executor rule
 - Use Kinocut when `docs/CAPABILITY_MATRIX.md` says it passed; use direct FFmpeg (a named typed op) when it did not,
@@ -16,8 +16,8 @@ Shotcut is being REMOVED.
 ## Hard exclusions (never)
 - No AI-generated images or video, ever. Use real footage, user assets, or code-made graphics; or report the asset
   missing.
-- No FireRed-OpenStoryline. No Shotcut in the automated pipeline or as a fallback. No copying OpenMontage code
-  (AGPL-3.0; ideas only; ask first).
+- No FireRed-OpenStoryline. No editor-application backend in the automated pipeline or as a fallback
+  (deleted in M5). No copying OpenMontage code (AGPL-3.0; ideas only; ask first).
 - No paid API / cloud service / heavy model without the owner's explicit yes. No new npm packages without the owner.
   Remotion stays 4.0.539.
 - Never print, commit or paste `keys.env`, API keys, `voices/`, `models/`, `venvs/`, `.venvs/`.

@@ -1,443 +1,142 @@
-> **ARCHITECTURE CHANGE (2026-10-29).** Editing infrastructure is now **Kinocut first, FFmpeg direct where tests justify it**; Remotion
-> renders motion graphics; **Shotcut is being removed** (milestone M5). The Cutwright sections further down still describe the Shotcut
-> `build` workflow and are scheduled for pruning. Agents: start at `.clinerules`, then `HANDOFF.md`, then `docs/ROADMAP.md`.
-
 # Cutwright (merged with Recap Studio)
 
 **One project, two halves.** An engine of tools an AI agent calls to make videos of any kind.
 
 | half | folder | role |
 |---|---|---|
-| Cutwright | `cutwright/` | agent tools (stdlib only): probe, subtitle gate, moments, frame verification, whisper, Shotcut `.mlt` writer + checks, write guard |
+| Cutwright | `cutwright/` | agent layer (stdlib only): `doctor`, `probe`, subtitle gate, moments, frame verification, whisper, write guard, and the **engine** (manifest -> typed ops on Kinocut / FFmpeg) |
 | Recap Studio | `recapstudio/` | the video engine: Python pipeline (script, TTS, frame-exact timing, `timeline.json`) + Remotion renderer + agent-written TSX scenes + web UI; Premiere XML / VideoPad / ffmpeg exports |
 
-Agents (DeepSeek via Cline, or any other) start at **`.clinerules`**, then **`HANDOFF.md`** (status + goal
-table). Specs are in `docs/` (`GOALS.md`, `ARCHITECTURE.md`, `TOOLS.md`, `CODEMAP.md`, `VISUAL_STANDARD.md`).
-Old handoffs and the Recap Studio gameplan are in `docs/legacy/`.
+**Editing infrastructure (2026-10-29, executed in M4/M5):** Kinocut first, direct FFmpeg where the
+measured capability matrix says Kinocut did not pass, Remotion for motion graphics. There is **no
+editor-application backend**: the old timeline writer, its window automation and its checks were
+deleted in M5 (2026-10-30). Nothing in the pipeline opens an editor, and none may come back.
 
-Quick start on Windows: run `recapstudio\SETUP.bat` (Node + Remotion + voice tools), then
-`python -m cutwright doctor`. The Cutwright sections below describe the Shotcut/MLT half and are
-unchanged except where the layout block says otherwise.
+Agents (DeepSeek via Cline, or any other) start at **`.clinerules/`**, then **`HANDOFF.md`** (status +
+milestone table), then **`docs/ROADMAP.md`**. Specs are in `docs/` (`ARCHITECTURE.md`, `CODEMAP.md`,
+`TOOLS.md`, `CAPABILITY_MATRIX.md`, `KINOCUT_FINDINGS.md`, `VISUAL_STANDARD.md`). Old handoffs,
+reports and the v2 vision are in `docs/legacy/`.
 
----
-
-# Cutwright
-
-Agent control of a Desktop video-editing fork: perception first, editing second.
-
-The half that writes an edit today is `build`: a JSON list of cuts goes in, a
-Shotcut `.mlt` project comes out, and seven checks prove the file is what it
-claims to be -- the XML resolves, every effect name exists in the installed
-Shotcut, the track lengths add up, a small render really shows the frames the
-edit asked for, a fade (if the plan asks for one) really darkens the picture and
-the sound at the ends it was asked for, a title really appears in the band and
-frames the plan gave it, and the title survives the rewrite Shotcut performs on
-that file when it opens it.
-
-This is a **self-contained fork**. All copied code and text lives in `vendor/`
-with a SHA256 manifest. Footage is never copied -- source files are referenced
-by absolute path and read only.
-
-## What is and is not in this repo
-
-Code, docs and one demo project are committed (108 files, 0.9 MB). The three
-things Cutwright wraps are **not**, because together they are 1.2 GB and none of
-them is mine to redistribute:
-
-| absent from git | size (MiB) | published at |
-|---|---|---|
-| `shotcut\Shotcut\` -- Shotcut 26.9.27, provides `melt.exe` 7.41.0 | 522 MB | `github.com/mltframework/shotcut/releases`, v26.9.27 win64 zip |
-| `models\ggml-small.en.bin` -- whisper small.en, f16 | 465 MB | `huggingface.co/ggerganov/whisper.cpp` |
-| `bin\` -- whisper.cpp 1.9.5 build, plus both downloaded zips | 234 MB | `github.com/ggml-org/whisper.cpp/releases`, build `b5454` |
-| `testclips\` -- the footage the demo cuts from | 35 MB | not mine to publish; use your own |
-
-`PROVENANCE.md` has the URL, byte size and sha256 each one must match. Unpack
-them at the paths above, relative to this folder: `.gitignore` only keeps them
-out of git, nothing in the code assumes a different location.
-`python -m cutwright doctor` lists what is missing and what stops working
-without it. The demo projects are committed without their `check\` folders (proof
-renders and the lossless pairs the title check compares, tens of MB); `build`
-recreates those.
-
-## The one invariant
-
-Every write goes through `cutwright/guard.py`. It refuses to write:
-
-* anywhere inside either original project folder
-* anywhere outside this folder
-
-That is enforced in one place, tested by `doctor`, and nothing in the codebase
-opens a file for writing any other way.
-
-```
-C:\Users\user\Downloads\RecapStudio_v2_ui_videopad   read only
-C:\Users\user\Downloads\videopad                    read only
-C:\Users\user\Desktop\Cutwright\                     the only writable place
-```
+Quick start on Windows: run `recapstudio\SETUP.bat` (Node + Remotion + voice tools), install Kinocut
+once into its own venv (`docs/KINOCUT_FINDINGS.md` section 1), then `python -m cutwright doctor`.
 
 ## Layout
 
 ```
-Cutwright\
-  recapstudio\     the video engine (live code, not vendored): studio.py, _template\, remotion\, web\
-  vendor\videopad\ copied VideoPad automation research (47 files)
-    MANIFEST.sha256 every vendored file's hash (vendor\ only)
-  docs\            ARCHITECTURE, GOALS, TOOLS, CODEMAP, VISUAL_STANDARD, legacy\
-  bin\whisper\      whisper.cpp 1.9.5 binaries        (not in git, see PROVENANCE.md)
-  bin\_dl\          the downloaded zips, kept so their hashes stay re-checkable
-  models\           ggml weights, ggml-small.en.bin    (not in git, 465 MiB)
-  shotcut\Shotcut\  Shotcut 26.9.27 portable, incl. melt.exe 7.41.0   (not in git)
-  testclips\        short samples cut from real footage for tests      (not in git)
-  cutwright\        the new tool, standard library only
-    guard.py        write invariant, hashing, provenance
-    probe.py        ffprobe/ffmpeg, stream discovery, subtitle extraction
-    subs.py         the subtitle gate: find a transcript, then prove it is usable
-    moments.py      transcript -> beats -> ranked candidate moments
-    frames.py       frame verification: grade picks against pictures
-    transcribe.py   whisper.cpp fallback: produce a transcript, gate it too
-    mlt.py          plan -> Shotcut .mlt, then the seven checks on the file
-    cli.py          doctor / probe / subs / moments / verify / transcribe / build
-  projects\<name>\   plan.json + <name>.mlt + checks.json + digest.txt + check\
-  out\<video>\      per-video analysis output
-  out\cache\        melt's filter/transition/producer lists, keyed to that exe
+cutwright\            agent layer (stdlib only)
+  cli.py              every verb below; parses and prints, decides nothing
+  guard.py            the write invariant: nothing outside this folder is ever written
+  probe.py subs.py moments.py frames.py transcribe.py    perception tools
+  engine\             ops.py (op data), registry.py (discovery + routing),
+                      manifest.py (run/resume/checkpoints), validate.py, gates.py,
+                      report.py, ids.py, checkpoint.py,
+                      executors\kinocut.py, executors\ffmpeg.py
+recapstudio\          the video engine (Python + Remotion); _template\recap.py is the pipeline,
+                      _template\engine_bridge.py the only bridge to cutwright.engine
+docs\                 architecture, roadmap, capability matrix, evidence, schemas
+.venvs\kinocut\       isolated Kinocut CLI (not in git)
+testclips\ out\        short samples and per-video analysis output (not in git)
 ```
 
 ## What works today
 
-**`subs` -- the subtitle gate.** Walks a trust ladder (`your file` > `sidecar`
-> `embedded text track` > `needs_whisper`) and validates every candidate before
-anything downstream is allowed to use it:
-
-| check | catches |
+| command | does |
 |---|---|
-| `has_cues`, `cue_durations`, `monotonic` | empty, inverted or shuffled timing |
-| `in_range`, `covers_end` | subtitles for a **different cut or film** |
-| `script_latin` | the Spanish or Japanese track |
-| `no_mojibake` | cp1251 read as UTF-8 |
-| `no_drawing_commands` | ASS vector art leaking in as text |
-| `cue_density`, `cue_overlap`, `cue_length` | sign-layer spam, machine output |
-| `styling`, `source_cleanliness` | decorative layers, markup pollution |
+| `doctor` | what this machine has: ffmpeg, whisper, **Kinocut, Recap Studio engine, Node, Remotion, Python modules**; proves the write guard |
+| `probe <file>` | streams, duration, subtitle tracks |
+| `subs <video>` | find the best subtitle source and prove it usable |
+| `moments <video>` | transcript -> beats -> ranked candidate moments + agent digest |
+| `verify <video>` | grade picks against frames: verified / retimed / replaced |
+| `transcribe <video>` | whisper.cpp transcript, then gated (needs `bin\`, `models\`) |
+| `tools list\|describe\|envelope` | what the engine can do, one op or one stage at a time |
+| `validate <manifest>` | pre-render check: ops, params, refs, budget, asset provenance |
+| `run <manifest>` | execute it; cached steps are skipped on a re-run |
+| `resume <run-dir>` / `status <run-dir>` | continue from the checkpoint / read it step by step |
+| `approve <run-dir> <gate>` | release the step sitting behind an approval gate |
 
-It also does real cleanup that `recap.py` does not: it keeps the native `.ass`
-instead of the flattened `.srt`, then drops vector drawings (`\p1`) and
-non-dialogue styles (`Signs`, `ED Translation`, ...). On a real fansub episode
-that turned 3024 raw cues into 357 usable dialogue cues.
-
-No gate pass means no transcript. It stops and asks rather than quietly
-substituting Whisper.
-
-**`moments` -- transcript to candidate moments.** Groups cues into beats on
-silence and length, scores them on dramatic language density, and picks a
-shortlist that covers the whole runtime instead of 12 deaths from the last five
-minutes. Emits `moments.json` plus a plain-text digest meant to be read by an
-agent, mirroring recap.py's `ALL_EPISODES_for_claude.txt`.
-
-Every candidate is `status: unverified` with an empty `expected` field and three
-`frames[]` timestamps. That is the seam where perception takes over: the
-transcript says what is *said*, never what is *seen*.
-
-**`verify` -- frame verification.** The agent writes `expected` in words; the
-machine measures what ffmpeg can prove without a model: shot changes inside the
-window, whether the in-point lands on a cut or mid-shot, and mean luma from an
-8x8 grey probe (which tells a flat black frame apart from a dark scene). Every
-pick is graded **verified / retimed / replaced / unverified**, and only a
-contradiction demotes: a busy window is a warning, not an error. A separate
-`review.json` lets the agent overrule the machine after actually opening the
-JPEGs, and the machine's original call is kept in `frames.json` beside it.
-
-**`transcribe` -- the whisper fallback.** When the ladder ends in
-`needs_whisper`, this runs whisper.cpp on a 16 kHz mono WAV and puts the result
-through **the same gate** a downloaded `.srt` must pass. Three signals a human
-subtitle file cannot offer are added as warnings, all derived from the per-token
-probabilities `-ojf` writes (whisper.cpp 1.9.5 has no segment-level
-`avg_logprob` or `no_speech_prob` anywhere in its JSON, so claiming them would be
-a vacuous pass): decoder confidence = mean `ln(p)` over each segment's tokens,
-weak-token share (`p < 0.30`), and whisper's own repetition tripwire
-(`compression_ratio`, recomputed with zlib). If a run produces no probabilities
-at all, `signal_data` warns instead of reporting three greens. With `--subs` it
-can also cross-check the wording against a reference subtitle file: matching
-lines plus a consistent time delta prove the transcript is the dialogue really in
-the clip, and the delta says where the clip sits in the longer film.
-
-**Transcribing is cached.** `out\<video>\whisper_cache.json` keys on the clip's
-size and mtime, its duration, the language and the model/binary stamps, so a
-second `transcribe` on the same file reuses the transcript in well under a
-second instead of re-running the model (measured: 44.8 s -> 0.4 s, byte-identical
-`.srt`). Change the clip, the language or the model and it misses; `--fresh`
-ignores the cache outright.
-
-**`build` -- plan to Shotcut project.** Reads a plan (an ordered list of clips
-with in/out points), writes a `.mlt` Shotcut can open as an editable timeline,
-and then checks the file it just wrote:
-
-| check | proves |
-|---|---|
-| `xml` | it parses, ids are unique, every `producer=`/`track=` reference resolves, transition track numbers are in range, and the Shotcut/MLT version it records is the installed one |
-| `effects` | every `mlt_service` is a name `melt -query` reports -- nothing invented (674 filters / 59 transitions / 42 producers on this build) |
-| `lengths` | every track is exactly as long as the tractor, no entry overruns its producer, and the clip lengths add up to the timeline |
-| `render` | a small render really shows the source frames the edit claims: PSNR against the same frames rendered through the same pipeline, plus the audio level per clip |
-| `fade` | when the plan asks for a fade: rendered twice, with and without it, frame against frame -- black at the outer frame, full just outside, an eased ramp in the middle, untouched in between, and the sound measured the same way |
-| `titles` | when the plan asks for a title: rendered twice, with and without the text filters, frame against frame -- the frame changed, the change is inside the band the plan named, and the frames just outside the window are identical |
-| `shotcut` | when the plan asks for a title: refuses a title that is put on screen by a blend (the shape Shotcut rewrites), then renders the project **after** that rewrite and asks the same question again -- the text is still in its band on the frames the plan gave it |
-
-The render check compares against a **reference rendered by this same writer**
-rather than against the source decoded by ffmpeg. Measured on a clip that was
-demonstrably at the right frames, ffmpeg's decode and scale agreed with melt to
-45 dB on chroma but only 22.8 dB on luma -- two pipelines disagreeing, not
-footage. Comparing like with like, a correct clip scores 32-37 dB and a
-deliberately mismatched frame scores 13 dB, so the 24 dB threshold has room on
-both sides. Each sample is scored at offsets of 0, +-1 and +-2 frames so a
-rounding disagreement fails nothing that is otherwise correct.
-
-The file is a background colour producer, a **V1** video playlist and an **A1**
-audio playlist holding the same producers, `hide="audio"` on V1 and
-`hide="video"` on A1 so nothing plays twice, and the per-track `mix`/`blend`
-transitions Shotcut writes. Frame counts are integers throughout -- no timecode
-strings, nothing to round twice. Shotcut 26.9.27 and MLT 7.41.0 are recorded in
-the root `title` and in `cutwright:` properties, and `xml` fails if either
-disagrees with the binaries on disk.
-
-Four melt behaviours are worth knowing, all measured rather than guessed:
-
-* A single pass that encodes a project **with audio** reaches the last frame and
-  then never exits (`melt` sits at 99% forever). melt's own serialized XML does
-  the same, so it is the build, not the file. Hence two passes: picture to H.264,
-  audio to PCM, both of which finish in seconds.
-* A playlist entry seeks *relative to its producer's* `in=`. Setting a producer's
-  `in=` to the trim start double-counts it: clip 2 started at source frame 1415
-  and landed at 2830, past the end, frozen on the last frame. Producers now span
-  the whole file and the entries carry the trim.
-* A pass over a project whose **last entry ends on the timeline's last frame**
-  can write every frame and then never exit -- the same symptom as above, from a
-  different cause: with `eof=pause` on every producer, nothing pulls the
-  multitrack past the end. It appeared when the titles moved onto V1 and the
-  trailing blank that used to supply that pull went with the V2 track: 311
-  frames and 10.377 s in the file, a process still alive minutes later with its
-  CPU frozen. The consumer is now told `terminate_on_pause=1`, and the wait loop
-  additionally trusts only the file -- a pass that has stopped writing and whose
-  file already holds the length it was asked for is finished.
-* melt renders on **its own default profile, 25 fps**, no matter what the
-  `<profile>` element says, unless it is told on the command line. Producers get
-  the file's profile; filters and the consumer do not. Measured: a hard cut at
-  source time 12.570 s landed on render frame 63 instead of 77 -- every frame
-  sampled 20% late -- and a fade written for the last 30 frames left the picture
-  at luma 16.0 (black) for the final 36 frames, where the plan asks for a ramp
-  and one frame of black. Every render now writes the project's profile beside
-  the proof and passes `-profile <file>`. This stayed invisible for as long as it
-  did because both sides of every comparison were rendered the same wrong way;
-  it surfaced only when a fade had to line up with a frame number.
-
-### Fade
-
-A plan can ask for a fade in, a fade out, or both, in seconds, and the sound
-follows the picture by default:
-
-```json
-{
-  "name": "demo_fade",
-  "fade": {"in": 0.8, "out": 1.0, "audio": true},
-  "clips": [
-    {"source": "testclips/part1_1_60-120.mp4", "in": 0.0, "out": 4.0, "label": "..."}
-  ]
-}
-```
-
-That is two animated filters on the tractor: `brightness` ramps `level` 0 -> 1
-for the picture, `volume` ramps `level` -60 dB -> 0 dB for the sound, both
-keyframed in frames against the project profile (24 in, 30 out at 29.97 fps),
-so the ramp is the length the plan asked for and not a length melt picked. The
-filters live on the tractor, not on the clips: a producer-level `<filter>` in
-this file shape does nothing at all -- measured, not assumed.
-
-The `fade` check renders the project twice -- once as written, once with the
-fade removed by this same writer -- and divides their mean luma frame by frame,
-so "half way" means half of what *that* frame looks like without a fade. It then
-asserts the shape: black at the outer frame, full at the frame just outside the
-fade, between 25% and 75% at the middle of the ramp -- melt eases in and out of
-an animated property, so the middle frame sits near 30% and 45% rather than on a
-straight line -- and full brightness at three points inside the body. An earlier
-version of this check compared the head against the middle of the timeline and
-read a brighter shot as the yardstick: it failed a fade that was correct. The
-control render cannot make that mistake, and the body samples are what catch a
-fade that is written into the file but applied to the wrong frames. Measured on
-`demo_fade`: frame 0 at 0.00, the middle of the fade in at 0.28, frame 24 at
-0.99, frame 279 at 1.00, the middle of the fade out at 0.45, the last frame at
-0.01, and 0.99-1.00 at three points inside the body.
-
-### Titles
-
-A plan can put text on screen for a stretch of frames, in one of three bands:
-
-```json
-{
-  "name": "demo_title",
-  "titles": [
-    {"text": "the three cuts",   "in": 0.9, "out": 3.2, "size": 72, "position": "middle"},
-    {"text": "the word is meat", "in": 6.4, "out": 8.6, "size": 48, "position": "lower"}
-  ]
-}
-```
-
-`position` is `top`, `middle` or `lower` -- bands of 24% of the frame height at
-8%, 38% and 68% down. White text, black outline, weight 700, centred in the band.
-`size` is pixels of font height in the project's own resolution, default 64.
-
-Each title becomes one `dynamictext` filter with an `in`/`out` window, written
-**inside the V1 playlist** -- a track filter, which is what Shotcut writes when
-you add a filter to a track and what it writes back unchanged when it saves. The
-filter draws onto the picture the track is already showing, so there is no
-compositing step between tracks at all, the footage underneath is untouched, and
-two titles may not overlap because two filters on one track would both draw.
-
-The obvious shape was a title track: a transparent `color` producer on **V2**
-with the text on it, blended down onto V1. It renders, and it is how a title
-*looks* in the GUI -- but it put the title on screen through a transition, and
-the transition's `a_track` turned out to be the whole argument:
-
-* With `a_track=1` (the track below), melt draws the text over V1. That is what
-  this writer emitted, and the `titles` check passed 6/6 on it.
-* Shotcut, opening that same file, rebuilt the blend with **`a_track=0`** and
-  saved it that way. With `a=0` the composite lands in the background frame,
-  which is painted *under* V1, so the title is covered -- and melt agrees: a
-  frame from Shotcut's own saved copy is byte-identical to the same file with
-  the text filters removed. The GUI showed no title because, in the file it had
-  written, there was no title.
-* A title on a track therefore depends on a number the editor owns and rewrites.
-  A title on a track *filter* does not: there is no transition for Shotcut to
-  re-decide, so the GUI and melt render the same frames by construction.
-
-The `titles` check renders the project **twice from this writer**, lossless, and
-compares frame n against frame n. The control is the same timeline with only the
-two `dynamictext` elements left out -- same footage, same track, same encoder --
-so the difference between the two is the text and nothing else. Every other way
-of building that control was measured and rejected: dropping a title track drops
-its clip and its blend with it and moves *every* frame (cairo alone shifts colour
-by about 33 dB), and an empty title track is a third compositing path again;
-either one drowns a title that starts or stops on the wrong frame. Lossless for
-the same reason: under H.264, a bright title carries into the frames just after
-it and they read 33 dB instead of identical.
-
-The `shotcut` check exists because all of that passed while the GUI showed
-nothing. It takes the file this writer just wrote, applies the rewrite Shotcut
-performed on it -- every blend's `a_track` set to 0 -- and renders both sides of
-that rewrite, asking the `titles` question again. It also refuses the shape
-outright: a blend, not disabled, whose b-track carries text is a failure before
-any render, because that is exactly the construct that disappeared. Measured on
-the old V2 file with the structural guard bypassed, it reports `title 1 is gone
-after the rewrite ... frame 61 reads inf dB against the same file without the
-text`; on the file this writer emits now it reports `the rewrite changes no blend
-(none carries the picture)`.
-
-Per title it asserts three things. The frame changed at all (`15 dB < PSNR <
-45 dB`: text is white on a dark shot, so it moves a lot of pixels but the shot
-under it is still most of the frame). The change sits in the band the plan named
-rather than spread over the frame -- the named band's PSNR has to be at least
-2.5 dB lower than the whole frame's. And the frames one past each end are
-*identical* (PSNR above 50 dB, in practice inf), while the frames inside the body
-stay under the ceiling. A title written into the file but never drawn fails the
-first, one drawn over the whole frame fails the second, one at the wrong time
-fails the third. Measured on `demo_title`: 29.5 / 26.2 / 26.8 dB whole-frame at
-the first, middle and last frame of title 1 with 23.3 / 20.0 / 20.6 dB in its
-band, and inf at frames 25, 96, 190 and 258.
-
-## Testing rules
-
-Never test on a full episode or a long file. Every test uses a short sample cut
-out of the footage first, because a 24-minute file turns a 30-second check into a
-30-minute wait and a 500 MB WAV.
-
-```
-testclips\          short samples cut from real footage (the only media in this fork)
-out\                analysis output, per video
-```
-
-* **30-90 seconds per clip, hard cap 2 minutes.** Cut with stream copy so it is
-  instant and lossless and the sample is bit-identical to the source range:
-  `ffmpeg -ss 00:05:00 -to 00:05:01:30 -i "<source>" -c copy -avoid_negative_ts make_zero "testclips\<name>.mp4"`
-* **Pick samples that cover what is being tested**, not just the first minute:
-  one clip with dialogue, one silent action clip, one with a hard cut on a known
-  timestamp. A test that only sees dialogue proves nothing about shot detection.
-* **Never write into the original folders.** Samples are cut *from* the
-  originals and saved *into* `testclips\`; the guard enforces this.
-* **If a test would take more than about 2 minutes, say the estimate and ask**
-  before running it. Measured: whisper runs at ~0.75x the clip's length on 8 CPU
-  threads, so a 60 s clip is ~45-50 s and a 90 s clip is ~70 s.
-* **Cache anything slow.** A transcript is written once and reused; re-running
-  `transcribe` on the same file must not re-run whisper.
-* **Renders are the slow part of `build`.** melt decodes 1080x1920 at ~15 fps
-  here, so the proof render costs about the timeline's length: 11.9 s for a
-  10.4 s edit, including three reference windows and the frame comparisons. The
-  filter/transition/producer lists are cached in `out\cache\` keyed to the exe's
-  size and mtime, because asking melt three times costs ~30 s on its own.
-* **Full-length runs only when explicitly asked for.**
+Recap Studio steps run inside a project folder (`cd recapstudio\Projects\<name>`, then
+`python recap.py <step>` with `RECAP_NONINTERACTIVE=1`): `tts`, `video`, `timeline`, `scenes`,
+`remotion`, `premiere`. `studio.py` is the web UI. What is verified on this PC, with numbers, is in
+`HANDOFF.md` and `LOG.md`.
 
 ## Usage
 
 ```powershell
-cd C:\Users\user\Desktop\Cutwright
+cd C:\Users\user\Desktop\Cutwright-kinocut-handoff\cutwright
 python -m cutwright doctor
 python -m cutwright probe "C:\path\to\film.mp4"
 python -m cutwright subs "C:\path\to\film.mp4"
 python -m cutwright moments "C:\path\to\film.mp4" --top 10
-python -m cutwright moments "C:\path\to\film.mp4" --subs "C:\path\to\film.srt"
 python -m cutwright verify  "C:\path\to\film.mp4"
 python -m cutwright transcribe "C:\path\to\clip.mp4" --subs "C:\path\to\film.srt"
-python -m cutwright transcribe "C:\path\to\clip.mp4" --fresh   # ignore the cache
-python -m cutwright build   "projects\demo_cuts\plan.json"
-python -m cutwright build   "projects\demo_fade\plan.json"
-python -m cutwright build   "projects\demo_title\plan.json"
-python -m cutwright build   "projects\demo_cuts\plan.json" --width 320 --crf 30
-python -m cutwright build   "projects\demo_cuts\plan.json" --checks xml,effects
+python -m cutwright tools list --stage assemble
+python -m cutwright tools describe trim
+python -m cutwright validate out\fx\demo_manifest.json
+python -m cutwright run      out\fx\demo_manifest.json --json
+python -m cutwright resume   out\fx\run
+python -m cutwright status   out\fx\run
 ```
 
-A plan is just the cuts, in order, in seconds (`out` exclusive):
+A manifest is JSON: one `steps` list, each step naming an op, its declared inputs, params, outputs and
+what must be validated. The full shape the M3 demo renders is `docs/schemas/manifest.example.json`;
+op names and params come from `python -m cutwright tools describe <op>`, and the measured evidence
+behind every routing decision is `docs/CAPABILITY_MATRIX.md`.
 
 ```json
 {
-  "name": "demo_fade",
-  "title": "three cuts, opening from black and closing to black",
-  "fade": {"in": 0.8, "out": 1.0},
-  "clips": [
-    {"source": "testclips/part1_1_60-120.mp4", "in": 0.0,  "out": 4.0,  "label": "crash into the wall"},
-    {"source": "testclips/part1_1_60-120.mp4", "in": 34.2, "out": 37.6, "label": "he takes a bite"},
-    {"source": "testclips/part1_1_60-120.mp4", "in": 47.2, "out": 50.2, "label": "the word is meat"}
+  "schema": 1, "run_id": "demo-0001", "pipeline": "recap",
+  "fps": 24, "size": [1920, 1080],
+  "assets": [{"id": "src_a", "path": "out/fx/a.mp4", "origin": "footage", "license": "owner-supplied"}],
+  "steps": [
+    {"id": "cut_1", "op": "trim_exact", "inputs": {"src": "@asset.src_a"},
+     "params": {"start_frame": 37, "frames": 50}, "executor": "kinocut",
+     "outputs": {"video": "production/demo-0001/work/cut_1.mp4"},
+     "validation": [{"check": "frame_count", "expect": 50}]}
   ]
 }
 ```
 
-`fade` is optional and applies to the whole program, picture and sound together
-(`"audio": false` fades the picture only). `titles` is optional too and is a list
-of `{"text", "in", "out", "size", "position"}` -- see [Titles](#titles). Both are
-seconds, converted to frames once.
+## Testing rules
 
-`source` is resolved against the fork root first, then against the plan's own
-folder. `build` writes `<name>.mlt`, `checks.json` and `digest.txt` into
-`projects\<name>\`, keeps the proof render and its frames in `check\`, and exits
-5 if any check fails.
+Never test on a full episode or a long file. Every test uses a short sample cut out of the footage
+first, because a 24-minute file turns a 30-second check into a 30-minute wait and a 500 MB WAV.
 
-Standard library only. ffmpeg and ffprobe must be on PATH (they already are).
-`transcribe` additionally needs `bin\whisper\Release\whisper-cli.exe` and
-`models\ggml-small.en.bin`; without them it prints the exact install steps and
-exits 3 instead of guessing.
+* **30-90 seconds per clip, hard cap 2 minutes.** Cut with stream copy so it is instant and lossless
+  and the sample is bit-identical to the source range:
+  `ffmpeg -ss 00:05:00 -to 00:05:01:30 -i "<source>" -c copy -avoid_negative_ts make_zero "testclips\<name>.mp4"`
+* **Pick samples that cover what is being tested**, not just the first minute: one clip with dialogue,
+  one silent action clip, one with a hard cut on a known timestamp.
+* **Never write into the original folders.** Samples are cut *from* the originals and saved *into*
+  `testclips\`; the guard enforces this.
+* **If a test would take more than about 2 minutes, say the estimate and ask** before running it.
+* **Cache anything slow.** A transcript is written once and reused; a run re-uses any step whose cache
+  key is unchanged (`status` shows it).
+* **Test the real path**: produce media, decode it, count frames, check ids/audio, look at frames. An
+  import that succeeds is not a test.
+* **Full-length runs only when explicitly asked for.**
 
 ## Not built yet
 
 | piece | status |
 |---|---|
-| transition between two clips | not built -- `luma`, `mix` and `composite` are all confirmed present; `transition()` already takes any of them |
-| music dipping under the voice | not built -- a second audio track with keyframed `volume` |
-| planner: transcript + frames -> plan | not built -- the pieces exist separately; nothing joins them yet |
+| agent bridge `recap <step> --json` + focused tool discovery | M6 |
+| agent-owned scene loop (3 scenes written by the agent, one revised after viewing frames) | M7 |
+| visual quality overhaul + 5-scene benchmark at 16:9 and 9:16 | M8 |
+| perception -> script for arbitrary footage | M10 |
+| blueprints / any-video profiles | M11 |
+| SFX engine | M12 |
+| true 9:16, speed, polish | M13 |
+| MCP server + portable skill | M14 |
+| Cutwright Studio UI | M15 |
 
-Nothing gets installed without approval. Shotcut was installed on explicit
-approval; it is only unpacked, never launched as a GUI by this tool. `build` has
-written `projects\demo_cuts\demo_cuts.mlt` (three cuts, no fade),
-`projects\demo_fade\demo_fade.mlt` (the same three cuts under a 0.8 s fade in and
-a 1.0 s fade out, picture and sound) and `projects\demo_title\demo_title.mlt`
-(the same three cuts, the fade, and two titles drawn on V1), and all seven checks
-pass on all three. `demo_cuts` has been opened in the Shotcut GUI: three clips on
-V1 with their labels, three on A1 with waveforms, ruler reading `00:00:10.377`.
-`demo_fade` has not been opened by hand. `demo_title` has: it is what showed the
-V2 blend losing its title in the preview while melt drew it, which is why the
-titles are track filters now, and why the `shotcut` check renders the file after
-the rewrite that caused it -- what the checks measure is melt rendering what
-Shotcut is left with, not melt rendering what this tool hoped it wrote.
+## Rules and provenance
+
+`.clinerules/` holds the working rules (session loop, architecture and hard exclusions, testing and
+evidence, session boundaries). `PROVENANCE.md` records where every byte came from and what was
+deliberately not copied; `docs/legacy/PROVENANCE_removed_editor.md` keeps the deleted editor
+backend's hashes as history. Nothing gets installed or downloaded without the owner's approval.
+
+Standard library only in `cutwright/`. ffmpeg and ffprobe must be on PATH (they are). Kinocut lives in
+`.venvs\kinocut` and is called by subprocess -- `import kinocut` appears nowhere in `cutwright/`.
+`transcribe` additionally needs `bin\whisper\Release\whisper-cli.exe` and
+`models\ggml-small.en.bin`; without them it prints the exact install steps and exits 3.

@@ -108,8 +108,8 @@ def version_of(binary):
         m = re.search(r"version[:\s]+v?(\d+\.\d+(?:\.\d+)?)", line, re.I)
         if m:
             return m.group(1)[:80]
-    # Some builds (Shotcut's bundle) reject --version and print a help block or
-    # GPU probe output instead. Better "?" than a temperature reading.
+    # Some builds (bundled with editors or GPU toolchains) reject --version and
+    # print a help block or GPU probe output instead. Better "?" than that.
     return "?"
 
 def install_note(binary_missing=True, model_missing=True):

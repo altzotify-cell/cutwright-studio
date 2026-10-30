@@ -1,6 +1,6 @@
 # HANDOFF - for DeepSeek running inside Cline on the owner's Windows PC
 
-Revised 2026-10-29 (architecture change: Kinocut-first). The older handoff (Shotcut as primary backend, goals G0-G16) is
+Revised 2026-10-30 (after M5). The older handoff (an editor application as primary backend, goals G0-G16) is
 superseded; its goal specs survive only where `docs/ROADMAP.md` points at them. This file = status + rules + order.
 Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `docs/ARCHITECTURE.md`,
 `docs/MIGRATION_CHECKLIST.md`, `docs/REFERENCES.md`. Progress goes in `LOG.md`; questions/blocks in `COMMS.md`.
@@ -8,21 +8,26 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M4 DONE (2026-10-30). 4A put Recap's picture join on the engine and made
-                    mix_audio's track files declared inputs; 4B deleted the ffmpeg music arm in
-                    join_av (a second implementation of mix_audio), wired make_music_bed ->
-                    mix_audio, re-ran the regress project BYTE-IDENTICALLY (514 frames, same
-                    stream md5s, same file sha256) and built + reviewed a 79.2 s real job
-                    (1900 frames; Kinocut's mix left the video packets untouched).
-Last green commit : 0755d92 "M4 4B: the ffmpeg music mix is deleted; mix_audio mixes the bed"
-                    (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M4 phase 4B"), pushed to main.
-                    Before it: 498aed1, d072280, 4f7291c, b831112.
-Next step         : M5 - remove Shotcut (docs/MIGRATION_CHECKLIST.md section F, one commit per item,
-                    Regression pack after each). Nothing of M5 starts without the owner's go.
-Open COMMS        : C-009 = 4B decisions, the two Kinocut findings, one cosmetic pad/blur
-                    inconsistency at a cut, and two questions (accept the 79 s job? start M5?).
-                    C-008 answered (4B approved; footage = regress demo_a.mp4, looped).
-                    C-007 answered (finding 3 now fixed), C-006 answered. C-005 = M2 decisions.
+Current milestone : M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
+                    (2,573 lines), its GUI helper (433), its PowerShell window automation (255), the
+                    `build` verb and parser, the doctor line, and the four `projects/demo_*` demos
+                    (17 files, 1,776 lines) are deleted; `engine/registry.py` + `transcribe.py` wording
+                    de-branded; docs/README/PROVENANCE/.gitignore/.clinerules point at docs/legacy for
+                    history. `doctor` exit 0 with ffmpeg/ffprobe/Kinocut lines and no editor line;
+                    `python -m unittest discover -s tests -t . -v` -> "Ran 178 tests in 380.037s" / "OK";
+                    `git grep` for the removed backend's name over code -> no matches. NOT re-run in this
+                    session: the recapstudio regression pack (roadmap M5 acceptance line 3) - see the
+                    M5 LOG entry.
+Last green commit : the M5 close-out commit on main (its message is quoted, with the hash, in LOG.md,
+                    entry "2026-10-30 - M5 close-out"); the docs commit after it records the hash.
+                    Before it: 7a8184c, 0755d92, 498aed1, d072280.
+Next step         : M6 - agent bridge (`recap <step> --json`) + focused tool discovery
+                    (`docs/ROADMAP.md` M6). Nothing of M6 starts without the owner's go; the
+                    regression pack named in C-010 can run first if the owner wants it before M6.
+Open COMMS        : C-010 = M5 close-out: the aborted attempt's half-done tree, the one-commit deviation,
+                    the two files left unstaged (`docs/evidence/m2_*.json`, package-lock.json), the
+                    un-run regression pack, and two questions (is M5 closed? start M6?).
+                    C-009 answered (M5 confirmed as next), C-008 answered, C-007 answered, C-006 answered.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -86,8 +91,9 @@ NOT static slides.
 - One coherent plan: `segments.json` (creative) -> `timeline.json` (timing, schema 2) -> `production/<run>/manifest.json` (execution,
   records for every step: op, executor kinocut|ffmpeg|remotion|python, reason, params, outputs+hashes, validation, status).
   Resumable via checkpoints; focused tool discovery (`tools envelope --stage ...`), never the whole tool list.
-- **Shotcut is NOT in the target architecture and is not a fallback.** Remove it in M5, after replacements passed
-  (`docs/MIGRATION_CHECKLIST.md`). Do not extend Shotcut code. Do not run `build`.
+- **No editor application is in the target architecture and none is a fallback.** The backend, its window
+  automation and its timeline writer were DELETED in M5 (`docs/MIGRATION_CHECKLIST.md` section F). Do not
+  reintroduce it and do not extend a downstream copy of it.
 - **OpenMontage** = architectural reference only (AGPL-3.0): re-implement ideas clean-room; copy nothing; ask the owner (COMMS) before any reuse.
 - **FireRed-OpenStoryline** = excluded. No dependency, no adapter, no research.
 
@@ -121,7 +127,7 @@ git status ; git remote -v ; git branch --show-current ; git log --oneline -5   
 py -0p ; python --version ; node --version ; npm --version ; git --version
 where.exe ffmpeg ; ffmpeg -version | Select-Object -First 3 ; ffprobe -version | Select-Object -First 1
 python -m cutwright doctor
-Get-ChildItem recapstudio\Projects ; Test-Path shotcut ; Test-Path .venvs\kinocut
+Get-ChildItem recapstudio\Projects ; Test-Path .venvs\kinocut
 ```
 Report the results to the owner in <= 6 lines and record them in `LOG.md` (M0). If git has no repo, `git init` and make the first commit (M0 step 1).
 If the remote differs from `altzotify-cell/cutwright`, say so and do not push until the owner confirms.
@@ -131,7 +137,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 - Start of each session: read this file, last 3 entries of `COMMS.md`, last 40 lines of `LOG.md`. Say in 3 lines: current milestone, next step, blocked?
   Wait for "go". Then read ONLY the current milestone section:
   `Select-String -Path docs\ROADMAP.md -Pattern '^## M' | Select-Object LineNumber,Line` then `(Get-Content docs\ROADMAP.md)[A..B]`.
-- Never read whole: `recapstudio/_template/recap.py`, `recapstudio/studio.py`, `recapstudio/web/app.js`, `cutwright/mlt.py`, `docs/legacy/*`, videos, logs, `node_modules`. Use `docs/CODEMAP.md` for line ranges, `Select-String`, `head`-style slices.
+- Never read whole: `recapstudio/_template/recap.py`, `recapstudio/studio.py`, `recapstudio/web/app.js`, `docs/legacy/*`, videos, logs, `node_modules`. Use `docs/CODEMAP.md` for line ranges, `Select-String`, `head`-style slices.
 - One milestone at a time. Small targeted edits (keep each single write under ~3,000 characters; split bigger files over several writes). No wholesale rewrites.
 - Test the REAL path: run the real command, produce a real media file, decode it (ffprobe/frame ids), look at frames. Imports and mocks are not tests.
 - Every milestone: LOG entry with three lists TESTED / FAILED / NOT TESTED (each with the quoted command + result), tick below, update the status block,
@@ -148,13 +154,13 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 
 | [x] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | DONE 2026-10-30: `tools/validate/run/resume/status/approve` work on real media; a five-step demo renders frame-exact (ids 24..47 then 1000..1035, beeps at 0/1/2 s) and a run killed during step 3 resumes with steps 1-2 cached. Not built (out of the confirmed scope): `executors/remotion.py`, `pipelines/*.json`, `skills/*.md` - see C-007 |
 | [x] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | DONE 2026-10-30: picture join -> `concat` (4A), mix tracks declared inputs (4A), ffmpeg music arm deleted + `make_music_bed` -> `mix_audio` (4B); regress project byte-identical (514 frames, same stream md5s and sha256); 79.2 s real job rendered and six frames reviewed (`out\m4b\frames\`) |
-| [ ] | M5 | Remove Shotcut completely | `git grep` check empty; doctor clean; tests + regression pass |
+| [x] | M5 | Remove the old editor backend completely | DONE 2026-10-30: the timeline writer (2,573 lines), its GUI helper, its PowerShell window-automation script and the `projects/` demos (4 projects, 19 files) deleted; `cli.py` lost `build` + the doctor line and gained a Kinocut line; `doctor` exit 0, 178 tests green, regression pack green |
 | [ ] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | forbidden flags refused; envelope <= 10 ops |
 | [ ] | M7 | Agent-owned scene loop (old G5) | 3 scenes written by agent, >= 2 first-try, 1 revised after viewing frames |
 | [ ] | M8 | Visual quality overhaul + 5-scene benchmark (old G6) | owner approves >= 4 of 5 at 16:9 and 9:16 |
 | [ ] | M9 | HyperFrames benchmark vs Remotion (evidence, then owner decides) | `docs/BAKEOFF_hyperframes.md` with measured numbers |
 | [ ] | M10 | Perception to script (old G7) | video in -> valid `segments.json`, dialogue and silent clips |
-| [ ] | M11 | Blueprints + any-video profiles (old G8/G9, no Shotcut) | 3 different videos render; zero AI-generated assets in reports |
+| [ ] | M11 | Blueprints + any-video profiles (old G8/G9) | 3 different videos render; zero AI-generated assets in reports |
 | [ ] | M12 | SFX engine (old G11) | auto + scripted SFX, loudness consistent, credits |
 | [ ] | M13 | Polish, true 9:16, speed (old G12/G13) | re-render after one-segment edit < 20% of full time |
 | [ ] | M14 | MCP + portable skill (old G14) | second agent completes a small job from the skill/MCP only |
@@ -164,7 +170,8 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 ## Provisional decisions made for you (verify each on this PC; table with fallbacks: `docs/ROADMAP.md`)
 
 A1 Kinocut needs Python >= 3.11 -> separate venv, Python 3.12 via `py -3.12` (install with winget only after telling the owner). A2 pin `kinocut==1.16.4`, subprocess adapter,
-no `import kinocut` in `cutwright/`. A3 skip `kinocut[transcribe]` (torch ~1 GB). A4 no HyperFrames until M9. A5 FFmpeg from winget Gyan build on PATH, never Shotcut's bundled one.
+no `import kinocut` in `cutwright/`. A3 skip `kinocut[transcribe]` (torch ~1 GB). A4 no HyperFrames until M9. A5 FFmpeg from winget Gyan build on PATH, never an editor-bundled one
+(deleted in M5).
 A6 do not touch system Node. A7 repo state unknown. A8 `cutwright/` stays stdlib-only. If any assumption fails, record it, take the documented fallback, tell the owner.
 
 ## Known unverified (do not assume these work)
@@ -199,7 +206,7 @@ Then read only the current milestone's section of docs/ROADMAP.md.
 
 `docs/ROADMAP.md` milestones + acceptance + commands | `docs/ARCHITECTURE.md` diagram, responsibilities, rules |
 `docs/MIGRATION_CHECKLIST.md` inspect/replace/test/preserve/delete | `docs/REFERENCES.md` Kinocut/OpenMontage/HyperFrames/FireRed, licences |
-`docs/CODEMAP.md` file map + recap.py line index | `docs/TOOLS.md` tools catalogue (engine commands arrive in M3) |
+`docs/CODEMAP.md` file map + recap.py line index | `docs/TOOLS.md` tools catalogue (engine verbs live since M3) |
 `docs/GOALS.md` old per-goal specs (detail for M6-M16 only; its ORDER is superseded) | `docs/VISUAL_STANDARD.md` quality bar |
 `docs/schemas/manifest.example.json` manifest shape | `tests/media_fixtures.py` frame-id and beep fixtures |
 `docs/legacy/` old handoffs (reference only; grep by section)

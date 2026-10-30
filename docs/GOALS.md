@@ -335,8 +335,8 @@ footage into the repo (reference by path, read-only). Burned-in subtitles are a 
 
 ## G8 - Backend interface + Production Blueprint (the AI Director's plan format)
 
-Source: `docs/VISION_cutwright_v2.md` sections B, E and the Blueprint list. Why: so the Director, the CLI and later
-the UI do not care which renderer draws a scene.
+Source: `docs/legacy/VISION_cutwright_v2.md` sections B, E and the Blueprint list (moved there in M5). Why: so the
+Director, the CLI and later the UI do not care which renderer draws a scene.
 
 Depends on: G3 (Shotcut backend exists) and G6 (Remotion scenes proven); G7 helps.
 Read first: the vision doc "Production Blueprint" and "Rendering architecture"; `docs/ARCHITECTURE.md`.

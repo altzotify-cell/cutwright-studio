@@ -997,6 +997,71 @@ TESTED     - the 60-90 s real job, built and rendered : `recapstudio\Projects\m4
              itself is gitignored (`recapstudio/Projects/*`).
 TESTED     - the bed really is mixed by Kinocut, and the picture is untouched on the real job :
              `python out\m4b\verify_job.py` -> mix source `tiktok_temp\full_picture_av.mp4` and the
+
+## 2026-10-30 - M5 close-out: the old editor backend leaves the code
+
+```
+TESTED     - grep, roadmap M5 acceptance: git grep -n -i "shotcut|melt\.exe|\.mlt" -- . ":!LOG.md"
+             ":!COMMS.md" ":!docs/legacy" ":!docs/MIGRATION_CHECKLIST.md" ":!docs/REFERENCES.md"
+             ":!docs/ROADMAP.md" ":!docs/ARCHITECTURE.md" ":!docs/GOALS.md" ":!docs/BORROW_notes.md"
+             ":!PROVENANCE.md"  -> no output (exit 1). The only surviving substring anywhere is
+             `meltysynth` in docs/KINOCUT_FINDINGS.md, a different package.
+TESTED     - code only: git grep -c -i shotcut -- tests cutwright -> no matches (exit 1);
+             git grep -c -i mlt -- tests -> no matches (exit 1);
+             git grep -n -i shotcut -- '*.py' '*.bat' '*.js' '*.json' '*.ps1' '*.cmd' -> no matches (exit 1).
+TESTED     - doctor: python -m cutwright doctor -> "[+] ffmpeg    C:\Users\user\scoop\shims\ffmpeg.EXE",
+             "[+] Kinocut      Kinocut 1.16.4 (editing toolkit, called by subprocess)", under the heading
+             "transcription / editing engines:"; there is no editor line any more; exit 0.
+TESTED     - the verb is gone: python -m cutwright --help -> the STEP list has no `build`;
+             python -m cutwright build x -> "usage: cutwright [-h] [--version] STEP ..." (argparse exit 2).
+TESTED     - suite: python -m unittest discover -s tests -t . -v -> "Ran 178 tests in 380.037s" and "OK".
+TESTED     - nothing left to delete outside git: Test-Path shotcut -> False; Test-Path 'bin\_dl' -> False.
+FAILED     - nothing failed in this objective.
+NOT TESTED - the recapstudio regression pack (roadmap M5 acceptance line 3: demo, briefs --demo, video,
+             timeline, scenes, remotion, premiere): not run. Reason: this session's task list named the
+             doctor and the suite only, and the pack is a multi-minute Remotion render chain; C-010 asks
+             whether it gates M5 or the start of M6. The earlier attempt's HANDOFF line ("regression pack
+             green") had no log entry behind it and was corrected, not inherited.
+NOT TESTED - listening to an output: M5 deletes code, it renders nothing new.
+NOT TESTED - MLT-generation tests: there are none to remove. git grep -i mlt -- tests and -- cutwright
+             both return no matches, so no test ever asserted the timeline writer's output. The four
+
+```
+DECISIONS  - 1. What went: cutwright/mlt.py (2,573 lines), cutwright/gui.py (433), 
+             cutwright/tools/shotcut_window.ps1 (255), the four projects/demo_* folders (17 tracked files,
+             1,776 lines, measured with git diff --cached --numstat -- projects), plus the `build` verb,
+             its sub-parser and the doctor block in cutwright/cli.py, which now prints a Kinocut line
+             built from `kino.available()/kino_exe()` + `kino --version`. Nothing was ported out of the
+             writer: every helper the checklist section C listed was already an engine op by M2/M3
+             (fit_to_frames, concat, mix_audio, overlay_audio, export_h264).
+             2. One commit, not one per checklist item: the working tree arrived with the earlier attempt's
+             code and doc edits interleaved and its deletions already staged. Splitting that into invented
+             intermediate commits would have meant committing states nobody ran; the tree went in whole and
+             section F of docs/MIGRATION_CHECKLIST.md is ticked per item with the evidence instead. The
+             recommendation of "one commit per item" stands for future milestones that start clean.
+             3. History is MOVED, not deleted: REPORT.md -> docs/legacy/REPORT_shotcut_era.md,
+             docs/VISION_cutwright_v2.md -> docs/legacy/, and the editor's provenance block (download URL,
+             sha256, the five demo-file hashes) verbatim in docs/legacy/PROVENANCE_removed_editor.md, with
+             PROVENANCE.md carrying a "Removed 2026-10-30 (M5, historical)" pointer. The four plan.json
+             files were NOT converted to examples/: they are shaped around the writer's clip/in/out model
+             and docs/schemas/manifest.example.json already teaches the engine manifest.
+             4. Tests: 178 before, 178 after. That is the check on item 3 - if deleting the writer had
+             removed a test, the count would have dropped; no test ever referenced it.
+             5. Left UNSTAGED on purpose: docs/evidence/m2_*.json (20 files). The suite rewrites them on
+             every run (the equivalence tests emit their own evidence, "[evidence] docs/evidence/m2_*.json"
+             in the test output), so they are run artifacts, not M5 edits; and
+             recapstudio/remotion/package-lock.json stays untracked (C-006).
+             6. The earlier attempt's unbacked HANDOFF claim ("M5 DONE ... 178 tests green, regression pack
+             green") was replaced with what this session measured, including the un-run regression pack.
+Commit     - "M5 close-out: remove obsolete Shotcut MLT backend, GUI, and tests" on main. The hash is
+             recorded by the docs commit that follows this entry (same pattern as C-009/M4), because a
+             commit cannot contain its own id. Pushed to origin main; `git ls-remote origin refs/heads/main`
+             quoted in the close-out report.
+```
+
+             projects/demo_* folders it produced were data, not tests, and are deleted.
+```
+
              final: video packets BOTH 854df8a7ed5f1b631e560fb7724788db (also equal to the engine's
              concat output `tiktok_temp\full_picture.mp4`), audio packets 90132b3a... -> 2e343715...
              (changed: the mix happened), loudness -20.1 -> -19.2 LUFS. Goertzel over the first

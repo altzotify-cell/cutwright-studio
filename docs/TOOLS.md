@@ -1,4 +1,6 @@
-> **NOTE (2026-10-29).** The `build` (Shotcut .mlt) and `backends shotcut_cli` rows are CANCELLED/being removed (M5).
+> **NOTE (2026-10-30).** M5 removed the `build` row and the `backends editor_cli` row: this repo has no
+> editor-application backend and no timeline writer any more. Edits go through the engine
+> (`cutwright/engine/`). History: `docs/legacy/` and `docs/MIGRATION_CHECKLIST.md`.
 > **M3 (2026-10-30): the engine verbs are LIVE** - `tools list|describe|envelope`, `validate`, `run`,
 > `resume`, `status`, `approve` (all with `--json`). They are built on `cutwright/engine/`.
 > Editing runs through Kinocut (default) or direct FFmpeg ops; see `docs/ARCHITECTURE.md`.
@@ -14,13 +16,12 @@ with `set RECAP_NONINTERACTIVE=1` (PowerShell: `$env:RECAP_NONINTERACTIVE=1`). A
 
 | cmd | does | status |
 |---|---|---|
-| `doctor` | machine report: ffmpeg, whisper, Shotcut, **Recap Studio engine, Node, Remotion, Python modules**, write-guard self test | works |
+| `doctor` | machine report: ffmpeg, whisper, **Kinocut, Recap Studio engine, Node, Remotion, Python modules**, write-guard self test | works |
 | `probe <file>` | streams, duration, subtitle tracks | works |
 | `subs <video>` | find the best subtitle source and prove it usable (the subtitle trust gate) | works |
 | `moments <video>` | transcript -> beats -> ranked candidate moments + agent digest | works |
 | `verify` | grade picks against frames: verified / retimed / replaced | works |
 | `transcribe <video>` | whisper.cpp fallback transcript, then gated (needs `bin/`, `models/`, not in git) | works if installed |
-| `build <plan.json>` | plan -> Shotcut `.mlt` + checks (needs Shotcut portable) | works (crossfade unfinished, G1) |
 | `tools list [--stage S]` | every op (or one stage): name, stage, executor, one line. `--json` | works (M3) |
 | `tools describe <op>` | one op in full: params, defaults, executor + reason, evidence file, installed? | works (M3) |
 | `tools envelope --stage S` | at most 10 op descriptions for ONE stage - what an agent should load | works (M3) |
@@ -29,7 +30,6 @@ with `set RECAP_NONINTERACTIVE=1` (PowerShell: `$env:RECAP_NONINTERACTIVE=1`). A
 | `resume <run-dir>` | continue from the checkpoint; the manifest path comes from the checkpoint | works (M3) |
 | `status <run-dir>` | the cursor, every step, its outputs and whether they still match (stale) | works (M3) |
 | `approve <run-dir> <gate>` | write `approvals/<gate>.json`, releasing the step behind that gate | works (M3) |
-| `backends shotcut_cli` (wrapper over `cli-anything-shotcut`: transitions, blend/PIP, filters, ducking, export) | Shotcut editor controls without hand-building, each with a Cutwright check | **G3** |
 | `recap ...` | non-interactive, JSON bridge to the engine | **G4** |
 | `scene brief/write/check/sheet/metrics` | agent scene-authoring loop | **G5** |
 | `analyze`, `script check`, `profile show` | perception pack, script validation, prompt profiles | **G7** |

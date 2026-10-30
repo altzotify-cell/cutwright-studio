@@ -1,8 +1,6 @@
-# Cutwright writes byte-identical .mlt files and records their sha256, so line
-# endings have to stay put: every text file is stored and checked out as LF.
+# Every text file is stored and checked out as LF so hashes and patches stay put.
 * text=auto eol=lf
 
-*.mlt  text eol=lf
 *.py   text eol=lf
 *.json text eol=lf
 *.md   text eol=lf

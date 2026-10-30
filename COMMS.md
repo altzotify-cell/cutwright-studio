@@ -230,6 +230,40 @@ Observed: `join_av` no longer gives ffmpeg a third (music) input; the program au
       (90132b3a... -> 2e343715...), loudness -20.1 -> -19.2 LUFS, and the bed's 220/277 Hz tones
       arrive (Goertzel 21.4M/17.7M vs 3.7M/1.5M). The regress project is byte-identical to the M0
       baseline (514 frames, 21.416667 s, 6,834,110 B, same stream md5s, same sha256). Suite: 178 tests,
+
+## C-010 | 2026-10-30 | agent -> owner | INFO | OPEN
+
+Commit: the M5 close-out commit on main ("M5 close-out: remove obsolete Shotcut MLT backend, GUI, and
+        tests"); its hash is recorded in the docs commit that follows it (the C-009/M4 pattern).
+Files: deleted `cutwright/mlt.py` (2,573 L), `cutwright/gui.py` (433 L), `cutwright/tools/shotcut_window.ps1`
+       (255 L), `projects/demo_{cuts,fade,cross,title}` (17 files, 1,776 L); renamed `REPORT.md` ->
+       `docs/legacy/REPORT_shotcut_era.md` and `docs/VISION_cutwright_v2.md` -> `docs/legacy/`; added
+       `docs/legacy/PROVENANCE_removed_editor.md` (the moved history, not a deletion);
+       `cutwright/cli.py` (`build` + parser + doctor line gone, Kinocut line in), `cutwright/engine/registry.py`
+       and `cutwright/transcribe.py` (wording only), `.gitignore`, `.gitattributes`, `.clinerules/00`+`01`,
+       `README.md`, `PROVENANCE.md`, `docs/{CODEMAP,TOOLS,GOALS,ENVIRONMENT,MIGRATION_CHECKLIST}.md`,
+       `HANDOFF.md`, `LOG.md`.
+Goal: M5 - the old editor backend leaves code, config, docs and tests; nothing kept as a fallback.
+Surprises, all three worth your eye:
+1. The working tree arrived half-done and NOT as its own notes described: the deletions were staged, the
+   docs were edited, and `HANDOFF.md` already claimed "M5 DONE ... 178 tests green, regression pack green"
+   with no `LOG.md` entry behind it. I re-measured everything and corrected the claim instead of
+   inheriting it (the numbers are in the LOG entry).
+2. One commit, not the checklist's one-per-item: the earlier attempt had code and doc edits interleaved in
+   a single working tree, so a per-item split would have meant inventing history nobody verified. The tree
+   went in whole; section F of `docs/MIGRATION_CHECKLIST.md` is ticked item by item with the evidence.
+3. `docs/evidence/m2_*.json` (20 files) is NOT part of this commit and was left untouched in the tree: the
+   unittest suite itself rewrites them (the equivalence tests in `tests/kinocut_vs_current/` write their own
+   evidence - visible as `[evidence] docs/evidence/m2_*.json` in the test output), so those diffs are timings
+   and `generated_utc` from running the suite, not M5 edits. `recapstudio/remotion/package-lock.json` stays
+   untracked (C-006). `docs/legacy/PROVENANCE_removed_editor.md` IS committed: it is the history the
+   checklist asked to keep.
+Not done and not claimed: the recapstudio regression pack (roadmap M5 acceptance line 3) was NOT re-run in
+this close-out; `python -m cutwright doctor` and the unittest suite were, and are quoted in `LOG.md`.
+Ask: (i) is M5 closed on `doctor` + the suite, with the regression pack moved to the start of M6, or do you
+     want it run before M5 is called done? (ii) confirm M6 (agent bridge `recap <step> --json` + focused
+     tool discovery) as the next objective.
+
       "OK" in 424.901 s. Real job: `recap_final.mp4`, 1900 frames, 24/1, 1920x1080, 79.166667 s,
       56,943,664 B, aac 48000/2, built from 15 Edge-TTS segments (269 words) over the looped
       `footage\demo_a.mp4`, with a code-made music bed.

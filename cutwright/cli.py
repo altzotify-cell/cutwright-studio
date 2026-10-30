@@ -7,7 +7,6 @@ Steps:
   moments  Transcript -> ranked candidate moments + agent digest
   verify   Grade picks against frames: verified / retimed / replaced
   transcribe  whisper.cpp fallback: produce a transcript, then gate it
-  build    Plan -> Shotcut .mlt, then the checks on the file itself
 
 Engine verbs (M3 -- every decision lives in cutwright/engine/, these only parse and print):
   tools    list|describe|envelope   what the engine can do, and what is installed
@@ -28,12 +27,12 @@ import sys
 
 from . import guard
 from . import frames
-from . import mlt
 from . import moments
 from . import probe
 from . import subs
 from . import transcribe
 from .engine import checkpoint, gates, manifest, registry, report, validate
+from .engine.executors import kinocut as kino
 
 VERSION = "0.1.0"
 
@@ -157,7 +156,7 @@ def cmd_doctor(args):
         print("  [%s] %s" % ("+" if ok else "!", label))
 
     print("")
-    print("transcription / render engines:")
+    print("transcription / editing engines:")
     binary = transcribe.find_binary()
     model = transcribe.find_model()
     if binary:
@@ -172,15 +171,16 @@ def cmd_doctor(args):
     else:
         print("  [ ] %-12s %-32s %s" % ("model", "ggml weights for whisper.cpp",
                                         "not installed"))
-    melt = mlt.melt_version()
-    if melt:
-        print("  [+] %-12s %s" % ("Shotcut", "%s (MLT renderer/writer)" % melt))
-        print("                 %s" % guard.rel(mlt.MELT))
-        print("      [i] .mlt projects: python -m cutwright build <plan.json>"
-              "  (Shotcut %s)" % mlt.shotcut_version())
+    if kino.available():
+        exe = kino.kino_exe()
+        r = probe.run([exe, "--version"])
+        lines = (r.stdout or "").strip().splitlines()
+        print("  [+] %-12s %s" % ("Kinocut", "%s (editing toolkit, called by subprocess)"
+                                  % (lines[0] if lines else "installed")))
+        print("                 %s" % guard.rel(exe))
     else:
-        print("  [ ] %-12s %-32s %s" % ("Shotcut", "the .mlt renderer/writer",
-                                        "not installed"))
+        print("  [ ] %-12s %-32s %s" % ("Kinocut", "editing toolkit",
+                                        "not installed: see docs/KINOCUT_FINDINGS.md 1"))
     if binary and model:
         print("      [i] transcribe needs no further setup")
     else:
@@ -594,85 +594,6 @@ def cmd_transcribe(args):
 
 
 # ---------------------------------------------------------------------------
-# entry point
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
-# build
-# ---------------------------------------------------------------------------
-def cmd_build(args):
-    plan = os.path.abspath(args.plan)
-    if not os.path.isfile(plan):
-        print("[!] no such plan: %s" % plan)
-        return 3
-    rule("=")
-    print("CUTWRIGHT %s  build" % VERSION)
-    rule("=")
-    wanted = None
-    if args.checks:
-        wanted = [c.strip().lower() for c in args.checks.split(",") if c.strip()]
-    try:
-        result = mlt.build(plan, width=args.width, crf=args.crf,
-                           samples=args.samples, checks=wanted)
-    except mlt.PlanError as exc:
-        print("[!] %s" % exc)
-        return 4
-
-    project = result["project"]
-    profile = project.profile
-    print("plan        %s" % guard.rel(result["plan"]["path"]))
-    print("project     %s" % guard.rel(result["path"]))
-    print("shotcut     Shotcut %s / MLT %s  (written into the file)"
-          % (project.shotcut, project.mlt))
-    print("profile     %dx%d @ %.3f fps (%d/%d), colorspace %s"
-          % (profile.width, profile.height, profile.fps, profile.fps_num,
-             profile.fps_den, profile.colorspace))
-    print("timeline    %d frames, %.3f s, %d clip(s)"
-          % (project.length, profile.seconds(project.length),
-             len(project.clips)))
-    if project.has_crossfade:
-        print("crossfade   %d frames (%.3f s) at each of the %d cut(s): V1's tail "
-              "under V2's head" % (project.transition,
-                                   profile.seconds(project.transition),
-                                   len(project.clips) - 1))
-    print("")
-
-    rows = []
-    for index, clip in enumerate(project.clips):
-        rows.append({"n": str(index), "track": "V1 + A1",
-                     "file": os.path.basename(clip["source"]),
-                     "in": "%.2f" % (clip["in"] / profile.fps),
-                     "out": "%.2f" % ((clip["out"] + 1) / profile.fps),
-                     "frames": str(clip["frames"]), "label": clip["label"]})
-    print_table(rows, [("n", "#", 2), ("track", "track", 7), ("file", "file", 24),
-                       ("in", "in", 6), ("out", "out", 6), ("frames", "frames", 6),
-                       ("label", "label", 26)])
-    print("")
-    rule("-")
-    for check in result["checks"]:
-        print("  [%s] %-8s %s" % ("+" if check["ok"] else "!", check["name"],
-                                  check["detail"]))
-    for run in result.get("not_run") or []:
-        print("  [ ] %-8s not run: %s" % (run["name"], run["detail"]))
-    for name in result["skipped"]:
-        print("  [ ] %-8s not run" % name)
-    rule("-")
-
-    failed = [c for c in result["checks"] if not c["ok"]]
-    if failed:
-        print("verdict     NOT ready: %d check(s) failed" % len(failed))
-        return 5
-    if result["skipped"] or result.get("not_run"):
-        print("verdict     %d check(s) passed, NOT RUN: %s"
-              % (len(result["checks"]),
-                 ", ".join([r["name"] for r in result.get("not_run") or []]
-                           + result["skipped"])))
-        return 0
-    print("verdict     all checks passed")
-    print("open it     %s" % os.path.abspath(result["path"]))
-    return 0
-
-
-# ---------------------------------------------------------------------------
 # engine verbs: tools, validate, run, resume, status, approve  (M3)
 #
 # Thin on purpose: every decision lives in `cutwright/engine/` (ops, registry, manifest,
@@ -1027,22 +948,6 @@ def build_parser():
     p.add_argument("--write-back", action="store_true", dest="write_back",
                    help="patch status and expected back into moments.json")
     p.set_defaults(func=cmd_verify)
-
-    p = sub.add_parser("build",
-                       help="write a Shotcut .mlt from a plan, then check it")
-    p.add_argument("plan", help="plan JSON: clips with in/out (see README)")
-    p.add_argument("--width", type=int, default=270,
-                   help="width of the proof render in pixels (default 270)")
-    p.add_argument("--crf", type=int, default=34,
-                   help="proof render quality, higher is smaller (default 34)")
-    p.add_argument("--samples", type=int, default=3,
-                   help="how many clips to compare frames for (default 3)")
-    p.add_argument("--checks", metavar="LIST",
-                   help="subset of xml,effects,lengths,render,fade,crossfade,"
-                        "titles,shotcut,gui to run (default: all of them; fade, "
-                        "crossfade, titles, shotcut and gui only when the plan "
-                        "asks for them)")
-    p.set_defaults(func=cmd_build)
 
     p = sub.add_parser("transcribe",
                        help="whisper.cpp fallback: transcribe the audio, gate it")

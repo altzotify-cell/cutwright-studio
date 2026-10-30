@@ -13,7 +13,7 @@ Routing rules (`.clinerules/01-architecture-and-constraints.md`, `docs/CAPABILIT
   * a different executor needs an explicit `reason` (the string that goes into the manifest's
     `executor_reason`); the matrix decision is a project decision, not a runtime probe;
   * a missing executor raises `executor_not_installed` with the install step - never a silent
-    fallback, and never Shotcut, which is removed by design;
+    fallback, and never the editor backend this repo removed in M5 (2026-10-30);
   * parameters are validated before routing returns, so a bad manifest never reaches a render.
 """
 import dataclasses

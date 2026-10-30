@@ -9,7 +9,7 @@ Project shape, constraints and testing rules are in `01`-`03` of this folder. Th
 4. Read ONLY the current milestone's section of `docs/ROADMAP.md`
    (`Select-String -Path docs\ROADMAP.md -Pattern '^## M'` for line numbers, then slice).
 5. Never read whole: `recapstudio/_template/recap.py` (5,400+ lines), `recapstudio/studio.py`, `recapstudio/web/app.js`,
-   `cutwright/mlt.py` (to be deleted), `docs/legacy/*`, videos, logs, `node_modules`. Use `docs/CODEMAP.md` for ranges.
+   `docs/legacy/*`, videos, logs, `node_modules`. Use `docs/CODEMAP.md` for ranges.
 
 ## Pre-flight on a fresh checkout (before changing anything)
 Check git state (`git status`, `git remote -v`, branch), `py -0p`, `python --version`, `node --version`,

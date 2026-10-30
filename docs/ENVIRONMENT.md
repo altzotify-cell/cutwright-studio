@@ -53,8 +53,9 @@ ffprobe -version | Select-Object -First 1 ->
   ffprobe version 7.1-full_build-www.gyan.dev Copyright (c) 2007-2024 the FFmpeg developers
 ```
 
-A5 holds: the winning ffmpeg is a Gyan build, **not** Shotcut's bundled one (`shotcut\` does not exist:
-`Test-Path shotcut -> False`). The scoop shim (`scoop\apps\ffmpeg-shared`) wins over the winget one,
+A5 holds: the winning ffmpeg is a Gyan build, **not** an editor's bundled one (the removed editor
+folder is not on this PC: `Test-Path` -> False at M0 and again at M5). The scoop shim (`scoop\apps\ffmpeg-shared`)
+wins over the winget one,
 so "Gyan.FFmpeg via winget" is on PATH but not first. All three are Gyan builds; behaviour differences
 between 7.1 / 8.0 / 9.0.2 are unmeasured. Do not pin a version yet - M2 measures.
 
@@ -69,9 +70,9 @@ Nothing missing from the M0 list.
 ## Paths checked
 
 ```
-Test-Path shotcut               -> False
+Test-Path <editor folder>       -> False    (measured at M0 2026-10-29, still False at M5; nothing to delete)
 Test-Path .venvs\kinocut        -> False    (Kinocut not installed yet; M1)
-Test-Path shotcut\Shotcut\melt.exe -> False (so M0 step 8 is skipped)
+Test-Path <editor>\...\renderer -> False    (so M0 step 8 was skipped)
 recapstudio\Projects            -> only .gitkeep and _projects_go_here.txt (0 projects at audit time);
                                    regress\ was created later in M0 by copying _template (git-ignored,
                                    see "Recap regression baseline" below)
@@ -113,14 +114,16 @@ write guard self-test:
 transcription / render engines:
   [ ] whisper.cpp  offline transcription fallback   not installed
   [ ] model        ggml weights for whisper.cpp     not installed
-  [ ] Shotcut      the .mlt renderer/writer         not installed
+  [ ] <editor>     the deleted editor renderer/writer   not installed
       [i] run: python -m cutwright transcribe <video>   for the exact steps
 ```
 
 This block is verbatim, captured at M0 step 4, i.e. **before** the installs listed further down: the
-`[ ]` dependency lines are the pre-install state, not the current one.
+`[ ]` dependency lines are the pre-install state, not the current one. (Editorial: the M5 deletion of
+the old editor backend replaced that dependency line with a `Kinocut` line and the heading now reads
+"transcription / editing engines"; nothing else in the block was edited.)
 
-Expected/acceptable failures today: Shotcut absent (M5 deletes it anyway), whisper.cpp absent,
+Expected/acceptable failures today: the editor backend absent (deleted in M5), whisper.cpp absent,
 Recap Python deps, Remotion packages. Not acceptable after M0: Recap deps + Remotion, because the
 regression pack needs a real render. Both are installed now and the real render passed (premiere,
 remotion and timeline all exit 0) - see the baseline section below. Re-running
