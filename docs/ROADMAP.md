@@ -195,6 +195,10 @@ python -m cutwright resume out\runs\demo --json                # steps 1-2 repor
 Plus tests: manifest rejects an unknown op / missing input / non-zero cost with cap $0 / a visual asset whose origin is not in {footage, user_image, code_graphic, stock_licensed};
 approval gate blocks until approved; a corrupted checkpoint is detected, not trusted. At least one step ran through Kinocut and one through direct FFmpeg, both shown in the manifest with `executor_reason`.
 
+Status 2026-10-30: DONE (phases 3A/3B/3C/3D; quotes in `LOG.md`, decisions in `COMMS.md` C-006/C-007). All six acceptance commands
+pass on real media. NOT built, and not claimed: `executors/remotion.py`, `pipelines/*.json`, `skills/*.md` (out of the confirmed
+scope - no op routes to a remotion executor yet).
+
 ## M4 - Move Recap Studio's editing onto the engine (only where M2 proved parity)
 
 Objective: remove duplicated editing infrastructure without breaking recaps.

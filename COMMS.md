@@ -132,3 +132,43 @@ Ask: two decisions before phase 3D.
    pipelines/*.json, skills/*.md and the seven CLI verbs (`tools list|describe|envelope`, validate,
    run, resume, status, approve). Confirm that is the next objective.
 
+ANSWERED by the owner 2026-10-30: (1) -> (a), rewrite the example; (2) -> yes for validate/gates/
+report/ids + the verbs + the acceptance ladder. `executors/remotion.py`, `pipelines/*.json` and
+`skills/*.md` were NOT confirmed, so they stay out of 3D (see C-007).
+
+
+## C-007 | 2026-10-30 | agent -> owner | INFO | OPEN
+Commit: M3 3D close-out on main (hash in LOG.md; the M3 tick and this entry are in the same commit)
+Files: `cutwright/engine/{ids,gates,validate,report}.py` (new), `cutwright/engine/manifest.py`
+       (gates + declared checks + production report wired; `resume()` added), `cutwright/cli.py`
+       (six verbs), `docs/schemas/manifest.example.json` (rewritten, decision 1 = (a)),
+       `tests/{engine_demo,test_engine_validate,test_engine_gates,test_engine_cli}.py`,
+       `tests/media_fixtures.py` (+`make_beep_bed`), `HANDOFF.md`, `LOG.md`.
+Goal: finish phase 3D - the six CLI verbs, post-render validation, approval files, the production
+report, and the roadmapped acceptance ladder on real media. Close M3.
+Observed: all six acceptance commands run and pass; the demo is a five-step render (Kinocut trim ->
+ffmpeg exact fit -> Kinocut concat -> Kinocut mix -> Kinocut export) whose final file carries frame
+ids 24..47 then 1000..1035 (60 frames, 24.0 fps, 160x90, AAC 48 kHz stereo) with the mix bed's beeps
+at 0.0/1.0/2.0 s - so picture, audio and timing are all measured, not assumed. A killed run (killed
+during step 3) resumes with steps 1-2 "cached (cache key unchanged, outputs intact)", re-runs step 3
+over its partial file, and finishes frame-exact.
+DECISION 1 answered as (a). The rewritten example is now valid; writing it caught my own mistake -
+`export_h264` takes input `src`, not `video`.
+DECISION 2 executed as scoped. NOT done, and not claimed: `executors/remotion.py`, `pipelines/*.json`,
+`skills/*.md` (no op routes to a remotion executor yet; those three were not in the confirmed scope).
+Three findings, all measured, all worth your eye:
+1. `kino merge` silently RE-TIMES heterogeneous inputs: a 24 fps silent clip + a 24 fps clip with
+   audio came out 30.0 fps / 44.1 kHz and 75 frames instead of 60. Two silent 24 fps clips came out
+   60/60 at 24.0 fps. Consequence: never concat a silent clip with an audio one; build picture
+   first and one audio track after (the M2 decision already points that way). `constant_fps` now
+   asserts the RATE, not just uniformity, so this cannot pass silently again.
+2. `fit_to_frames` is video-only by design (`-an`, matrix row 2), so fitting a clip drops its audio.
+   Documented in the executor and in the demo builder; a manifest author still has to know it.
+3. `mix_audio`'s track files are params, not declared inputs, so they are NOT part of the step's
+   cache key: replacing `music.wav` does not invalidate the mix. Fixing it means declaring the track
+   as an input of the op, which changes the op contract - M4 decision, recorded here.
+Ask: (i) confirm M3 is closed as you read it; (ii) any objection to making a mix track a declared
+input in M4; (iii) the next objective is M4 (move Recap editing onto the engine) and it waits for
+your go.
+
+

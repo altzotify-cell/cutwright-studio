@@ -278,7 +278,10 @@ def step_cached(state, step_id, key, outputs):
     """
     entry = (state.get("steps") or {}).get(step_id) or {}
     if entry.get("status") != DONE:
-        return False, "step is %s" % (entry.get("status") or "not started")
+        # Phrased as a reason to RUN, because that is what the caller does with it: a step that was
+        # never started, or was left `running` by a killed process, or was `skipped` behind a gate,
+        # must run now. "step is skipped" on a row that just ran read like a contradiction.
+        return False, "step was %s, so it runs again" % (entry.get("status") or "never started")
     if not key:
         return False, "no cache key was computed"
     if entry.get("cache_key") != key:

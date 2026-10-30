@@ -9,9 +9,19 @@ Steps:
   transcribe  whisper.cpp fallback: produce a transcript, then gate it
   build    Plan -> Shotcut .mlt, then the checks on the file itself
 
-Every step is dry by default and writes only inside this folder.
+Engine verbs (M3 -- every decision lives in cutwright/engine/, these only parse and print):
+  tools    list|describe|envelope   what the engine can do, and what is installed
+  validate Pre-render check of a manifest: plan, params, budget, asset provenance
+  run      Execute a manifest (--dry-run, --only); cached steps are skipped on a re-run
+  resume   Continue a run from its checkpoint
+  status   What a run folder's checkpoint says, step by step
+  approve  Write the approval file that opens a gate in a run folder
+
+The legacy steps are dry by default. The engine verbs write only inside this folder, and only
+through cutwright/guard.py.
 """
 import argparse
+import json
 import os
 import shutil
 import sys
@@ -23,6 +33,7 @@ from . import moments
 from . import probe
 from . import subs
 from . import transcribe
+from .engine import checkpoint, gates, manifest, registry, report, validate
 
 VERSION = "0.1.0"
 
@@ -661,6 +672,309 @@ def cmd_build(args):
     return 0
 
 
+# ---------------------------------------------------------------------------
+# engine verbs: tools, validate, run, resume, status, approve  (M3)
+#
+# Thin on purpose: every decision lives in `cutwright/engine/` (ops, registry, manifest,
+# checkpoint, gates, validate, report). These functions only parse, call and print, so the same
+# behaviour is reachable from a test, an agent, or a human at a prompt.
+# ---------------------------------------------------------------------------
+def _json_mode(args):
+    return bool(getattr(args, "json", False))
+
+
+def _dump(data):
+    print(json.dumps(data, indent=2, ensure_ascii=False, default=str))
+
+
+def _reject(args, kind, exc):
+    """One rejected request, the same shape with or without --json. Returns the exit code 2."""
+    data = {"ok": False, "error": kind, "code": getattr(exc, "code", "error"),
+            "message": str(exc), "suggested": getattr(exc, "suggested", "")}
+    if hasattr(exc, "to_dict"):
+        data["details"] = exc.to_dict()
+    if _json_mode(args):
+        _dump(data)
+    else:
+        print("[!] %s" % str(exc))
+        if data["suggested"]:
+            print("    %s" % data["suggested"])
+    return 2
+
+
+def _mark(status):
+    return {"done": "[+]", "skipped": "[=]", "failed": "[!]", "would_run": "[>]"}.get(status, "[ ]")
+
+
+def _print_tool_list(data):
+    rule()
+    print("ENGINE OPS  %d" % data["count"])
+    rule()
+    if data["ops"]:
+        print_table([{"name": row["name"], "stage": row["stage"], "executor": row["executor"],
+                      "what": row["description"]} for row in data["ops"]],
+                    [("name", "op", 20), ("stage", "stage", 8), ("executor", "executor", 8),
+                     ("what", "does", 34)])
+        print("")
+    print("  per stage  %s" % "  ".join("%s:%d" % (name, count)
+                                        for name, count in data["stages"].items()))
+    for name, row in sorted(data["installed"].items()):
+        print("  [%s] %-8s %s" % ("+" if row["ok"] else " ",
+                                  name, row.get("version") or row.get("install", "")))
+    rule()
+
+
+def _print_op(data):
+    rule()
+    print("%s  (%s, executor %s)" % (data["name"], data["stage"], data["executor"]))
+    rule()
+    print("  does      %s" % data["description"])
+    print("  inputs    %s" % ", ".join(data["inputs"]))
+    print("  outputs   %s" % ", ".join(data["outputs"]))
+    print("  why       %s" % data["executor_reason"])
+    evidence = data.get("evidence_status") or {}
+    print("  evidence  %s  %s" % (data["evidence"],
+                                  "ok" if evidence.get("ok") else evidence.get("reason", "")))
+    ready = data.get("executor_ready") or {}
+    print("  installed %s" % ("yes" if ready.get("ok") else "NO -> %s" % ready.get("reason", "")))
+    if data["params"]:
+        print("")
+        print_table([{"name": key, "type": param["type"],
+                      "req": "yes" if param["required"] else "",
+                      "def": "" if "default" not in param else str(param["default"]),
+                      "doc": param["doc"]}
+                     for key, param in data["params"].items()],
+                    [("name", "param", 14), ("type", "type", 6), ("req", "req", 3),
+                     ("def", "default", 8), ("doc", "what", 34)])
+    rule()
+
+
+def _print_envelope(data):
+    rule()
+    print("ENVELOPE %s  %d of %d ops%s" % (data["stage"], data["returned"], data["count"],
+                                           "" if not data["truncated"] else "  (truncated)"))
+    rule()
+    for row in data["ops"]:
+        print("  %-16s %s" % (row["name"], row["executor"]))
+        print("      %s" % row["description"])
+        if row["required"]:
+            print("      needs %s" % ", ".join(row["required"]))
+    print("")
+    print("  installed %s" % "  ".join("%s:%s" % (name, "yes" if ok else "NO")
+                                       for name, ok in data["installed"].items()))
+    rule()
+
+
+def cmd_tools(args):
+    action = getattr(args, "action", "") or "list"
+    try:
+        if action == "describe":
+            data = registry.describe(args.op)
+            data["ok"] = True
+            if _json_mode(args):
+                _dump(data)
+            else:
+                _print_op(data)
+            return 0
+        if action == "envelope":
+            data = registry.envelope(args.stage)
+            data["ok"] = True
+            if _json_mode(args):
+                _dump(data)
+            else:
+                _print_envelope(data)
+            return 0
+        rows = registry.list_ops(getattr(args, "stage", None))
+        data = registry.tools_report()
+        data.update({"ok": True, "stage": getattr(args, "stage", None) or "",
+                     "ops": rows, "count": len(rows)})
+    except registry.RegistryError as exc:
+        return _reject(args, "registry", exc)
+    if _json_mode(args):
+        _dump(data)
+    else:
+        _print_tool_list(data)
+    return 0
+
+
+def _print_plan(data):
+    rule()
+    print("PLAN  %s   %d step(s), $%s" % (data.get("run_dir", ""), data.get("steps", 0),
+                                          data.get("cost_usd", 0)))
+    rule()
+    for row in (data.get("provenance") or {}).get("assets") or []:
+        print("  asset  %-12s %-14s %s" % (row["id"], row["origin"] or "(no origin)",
+                                          "ok" if row["ok"] else "; ".join(row["problems"])))
+    for row in data.get("errors") or []:
+        print("  ERROR  %s%s | %s" % ("%s " % row["step"] if row["step"] else "",
+                                      row["code"], row["message"]))
+        if row.get("suggested"):
+            print("         -> %s" % row["suggested"])
+    for row in data.get("warnings") or []:
+        print("  warn   %s%s | %s" % ("%s " % row["step"] if row["step"] else "",
+                                      row["code"], row["message"]))
+    print("")
+    print("  status %s" % ("OK - this plan can run" if data["ok"] else "REJECTED"))
+    rule()
+
+
+def cmd_validate(args):
+    """Pre-render check. Provenance is REPORTED here; `manifest.validate` owns the verdict."""
+    try:
+        document = manifest.load(args.manifest)
+    except manifest.ManifestError as exc:
+        return _reject(args, "manifest", exc)
+    data = manifest.validate(document, manifest_path=args.manifest)
+    data["provenance"] = validate.provenance(document)
+    if _json_mode(args):
+        _dump(data)
+    else:
+        _print_plan(data)
+    return 0 if data["ok"] else 1
+
+
+def _check_line(check):
+    """One validation row as a line: pass / FAIL / not measured yet, with the number when there is one."""
+    status = check.get("status") or "not_run"
+    mark = {"pass": "ok  ", "fail": "FAIL", "not_run": " -- "}.get(status, " ?  ")
+    detail = check.get("message") or ""
+    if not detail and check.get("measured") is not None:
+        detail = "measured %s" % (check.get("measured"),)
+    return "       %s %-20s %s" % (mark, check.get("check"), detail)
+
+
+def _print_run(data):
+    rule()
+    print("RUN %s   %s%s" % (data["run_id"], data["run_dir"],
+                             "   (dry run: nothing written)" if data["dry_run"] else ""))
+    rule()
+    for row in data["steps"]:
+        print("  %s %-12s %-9s %-9s %s" % (_mark(row["status"]), row["id"], row["op"],
+                                           row["status"], row.get("reason") or ""))
+        for check in row.get("validation") or []:
+            print(_check_line(check))
+    if data.get("stopped"):
+        print("  stopped    %s" % data["stopped"])
+    cursor = data.get("cursor") or {}
+    print("  cursor     next %s, %d of %d done" % (cursor.get("next") or "(none)",
+                                                   len(cursor.get("done") or []),
+                                                   cursor.get("total") or 0))
+    for key in ("checkpoint", "production_report"):
+        if data.get(key):
+            print("  %-10s %s" % (key, data[key]))
+    rule()
+
+
+def cmd_run(args):
+    dry = bool(getattr(args, "dry_run", False))
+    try:
+        plan = manifest.load_plan(args.manifest, versions=manifest.tool_versions(),
+                                  strict_files=not dry)
+    except manifest.ManifestError as exc:
+        return _reject(args, "manifest", exc)
+    try:
+        data = manifest.run(plan, only=getattr(args, "only", None), dry_run=dry)
+    except (checkpoint.CheckpointError, guard.GuardError) as exc:
+        return _reject(args, "run", exc)
+    if _json_mode(args):
+        _dump(data)
+    else:
+        _print_run(data)
+    return 0 if data["ok"] else 1
+
+
+def cmd_resume(args):
+    folder = os.path.abspath(args.run_dir)
+    if not os.path.isdir(folder):
+        print("[!] no such run folder: %s" % folder)
+        return 3
+    try:
+        data = manifest.resume(folder, versions=manifest.tool_versions())
+    except (manifest.ManifestError, checkpoint.CheckpointError, guard.GuardError) as exc:
+        return _reject(args, "resume", exc)
+    if _json_mode(args):
+        _dump(data)
+    else:
+        _print_run(data)
+    return 0 if data["ok"] else 1
+
+
+def _print_status(data):
+    rule()
+    print("STATUS %s   %s" % (data["run_id"], data["run_dir"]))
+    rule()
+    for row in data["steps"]:
+        note = row.get("stale") and "STALE: %s" % row["stale"] or row.get("reason") or ""
+        print("  %s %-12s %-9s %-8s %s" % (_mark(row["status"]), row["id"], row["op"],
+                                           row["status"], note))
+        digests = (data.get("output_digests") or {}).get(row["id"]) or []
+        if digests:
+            print("       digests %s" % ", ".join(digests))
+    cursor = data.get("cursor") or {}
+    print("  cursor     next %s, %d of %d done" % (cursor.get("next") or "(none)",
+                                                   len(cursor.get("done") or []),
+                                                   cursor.get("total") or 0))
+    print("  report     %s" % ("production_report.json present" if data.get("production_report")
+                               else "no production_report.json yet"))
+    rule()
+
+
+def cmd_status(args):
+    folder = os.path.abspath(args.run_dir)
+    if not os.path.isdir(folder):
+        print("[!] no such run folder: %s" % folder)
+        return 3
+    try:
+        data = manifest.status(folder)
+        state = checkpoint.load(folder)
+    except checkpoint.CheckpointError as exc:
+        return _reject(args, "status", exc)
+    data["output_digests"] = {step_id: sorted(entry.get("output_digests") or {})
+                              for step_id, entry in (state.get("steps") or {}).items()}
+    data["production_report"] = report.load(folder) is not None
+    data["ok"] = bool(data["steps"]) and all(row["status"] == "done" and not row["stale"]
+                                             for row in data["steps"])
+    if _json_mode(args):
+        _dump(data)
+    else:
+        _print_status(data)
+    return 0 if data["ok"] else 1
+
+
+def cmd_approve(args):
+    folder = os.path.abspath(args.run_dir)
+    if not os.path.isdir(folder):
+        print("[!] no such run folder: %s" % folder)
+        return 3
+    try:
+        record = gates.approve(folder, args.gate, by=getattr(args, "by", "owner"),
+                               note=getattr(args, "note", ""))
+    except (guard.GuardError, checkpoint.CheckpointError, OSError, ValueError) as exc:
+        return _reject(args, "gate", exc)
+    data = {"ok": True, "approved": record, "gates": [], "pending_gates": []}
+    saved = report.load(folder)
+    if saved:
+        rows = []
+        for gate in saved.get("gates") or []:
+            if gate.get("id") == record["gate"]:
+                gate = dict(gate, approved=True, source="approval file",
+                            by=record["by"], at=record["at"])
+            rows.append(gate)
+        data["gates"] = rows
+        data["pending_gates"] = [row["id"] for row in rows if not row["approved"]]
+    if _json_mode(args):
+        _dump(data)
+    else:
+        rule()
+        print("APPROVED %s in %s" % (record["gate"], guard.rel(folder)))
+        print("  by %s at %s" % (record["by"], record["at"]))
+        print("  file %s" % record.get("path", ""))
+        if data["pending_gates"]:
+            print("  still closed: %s" % ", ".join(data["pending_gates"]))
+        rule()
+    return 0
+
+
 def build_parser():
     ap = argparse.ArgumentParser(
         prog="cutwright",
@@ -753,6 +1067,56 @@ def build_parser():
     p.add_argument("--out", metavar="DIR",
                    help="output folder (default: out/<video name>/)")
     p.set_defaults(func=cmd_transcribe)
+
+    # --- the engine (M3): thin verbs over cutwright/engine/* -------------------------------
+    p = sub.add_parser("tools", help="what the engine can do, and what is installed")
+    p.add_argument("--json", action="store_true", help="print JSON")
+    tsub = p.add_subparsers(dest="action", metavar="ACTION")
+    q = tsub.add_parser("list", help="every op, or one stage")
+    q.add_argument("--stage", help="plan|assets|edit|graphics|qc|deliver")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_tools)
+    q = tsub.add_parser("describe", help="one op in full: params, executor, evidence")
+    q.add_argument("op")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_tools)
+    q = tsub.add_parser("envelope", help="at most 10 op descriptions for ONE stage")
+    q.add_argument("--stage", default="edit")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_tools)
+    p.set_defaults(action="list")
+
+    p = sub.add_parser("validate", help="pre-render check of a manifest: plan + asset provenance")
+    p.add_argument("manifest")
+    p.add_argument("--json", action="store_true", help="print JSON")
+    p.set_defaults(func=cmd_validate)
+
+    p = sub.add_parser("run", help="execute a manifest, reusing steps whose cache key matches")
+    p.add_argument("manifest")
+    p.add_argument("--dry-run", action="store_true", dest="dry_run",
+                   help="report what would run; write nothing at all")
+    p.add_argument("--only", action="append", metavar="STEP",
+                   help="execute only these step ids (repeatable)")
+    p.add_argument("--json", action="store_true", help="print JSON")
+    p.set_defaults(func=cmd_run)
+
+    p = sub.add_parser("resume", help="continue a run from its checkpoint")
+    p.add_argument("run_dir")
+    p.add_argument("--json", action="store_true", help="print JSON")
+    p.set_defaults(func=cmd_resume)
+
+    p = sub.add_parser("status", help="what a run folder's checkpoint says, step by step")
+    p.add_argument("run_dir")
+    p.add_argument("--json", action="store_true", help="print JSON")
+    p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("approve", help="open an approval gate in a run folder")
+    p.add_argument("run_dir")
+    p.add_argument("gate", help="the gate id the manifest declared")
+    p.add_argument("--by", default="owner", help="who approved it (default: owner)")
+    p.add_argument("--note", default="", help="what was approved, in words")
+    p.add_argument("--json", action="store_true", help="print JSON")
+    p.set_defaults(func=cmd_approve)
     return ap
 
 

@@ -12,13 +12,13 @@ be skipped on a resume:
 param checked against `ops.py`, every cache key computed. Nothing in a Plan is guessed; a problem
 is a `ManifestError` naming the step, the field and the fix.
 
-Deliberately NOT here (next modules of M3, so there is exactly one implementation each):
+Divided on purpose, so each rule has exactly one implementation:
 
-  * media validation after a render (frame counts, decodes-clean, loudness) -> `validate.py`; this
-    module carries each step's declared checks through as `not_run` rows for validate.py to fill;
-  * approval gates' files in `production/<run>/approvals/` -> `gates.py`; a gate declared in the
-    manifest and not approved blocks its step here, using data only;
-  * `production_report.json` -> `report.py`; `run()` returns its result in memory.
+  * measuring a rendered file (frame counts, decodes-clean) -> `validate.py`; a step's declared
+    checks are carried here as `not_run` rows and filled by `validate.run_checks` after the step;
+  * approval gates' files in `<run_dir>/approvals/` -> `gates.py`; this module only asks it;
+  * `production_report.json` -> `report.py`; `run()` writes it at the end of every real run.
+
 
 Hard rules encoded here (`.clinerules/01`): the executor of every op is the measured one from
 `docs/CAPABILITY_MATRIX.md` -- a different executor needs a written `executor_reason`; nothing runs
@@ -31,7 +31,9 @@ import json
 import os
 
 from cutwright import guard
-from cutwright.engine import checkpoint, ops, registry
+from cutwright.engine import checkpoint, gates, ops, registry
+from cutwright.engine import report as production_report
+from cutwright.engine import validate as media_validate
 from cutwright.engine.executors import ExecutorError
 
 SCHEMA = 1
@@ -136,6 +138,12 @@ def _apath(value):
     if os.path.isabs(text):
         return os.path.normpath(text)
     return os.path.normpath(os.path.join(guard.ROOT, text))
+
+
+# Public alias: `validate.provenance` and the demo generator resolve paths the same way a plan does,
+# so there is exactly one rule for "where does a manifest path point".
+resolve_path = _apath
+
 
 
 def _error(errors, code, message, step="", suggested=""):
@@ -630,14 +638,11 @@ def step_key(step):
 def _blocking_gate(plan, step_id):
     """The id of an unapproved gate in front of `step_id`, or ''.
 
-    Only the manifest's data is consulted here; `gates.py` will own the approval FILES in
-    `production/<run>/approvals/` and feed the same three fields. A step behind a closed gate is
-    skipped and the run stops -- never silently executed.
+    `gates.py` owns the decision, because a gate can be opened two ways: the manifest's own
+    `approved: true`, or an approval FILE in `<run_dir>/approvals/` written by `approve`. A step
+    behind a closed gate is skipped and the run stops -- never silently executed.
     """
-    for gate in plan.gates or []:
-        if gate.get("before_step") == step_id and not gate.get("approved"):
-            return str(gate.get("id"))
-    return ""
+    return gates.blocking(plan.gates or [], plan.run_dir, before_step=step_id)
 
 
 
@@ -676,19 +681,41 @@ def _execute(plan, state, step, row, report, key):
                           attempts=prior + attempts, finished=checkpoint.now(),
                           reason="%s failed (%s)" % (step.spec.name, code))
         checkpoint.save(plan.run_dir, state)
-        row.update(status=checkpoint.FAILED, attempts=prior + attempts, error=error)
+        row.update(status=checkpoint.FAILED, attempts=prior + attempts, error=error,
+                   reason="%s failed (%s)" % (step.spec.name, code))
         report["stopped"] = "step %r failed (%s): %s" % (step.id, code,
                                                         (error or {}).get("message", ""))
         return row
     seconds = float(getattr(finished, "seconds", 0.0) or 0.0)
+    # The step's declared checks are measured on the file it just wrote. A failing check fails the
+    # step; it is deterministic, so the retry loop above never sees it (no second encode).
+    checks = media_validate.run_checks(step, finished)
+    failed = media_validate.failures(checks)
+    if failed:
+        message = "; ".join("%s: %s" % (item["check"], item.get("message") or "failed")
+                            for item in failed)
+        error = {"step": step.id, "code": "validation_failed", "type": "ValidationError",
+                 "message": message, "transient": False,
+                 "suggested": "measure the output again; fix the step or the expected value "
+                              "(a failed check is never retried)"}
+        checkpoint.record(state, step.id, status=checkpoint.FAILED, attempts=prior + attempts,
+                          finished=checkpoint.now(), seconds=round(seconds, 3),
+                          validation=checks, error=error,
+                          reason="%s failed validation" % step.spec.name)
+        checkpoint.save(plan.run_dir, state)
+        row.update(status=checkpoint.FAILED, attempts=prior + attempts, error=error,
+                   validation=checks)
+        report["stopped"] = "step %r failed validation: %s" % (step.id, message)
+        return row
     digests = {name: checkpoint.digest_file(path) for name, path in step.outputs.items()}
     checkpoint.record(state, step.id, status=checkpoint.DONE, attempts=prior + attempts,
                       finished=checkpoint.now(), seconds=round(seconds, 3),
                       output_digests=digests, cache_key=key, error={}, reason="",
+                      validation=checks,
                       result=(finished.to_dict() if hasattr(finished, "to_dict") else {}))
     checkpoint.save(plan.run_dir, state)
     row.update(status=checkpoint.DONE, attempts=prior + attempts, seconds=round(seconds, 3),
-               warnings=list(getattr(finished, "warnings", []) or []))
+               validation=checks, warnings=list(getattr(finished, "warnings", []) or []))
     return row
 
 
@@ -755,7 +782,29 @@ def run(plan, resume=True, only=None, dry_run=False):
     if state is not None:
         report["cursor"] = checkpoint.cursor(state)
         report["checkpoint"] = guard.rel(checkpoint.state_path(plan.run_dir))
+        written = production_report.write(plan.run_dir,
+                                          production_report.build(plan, report, state))
+        report["production_report"] = guard.rel(written)
     return report
+
+
+def resume(run_dir, versions=None, only=None):
+    """Continue a run from its checkpoint. Returns the same report shape as `run()`.
+
+    The checkpoint records the manifest by its REPO-RELATIVE path (never an absolute user path), so
+    a resume works from any working directory and after the folder moved inside the fork. A run
+    whose manifest no longer exists is refused instead of being resumed against a guess.
+    """
+    folder = _apath(run_dir)
+    state = checkpoint.load(folder)
+    path = str(state.get("manifest") or "")
+    if not path or not os.path.isfile(_apath(path)):
+        raise ManifestError("this run does not name a manifest that still exists: %r" % (path,),
+                            code="no_manifest",
+                            suggested="run the manifest again with `run <manifest>`, or restore %s"
+                                      % (path or "it"))
+    plan = load_plan(path, versions=versions, run_dir=folder, strict_files=True)
+    return run(plan, resume=True, only=only)
 
 
 def status(run_dir):

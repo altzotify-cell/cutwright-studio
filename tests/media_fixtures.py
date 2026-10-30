@@ -53,6 +53,13 @@ def _beep_wav(path, seconds):
         w.writeframes(bytes(samples))
 
 
+def make_beep_bed(path, seconds):
+    """A 1 kHz burst at every whole second (50 ms, amplitude 20000). Public name for callers
+    outside the fixtures: `beep_onsets` can then measure WHERE the audio sits in an output."""
+    _beep_wav(path, seconds)
+    return path
+
+
 def make_counter_clip(path, frames=240, fps=24, with_audio=True, id_offset=0):
     """Write an mp4 whose frame k carries the number k + id_offset. Returns path."""
     data = b"".join(_frame_bytes(k, id_offset) for k in range(frames))

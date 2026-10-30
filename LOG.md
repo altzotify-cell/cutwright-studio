@@ -755,3 +755,85 @@ DECISIONS  - the cache key is computed when a step is about to run, not when the
              `MAX_ATTEMPTS = 2` for transient failures only; a deterministic failure (bad params,
              refused overwrite, failed validation) is never retried.
 
+## 2026-10-30 - M3 phase 3D: engine CLI verbs, post-render validation, gates, production report (M3 CLOSED)
+
+Scope: the six roadmapped CLI verbs, media validation after a render, approval FILES, the production
+report, the run-id helpers, and the whole acceptance ladder on real media - then close M3.
+Started at commit 1f2f2cf ("M3 3C close-out") on `main`.
+
+TESTED     - full suite : `python -m unittest discover -s tests -t . -v` -> "Ran 166 tests in 360.362s" / "OK"
+             (166 = M0..M3 + the 20 M2 areas + 84 engine tests: 38 manifest+checkpoint, 19 validate,
+             9 gates, 16 CLI, plus env/flags/fixtures). First time the suite is green as a whole.
+TESTED     - tool discovery : `python -m cutwright tools list --stage edit --json` -> exit 0,
+             "count": 10 (trim_exact, fit_to_frames, concat, mix_audio, export_h264, ...), each row
+             naming its executor and evidence status.
+TESTED     - one op in detail : `python -m cutwright tools describe trim_exact --json` -> exit 0,
+             executor "kinocut", executor_reason citing the M2 evidence file, params + checks listed.
+TESTED     - plan validation : `python -m cutwright validate docs\schemas\manifest.example.json` ->
+             "status OK - this plan can run", exit 0, 3 steps, 2 assets, 1 warning (voice_1.wav does
+             not exist yet, and `validate` is allowed to pass a plan whose footage is not there).
+             The example was rewritten to the real op vocabulary first; my draft's `export_h264`
+             input was called `video` and the validator rejected it (`unknown_input`).
+TESTED     - run + gate : `python -m cutwright run out\fx\demo_manifest.json --json` -> exit 1,
+             ok=false, "stopped": "gate 'final_ok' is not approved", steps trim/fit/concat/mix done,
+             export skipped. Then `python -m cutwright approve out\runs\demo final_ok` ->
+             "APPROVED final_ok -> out\runs\demo\approvals\final_ok.json".
+TESTED     - re-run after approval : same `run` command -> exit 0, ok=true; the four earlier steps
+             report "cached (cache key unchanged, outputs intact)" and export runs, so one flow proves
+             the gate blocks, the approval releases it, and the cache skips work.
+TESTED     - status : `python -m cutwright status out\runs\demo --json` -> exit 0, ok=true, 5 steps
+             done, each with inputs_digest/outputs_digest and its validation rows.
+TESTED     - resume after a kill : killed the process during step 3 (`join`), `status` showed
+             cut/fit done and join "running"; after approving, `python -m cutwright resume
+             out\runs\demo --json` reported cut/fit "cached (cache key unchanged, outputs intact)",
+             re-ran join (attempts 2, over its partial file), then mix + export.
+TESTED     - the media itself : final.mp4 decodes to 60 frames, ids 24..47 then 1000..1035, 24.0 fps,
+             160x90, AAC 48 kHz stereo, mix bed beeps at 0.0 / 1.0 / 2.0 s (frame_count, size,
+             constant_fps, decodes_clean, has_audio, frame_ids_contiguous all `pass` in the manifest
+             and in production_report.json).
+FAILED     - `constant_fps` passed a 24 fps file asked for 30 fps : it compared each step against
+             `1/want` and so tested uniformity only. Fixed: the rate is asserted outright
+             (`abs(fps - want) > FPS_SLACK`) plus a 1 ms jitter test; the new failing case is
+             `test_constant_fps_fails_when_the_rate_is_wrong`. Found by writing the check, not by a
+             run - the demo never asked for a rate it did not get.
+FAILED     - concat of a silent clip + an audio clip : `kino merge` re-timed the output to 30.0 fps /
+             44.1 kHz, 75 frames instead of 60, so the step failed with validation_failed
+             ("frame_count: expected 60 frames, decoded 75") - the validator doing its job. The demo
+             now builds picture first and one audio track after; finding recorded in C-007.
+FAILED     - mix bed inaudible : my own mixing level put the bed below the beep onsets we measure, so
+             the onset test found nothing. Fixed in the fixture (`make_beep_bed`), not in the check.
+FAILED     - `guard.rel()` re-relativised an already-relative path against the CWD : the M2 harness
+             imports `recapstudio/_template/recap.py`, which chdir()s the process and never restores
+             it, so in the full suite an asset resolved to
+             `recapstudio\_template\out\engine_gates\src.mp4`
+             ("manifest rejected (code asset_missing): asset 'src' is missing on disk: ...") and 3
+             gate tests ERRORed, while each passed in isolation. Fixed in two places: `rel()` now
+             resolves a relative input against `ROOT` (its own documented contract, and it makes
+             rel(rel(x)) == rel(x)), and the test helper returns absolute paths instead of
+             double-relativising. Verified by forcing the cwd into `recapstudio/_template`:
+             `RUN_TESTS_CWD=recapstudio/_template python out\run_tests.py tests.test_engine_gates
+             tests.test_engine_manifest tests.test_engine_cli tests.test_engine_validate` ->
+             "RESULT: OK  (84 run, 0 failures, 0 errors)".
+FAILED     - clearing `reason` on a successful step : broke two 3C contract tests that pin the "why it
+             ran" explanation ('missing' and 'cache key' not found in ''). Reverted the `reason=""`;
+             the explanation is now phrased as a reason to RUN ("step was skipped, so it runs again"),
+             because "step is skipped" on a row that had just run read like a contradiction.
+NOT TESTED - `executors/remotion.py`, `pipelines/*.json`, `skills/*.md` : not in the confirmed 3D
+             scope (no op routes to a remotion executor yet) - C-007 decision 2.
+NOT TESTED - Kinocut ops other than trim/concat/mix/export through the engine, and every multi-output
+             op (refused by design: one executor call writes one file).
+NOT TESTED - `slideshow_risk` on real footage : measured on fixtures only (a cloned still scores 1.0,
+             the counter clip under 0.1); the M8 benchmark reel is where it gets a real subject.
+NOT TESTED - M2's concat clips that carry audio : the 30 fps re-time is measured only for a silent plus
+             an audio clip at 24 fps; other combinations are unmeasured.
+DECISIONS  - DECISION 1 = (a): the example was rewritten to the real validator vocabulary instead of
+             loosening the validator; the rewrite is itself evidence (it caught `export_h264`'s input
+             name). The demo deliberately carries a gate before export, so one flow proves blocking,
+             release and cache-skip together. `validate.py` reports provenance but does not decide it
+             (the manifest owns the policy) so there is one verdict, not two that can disagree.
+             Validation rows stay `not_run` until a media check fills them, and a failed check is a
+             DETERMINISTIC failure (`validation_failed`, attempts stay at 1): the same params cannot
+             fix a wrong frame count, so it must not be retried. `resume` reuses the `run` path (same
+             state machine, same cache rule) instead of being a second implementation; it only skips
+             re-deriving the plan. M3 is CLOSED here; M4 starts only on the owner's go.
+

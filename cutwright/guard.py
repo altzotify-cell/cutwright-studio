@@ -49,13 +49,23 @@ def is_inside(path, parent):
 
 
 def rel(path):
-    """Path relative to ROOT when it is inside it, else the absolute path."""
+    """Path relative to ROOT when it is inside it, else the absolute path.
+
+    A RELATIVE input is resolved against ROOT, not against the current working directory: the whole
+    module resolves against ROOT explicitly (never chdir), so `rel()` has to agree with
+    `manifest.resolve_path()` or `rel(rel(x))` would drift. It did: with the process cwd inside
+    `recapstudio/_template` (the M2 harness imports recap.py, which chdirs), `rel("out/a.mp4")`
+    returned `recapstudio/_template/out/a.mp4` and the run looked for an asset in the wrong folder.
+    """
+    text = str(path)
+    full = text if os.path.isabs(text) else os.path.join(ROOT, text)
+    full = os.path.abspath(full)
     try:
-        if is_inside(path, ROOT):
-            return os.path.relpath(os.path.abspath(path), ROOT)
+        if is_inside(full, ROOT):
+            return os.path.relpath(full, ROOT)
     except ValueError:
         pass
-    return os.path.abspath(path)
+    return full
 
 
 def assert_writable(path):
