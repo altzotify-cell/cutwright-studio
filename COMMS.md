@@ -96,3 +96,39 @@ Assumed: the synthetic fixtures (160x90 counter clips, 1 kHz bursts, 100 Hz bed)
        HDR/10-bit, non-24 fps and the MCP surface were not covered.
 Ask: review the executor column before M3 starts. Nothing else is needed - no code was changed and nothing
        is committed.
+
+
+## C-006 | 2026-10-30 | agent -> owner | INFO | OPEN
+Commit: 29fb366 ("M3 3A+3B+3C: engine executors, op table, registry, manifest state machine, atomic
+checkpoints"), pushed to main.
+Files: `cutwright/engine/` (manifest.py, checkpoint.py, ops.py, registry.py,
+executors/{__init__,kinocut,ffmpeg}.py), `tests/test_engine_{kinocut,registry,manifest}.py`,
+`LOG.md`, `HANDOFF.md`. `recapstudio/remotion/package-lock.json` stays UNTRACKED as instructed.
+`docs/evidence/m2_*.json` were rewritten by re-running the M2 tests (wall-clock `seconds` only)
+and were restored, not committed.
+Goal: finish phase 3C (execution manifest state machine + atomic resume) and put 3A/3B/3C under
+version control WITHOUT declaring M3 complete.
+Observed: `python -m unittest discover -s tests -t . -v` -> "Ran 122 tests in 377.413s" / "OK"
+(0 failures, 0 errors, 0 skips). Module alone: "Ran 40 tests in 6.979s" / "OK". A real two-step
+manifest (Kinocut trim -> ffmpeg fit) wrote exactly 48 and 24 frames; the second run reported both
+steps "skipped (cached (cache key unchanged, outputs intact))" and re-encoded nothing.
+Known: the state machine is `pending|running|done|failed|skipped`; a step is skipped only when its
+cache key (op + params + tool version + input digests) matches AND every output still matches its
+recorded digest. A truncated or schema-mismatched checkpoint raises
+CheckpointError(code="corrupted") instead of resuming. Three defects were caught by my own tests and
+the demo before anything was staged (see LOG 2026-10-30 phase 3C, FAILED list).
+Assumed: 24 fps (the manifest's `fps`) when translating frame counts into `kino trim -s/-d` seconds;
+one output file per call (every op in the table has exactly one), so a multi-output op is refused
+with `multi_output_unsupported`; audio origins such as `user_audio` are exempt from the visual-asset
+origin rule (the example manifest needs that).
+Ask: two decisions before phase 3D.
+1. `docs/schemas/manifest.example.json` NO LONGER validates: step fit_1 asks for `size` and
+   fill="blur", step export asks for crf/audio/faststart, none of which the op table takes. The
+   roadmap says to keep the example in sync with the validator. Either (a) I rewrite the example to
+   the real vocabulary (width/height, fill "pad", export quality/container) or (b) we treat the
+   example as the TARGET vocabulary and extend `ops.py` to match it. Your call - (a) is small, (b)
+   changes the executor decisions from M2.
+2. Phase 3D still needs validate.py, gates.py, report.py, ids.py, executors/remotion.py,
+   pipelines/*.json, skills/*.md and the seven CLI verbs (`tools list|describe|envelope`, validate,
+   run, resume, status, approve). Confirm that is the next objective.
+
