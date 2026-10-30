@@ -5,6 +5,8 @@ detail sources where a milestone says so (map at the end). Architecture: `docs/A
 `docs/REFERENCES.md`. Delete-list: `docs/MIGRATION_CHECKLIST.md`.
 
 Milestones are in order. Do not start M(n+1) until M(n) acceptance is met and logged with quoted output.
+One insertion (owner decision, 2026-10-30): **M5.5 - Creative rendering slice** sits between M5 and M6, so the
+order is M5 -> M5.5 -> M6 -> M7 -> M8 -> M9. **M10-M16 are a parking lot**: do not start or expand them.
 Each milestone is sized for one or two Cline sessions. Paths are relative to the repo root. Shell = Windows PowerShell.
 
 ## Standing rules for every milestone
@@ -234,6 +236,37 @@ python -m unittest discover -s tests -t . -v
 # Regression pack passes
 ```
 
+## M5.5 - Creative rendering slice (NEW, owner 2026-10-30; between M5 and M6)
+
+Objective: scenes stop looking like PowerPoint. `docs/VISUAL_STANDARD.md` section 4 names the technical cause:
+the scene contract bans footage and images (SVG/CSS only), the kit has charts/counters/rings/reveal text but no
+camera, parallax, masks, layered media, light, grain or trails, so every scene is a card layout. The contract is
+the thing that changes - not just a longer prompt (VISUAL_STANDARD section 12).
+
+Three phases, in this order, one session each:
+
+- **5.5A executor** (DONE 2026-10-30): `cutwright/engine/executors/remotion.py` behind the op registry, two ops -
+  `render_still` (one frame, PNG) and `render_range` (a frame range, H.264) - on the pinned Remotion 4.0.539, no
+  new npm package. The scene file is the op's declared INPUT, so a changed scene invalidates the cache; outputs
+  and their hashes land in the run checkpoint like every other op. Cold and warm cost is measured, not estimated,
+  because the point of a critic loop is knowing what one look costs.
+- **5.5B footage handle + primitives** (next session): a typed footage/still handle the scene author can use
+  (real files, never generated), and the kit primitives a directed shot needs; `docs/VISUAL_STANDARD.md`
+  section 5 fields become real.
+- **5.5C critic loop**: render frames -> the agent looks at them -> named defects -> revise -> cache the good
+  scenes. Feeds M7/M8.
+
+Acceptance
+```powershell
+python -m cutwright tools describe render_still --json
+python -m cutwright tools describe render_range --json
+python -m cutwright run out\m55\still_16x9.json --json     # one frame, 1920x1080, output hash in the checkpoint
+python -m cutwright run out\m55\range_9x16.json --json      # a 1 s range, 1080x1920, frame count measured
+# a second run of the SAME manifest skips the steps ("cache key unchanged"); touching the scene .tsx re-runs them
+```
+Plus, for the milestone: the owner sees at least one scene that is not a card layout, and the cold/warm numbers
+for one look are in `LOG.md`.
+
 ## M6 - Agent bridge and focused tool discovery (old G4 + discovery)
 
 Objective: the agent drives everything through typed commands with `--json`, never raw shell.
@@ -316,7 +349,8 @@ Acceptance: every module has a preset + prompt profile.
 | G8 blueprint/backend interface | M3 (skeleton) + M11 (blueprints) |
 | G9 any kind of video | M11 |
 | G10 HyperFrames bake-off | M9 |
-| G11-G16 | M12-M16 |
+| G11-G16 | M12-M16 (parking lot) |
+| (new, owner 2026-10-30) | M5.5 creative rendering slice, inserted between M5 and M6 |
 
 ## What "done" means for the whole project
 

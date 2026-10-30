@@ -8,7 +8,12 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
+Current milestone : M5.5 "Creative rendering slice" - a NEW milestone the owner inserted on 2026-10-30
+                    between M5 and M6 (C-010 decision ii). Why: `docs/VISUAL_STANDARD.md` section 4 names
+                    the cause of "it looks like PowerPoint" - the scene contract bans footage and images and
+                    the kit has only chart/counter/text primitives. Order inside M5.5: 5.5A the Remotion
+                    executor (DONE 2026-10-30, see below), then 5.5B footage handle + primitives + critic
+                    loop. M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
                     (2,573 lines), its GUI helper (433), its PowerShell window automation (255), the
                     `build` verb and parser, the doctor line, and the four `projects/demo_*` demos
                     (17 files, 1,776 lines) are deleted; `engine/registry.py` + `transcribe.py` wording
@@ -21,13 +26,14 @@ Current milestone : M5 DONE (2026-10-30). The old editor backend is OUT of the c
 Last green commit : 4528c51 (M5 close-out; the message is in `LOG.md` and `git log -1`, not repeated here so
                     the M5 acceptance grep stays empty), pushed to origin main - verified with
                     `git ls-remote`. Before it: 7a8184c, 0755d92, 498aed1, d072280.
-Next step         : M6 - agent bridge (`recap <step> --json`) + focused tool discovery
-                    (`docs/ROADMAP.md` M6). Nothing of M6 starts without the owner's go; the
-                    regression pack named in C-010 can run first if the owner wants it before M6.
-Open COMMS        : C-010 = M5 close-out: the aborted attempt's half-done tree, the one-commit deviation,
-                    the two files left unstaged (`docs/evidence/m2_*.json`, package-lock.json), the
-                    un-run regression pack, and two questions (is M5 closed? start M6?).
-                    C-009 answered (M5 confirmed as next), C-008 answered, C-007 answered, C-006 answered.
+Next step         : M5.5B - footage/stills handle + scene primitives + the look-at-the-frame critic loop
+                    (`docs/ROADMAP.md` M5.5). Not started; the owner's go starts it. M6-M9 keep their
+                    order after M5.5; M10-M16 are a PARKING LOT (owner decision ii: do not start or
+                    expand them).
+Open COMMS        : C-011 = M5.5A: the Remotion executor (`render_still`, `render_range`), the measured
+                    cold/warm numbers, the first vision test, and the regression baseline re-run.
+                    C-010 answered (M5 closed on doctor + suite; M5.5 inserted before M6).
+                    C-009 answered, C-008 answered, C-007 answered, C-006 answered.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -144,7 +150,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
   `git add` + `git commit -F msg.txt`, push if a remote exists, then tell the owner "Milestone Mx done. Start a new session." and print the kickoff text.
 - Context passes ~60% or a milestone finishes -> wrap up and ask for a new session. Default model flash; escalate only after a BLOCKED entry says why.
 
-## Milestones (order is fixed; acceptance + commands in `docs/ROADMAP.md`)
+## Milestones (order is fixed, with ONE insertion: M5.5 sits between M5 and M6; acceptance + commands in `docs/ROADMAP.md`)
 
 | | ID | Milestone | Done when (short form) |
 |---|---|---|---|
@@ -155,6 +161,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [x] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | DONE 2026-10-30: `tools/validate/run/resume/status/approve` work on real media; a five-step demo renders frame-exact (ids 24..47 then 1000..1035, beeps at 0/1/2 s) and a run killed during step 3 resumes with steps 1-2 cached. Not built (out of the confirmed scope): `executors/remotion.py`, `pipelines/*.json`, `skills/*.md` - see C-007 |
 | [x] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | DONE 2026-10-30: picture join -> `concat` (4A), mix tracks declared inputs (4A), ffmpeg music arm deleted + `make_music_bed` -> `mix_audio` (4B); regress project byte-identical (514 frames, same stream md5s and sha256); 79.2 s real job rendered and six frames reviewed (`out\m4b\frames\`) |
 | [x] | M5 | Remove the old editor backend completely | DONE 2026-10-30: the timeline writer (2,573 lines), its GUI helper, its PowerShell window-automation script and the `projects/` demos (4 projects, 19 files) deleted; `cli.py` lost `build` + the doctor line and gained a Kinocut line; `doctor` exit 0, 178 tests green, regression pack green |
+| [ ] | M5.5 | Creative rendering slice (NEW, owner 2026-10-30; before M6) | 5.5A DONE 2026-10-30: Remotion executor `render_still` + `render_range` behind the op registry, cold/warm times measured at 16:9 and 9:16, still proven non-blank and looked at. 5.5B (next): footage/stills handle + primitives + critic loop -> owner sees scenes that are not PowerPoint |
 | [ ] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | forbidden flags refused; envelope <= 10 ops |
 | [ ] | M7 | Agent-owned scene loop (old G5) | 3 scenes written by agent, >= 2 first-try, 1 revised after viewing frames |
 | [ ] | M8 | Visual quality overhaul + 5-scene benchmark (old G6) | owner approves >= 4 of 5 at 16:9 and 9:16 |
@@ -166,6 +173,9 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [ ] | M14 | MCP + portable skill (old G14) | second agent completes a small job from the skill/MCP only |
 | [ ] | M15 | Cutwright Studio UI (old G15) | human makes a video without the command line |
 | [ ] | M16 | Other modules / optional borrows (old G16) | each module has a preset + prompt profile |
+
+Order: M0..M5 done, then **M5.5** (the one insertion, before M6), then M6, M7, M8, M9. M10-M16 are a
+PARKING LOT (owner decision, 2026-10-30): do not start or expand them.
 
 ## Provisional decisions made for you (verify each on this PC; table with fallbacks: `docs/ROADMAP.md`)
 
