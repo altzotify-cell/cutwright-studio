@@ -382,3 +382,46 @@ engine's own colour bars, so "it looks like a shot instead of a slide" is still 
 point of 5.5. If you give me one real clip (a street scene, a face, anything non-synthetic), 5.5C's directed scene can be
 built and judged on it; without one I can only judge layout, timing and camera moves, not whether the result reads as
 footage.
+
+## C-013 | 2026-10-30 | agent -> owner | INFO | DONE (no answer needed)
+
+M5.5 is CLOSED. 5.5C shipped the last two primitives, one directed shot, and the loop you asked for - and the loop
+earned its keep on the very first look.
+
+What is new
+- `kit/kinetic.tsx` (kit 2 -> 3): `<KineticText>` (staggered word/line spring reveals; each unit travels, starts
+  skewed and motion-blurred, can punch in from 1.14x, one word in the accent colour) and `<MaskWipe>` (animated
+  `clip-path` polygon, four directions, square or angled edge). Pure Remotion spring math + CSS; no new package.
+- `src/scenes/directed_shot.tsx` + composition `bench-directed-shot`: real footage under a `<Camera>` push
+  (1.00 -> 1.12, `ease.inOut`), a left-to-right gradient bed, the kinetic headline and two angled wipes.
+- The C-012 ask is answered by me, not by you: the clip is NASA Perseverance's pre-sunrise sky (public domain,
+  Wikimedia Commons, 1588x892, 8.000 s, 885 KB). Licence, source URL and the exact ffmpeg line that re-creates it:
+  `docs/evidence/m55c_footage.md`. It is not committed - `recapstudio/.gitignore` ignores `Projects/*`, same rule as
+  your C-011 "project media never committed".
+
+What the critic loop found (this is the part that matters)
+Three defects, all visible only because I looked at the rendered PNGs, all fixed and re-rendered:
+1. The sub line ended 95 px from the bottom edge; the spoken captions sit at `captionBottom` = 97 px. They would
+   have overlapped in a real render. The block now ends at `captionBottom + 84u`.
+2. The left gradient bed (0.80/0.52) was so strong it extinguished the pre-dawn glow that is the best content in
+   the frame, so frame 0 and frame 48 looked like two different grades. Softened to 0.70/0.40.
+3. `scrim` 0.5 + `vignette` 0.5 left the footage at ~10-18 % luma: cinematic, but muddy. Now 0.42/0.45.
+
+Surprises worth your attention
+- A scene cannot import `scenes_examples` or even `sceneTypes`: the checker allows `remotion`/`react`/`@kit` only.
+  That is correct (it is what makes a scene self-contained), but it means the benchmark carries its own tiny
+  `spread()` helper for preview words and its entry is structurally typed instead of `LabEntry`.
+- `Camera` gained an optional `curve` prop. The default `ease.out` front-loads the move, which reads as a snap in
+  a Ken Burns push; I did not want to hide that behind an inflated `duration`.
+- `Invoke-WebRequest` against Commons returns 429 from this IP (with or without a User-Agent); `curl.exe` works.
+  NASA's images-api returns 403. Recorded in LOG so the next session does not repeat it.
+
+Not settled (say the word and I will do it, otherwise M6 starts)
+- Motion over the whole 8 s: I looked at frames 0/24/48, not a rendered range, and not the 30 fps clip inside a
+  24 fps composition.
+- The 9:16 version of this shot, and the caption overlay seen in its real position.
+- `recap.py scenes` / `recap.py video` were not re-run this session (kit gained no dependency; M5.5B's regression
+  already covers kit/2).
+
+The stills are in `out/m55c/stills/` (frames 0, 24, 48; 1920x1080) if you want to look before answering.
+

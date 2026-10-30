@@ -195,6 +195,104 @@ class CheckpointTest(unittest.TestCase):
         self.assertEqual(checkpoint.cursor(reloaded)["next"], "a")
 
 
+class DigestIdentityTest(unittest.TestCase):
+    """How a file is identified for the cache key (ASSET_HANDLES item 5, pinned in M5.5C).
+
+    Two rules that a refactor could silently break, and both of them decide whether a cached step is
+    genuinely reusable:
+
+      * below HASH_LIMIT (64 MiB) identity is the sha256; above it, size + mtime and NO hashing
+        (hashing a multi-GB film costs minutes and proves nothing new);
+      * `memo=True` (used for step INPUTS) trades a stale hash for speed, keyed on (path, size,
+        mtime_ns). It is not the default because an output can be rewritten with the same length
+        inside one mtime tick, and `outputs_intact` must see that.
+    """
+
+    def setUp(self):
+        self.dir = out("digest", self._testMethodName)
+        guard.ensure_dir(self.dir)
+        for name in os.listdir(self.dir):
+            os.remove(os.path.join(self.dir, name))
+        checkpoint._DIGEST_MEMO.clear()          # module-level cache, shared by every test
+
+    def tearDown(self):
+        checkpoint._DIGEST_MEMO.clear()
+
+    def _file(self, name="clip.bin", size=4096, fill=b"\xa5"):
+        path = os.path.join(self.dir, name)
+        with open(path, "wb") as handle:
+            handle.write(fill * size)
+        return path
+
+    def _counting_hash(self):
+        """A sha256_file that records every call and still returns the real digest."""
+        calls = []
+        real = guard.sha256_file
+
+        def counting(path):
+            calls.append(path)
+            return real(path)
+
+        return calls, counting
+
+    def test_the_threshold_is_64_mib(self):
+        self.assertEqual(checkpoint.HASH_LIMIT, 64 << 20)
+
+    def test_below_the_limit_identity_is_the_sha256(self):
+        path = self._file()
+        digest = checkpoint.digest_file(path)
+        self.assertEqual(sorted(digest), ["sha256", "size"])
+        self.assertEqual(digest["size"], 4096)
+        self.assertEqual(len(digest["sha256"]), 64)
+
+    def test_above_the_limit_identity_is_size_and_mtime_and_nothing_is_hashed(self):
+        path = os.path.join(self.dir, "feature.bin")
+        with open(path, "wb") as handle:
+            handle.truncate(checkpoint.HASH_LIMIT + 1)      # sparse: no 64 MiB write
+        with mock.patch.object(guard, "sha256_file",
+                               side_effect=AssertionError("a big file must never be hashed")):
+            digest = checkpoint.digest_file(path, memo=True)
+        self.assertEqual(sorted(digest), ["mtime_ns", "size"])
+        self.assertEqual(digest["size"], checkpoint.HASH_LIMIT + 1)
+
+    def test_the_memo_reuses_a_digest_until_the_file_changes(self):
+        path = self._file()
+        calls, counting = self._counting_hash()
+        with mock.patch.object(guard, "sha256_file", counting):
+            first = checkpoint.digest_file(path, memo=True)
+            again = checkpoint.digest_file(path, memo=True)
+        self.assertEqual(calls, [path])                  # hashed once, then served from the memo
+        self.assertEqual(first, again)
+        changed = self._file(size=8192)                  # same path, new size
+        with mock.patch.object(guard, "sha256_file", counting):
+            third = checkpoint.digest_file(path, memo=True)
+        self.assertEqual(len(calls), 2)
+        self.assertNotEqual(first["sha256"], third["sha256"])
+        self.assertEqual(third, checkpoint.digest_file(changed))   # and it agrees with a plain digest
+
+    def test_the_memo_is_opt_in_so_an_in_place_rewrite_is_seen(self):
+        """The documented risk: same length, same mtime tick -> the memo would return a stale hash."""
+        path = self._file(fill=b"\xa5")
+        original = checkpoint.digest_file(path, memo=True)   # this is what populates the memo
+        stamp = guard.file_sig(path)["mtime_ns"]
+        guard.write_bytes(path, b"\x5a" * 4096)          # different bytes, identical length
+        os.utime(path, ns=(stamp, stamp))               # ...and the same mtime
+        # memo=True cannot tell: same path, same size, same mtime_ns. That is why it is inputs-only.
+        self.assertEqual(checkpoint.digest_file(path, memo=True)["sha256"], original["sha256"])
+        # The default (no memo) hashes again, so `outputs_intact` does see the rewrite.
+        self.assertNotEqual(checkpoint.digest_file(path)["sha256"], original["sha256"])
+
+    def test_input_digests_use_the_memo_and_flatten_the_handle_table(self):
+        clip = self._file(name="footage_a.mp4")
+        calls, counting = self._counting_hash()
+        with mock.patch.object(guard, "sha256_file", counting):
+            rows = checkpoint.input_digests({"scene": clip, "assets": {"footage_a": clip}})
+            checkpoint.input_digests({"scene": clip, "assets": {"footage_a": clip}})
+        self.assertEqual([row["name"] for row in rows], ["assets[footage_a]", "scene"])
+        self.assertEqual(len(calls), 1)                  # one path, hashed once for both rows
+        self.assertEqual(rows[0]["path"], guard.rel(clip))
+
+
 
 class ManifestValidateTest(unittest.TestCase):
     """A plan is data, so it is checked as data: every rejection is a typo that would cost a render."""

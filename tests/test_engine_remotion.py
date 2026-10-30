@@ -14,6 +14,7 @@ the suite):
 import json
 import os
 import shutil
+import tempfile
 import unittest
 from unittest import mock
 
@@ -22,8 +23,26 @@ from cutwright.engine import manifest, ops, registry
 from cutwright.engine.executors import ExecutorError, ExecutorUnavailable
 from cutwright.engine.executors import remotion
 
-WORK = os.path.join(guard.OUT, "engine_remotion")     # inside the fork: the guard allows it
 COMPOSITION = "example-stat-ring"
+# `WORK` is per TEST, not per module (M5.5C). One shared folder made the suite collide with itself:
+# `RemotionArgvTest.setUp` wiped it while `AssetStagingTest` was mid-render, and `output_exists` only
+# fired when a PREVIOUS run happened to leave the file behind - so the tests passed or failed
+# depending on what ran before them. `new_work()` gives every test its own folder from
+# tempfile.mkdtemp(), inside out/ so the write guard still applies.
+WORK = ""
+
+
+def new_work():
+    """A private folder for ONE test. Returns it and makes it the current `out()` root."""
+    global WORK
+    base = os.path.join(guard.OUT, "engine_remotion")
+    guard.ensure_dir(base)
+    WORK = tempfile.mkdtemp(prefix="t_", dir=base)
+    return WORK
+
+
+def drop_work():
+    shutil.rmtree(WORK, ignore_errors=True)
 
 
 def out(name):
@@ -66,9 +85,11 @@ def fake_bundle(op=None, scene=None, timeout=None):
 
 class RemotionArgvTest(unittest.TestCase):
     def setUp(self):
-        shutil.rmtree(WORK, ignore_errors=True)      # a clean slate: the outputs are real files
-        guard.ensure_dir(WORK)
+        new_work()                    # a private, empty folder: the outputs are real files
         self.created = []
+
+    def tearDown(self):
+        drop_work()
 
     def _run(self, func, *args, **kwargs):
         with mock.patch.object(remotion, "available", lambda: True), \
@@ -167,7 +188,10 @@ class RemotionManifestTest(unittest.TestCase):
     """The op is cacheable only because the SCENE is an input - prove it in the real plan."""
 
     def setUp(self):
-        guard.ensure_dir(WORK)
+        new_work()
+
+    def tearDown(self):
+        drop_work()
 
     def _document(self, scene_path, run_id, frame=90):
         return {
@@ -221,16 +245,20 @@ class AssetStagingTest(unittest.TestCase):
     """kit/2 (M5.5B): a handle becomes a staged file plus a props table - and bad handles stop early."""
 
     def setUp(self):
-        shutil.rmtree(WORK, ignore_errors=True)
-        guard.ensure_dir(WORK)
+        new_work()
         self.created = []
+        # Staged files land in the RENDER'S public/assets - a folder every run shares - so each test
+        # uses handle names built from its own temp-folder tag and tearDown removes exactly those.
+        self.tag = "t_" + os.path.basename(WORK)
+        self.handle = self.tag + "_clip"
         self.staged_root = os.path.join(remotion.remotion_dir(), "public", "assets")
         guard.ensure_dir(self.staged_root)
 
     def tearDown(self):
         for name in os.listdir(self.staged_root):
-            if name.startswith("t_"):
+            if name.startswith(self.tag):
                 os.remove(os.path.join(self.staged_root, name))
+        drop_work()
 
     def _run(self, func, *args, **kwargs):
         with mock.patch.object(remotion, "available", lambda: True), \
@@ -238,13 +266,13 @@ class AssetStagingTest(unittest.TestCase):
                 mock.patch.object(remotion.subprocess, "Popen", fake_popen(self.created)):
             return func(*args, **kwargs)
 
-    def _clip(self, name="t_clip.mp4", data=b"\0\0\0\x18ftypmp42" + b"\0" * 64):
-        path = out(name)
+    def _clip(self, name=None, data=b"\0\0\0\x18ftypmp42" + b"\0" * 64):
+        path = out(name or self.handle + ".mp4")
         guard.write_bytes(path, data)
         return path
 
     def _image(self):
-        path = out("t_still.png")
+        path = out(self.tag + "_still.png")
         guard.write_bytes(path, b"\x89PNG\r\n\x1a\n" + b"\0" * 32)
         return path
 
@@ -252,20 +280,20 @@ class AssetStagingTest(unittest.TestCase):
         scene = scene_file()
         clip = self._clip()
         target = out("still_asset.png")
-        self._run(remotion.render_still, scene, target, COMPOSITION, assets={"t_clip": clip})
+        self._run(remotion.render_still, scene, target, COMPOSITION, assets={self.handle: clip})
         with open(target + ".props.json", "r", encoding="utf-8") as handle:
             props = json.load(handle)
-        self.assertEqual(props["assets"]["t_clip"]["kind"], "video")
-        self.assertEqual(props["assets"]["t_clip"]["file"], "assets/t_clip.mp4")
-        self.assertEqual(len(props["assets"]["t_clip"]["sha256"]), 64)
-        staged = os.path.join(self.staged_root, "t_clip.mp4")
+        self.assertEqual(props["assets"][self.handle]["kind"], "video")
+        self.assertEqual(props["assets"][self.handle]["file"], "assets/%s.mp4" % self.handle)
+        self.assertEqual(len(props["assets"][self.handle]["sha256"]), 64)
+        staged = os.path.join(self.staged_root, self.handle + ".mp4")
         self.assertTrue(os.path.exists(staged))
         self.assertEqual(remotion.link_or_copy(clip, staged), "existing")   # never re-staged
 
     def test_a_still_is_an_image_handle(self):
-        table = remotion.stage_assets("render_still", {"t_still": self._image()})
-        self.assertEqual(table["t_still"]["kind"], "image")
-        self.assertTrue(table["t_still"]["file"].endswith(".png"))
+        table = remotion.stage_assets("render_still", {self.tag + "_still": self._image()})
+        self.assertEqual(table[self.tag + "_still"]["kind"], "image")
+        self.assertTrue(table[self.tag + "_still"]["file"].endswith(".png"))
 
     def test_a_file_that_is_not_footage_is_refused(self):
         scene = scene_file()
@@ -273,7 +301,7 @@ class AssetStagingTest(unittest.TestCase):
         guard.write_text(junk, "not media\n")
         with self.assertRaises(ExecutorError) as ctx:
             self._run(remotion.render_still, scene, out("nope.png"), COMPOSITION,
-                      assets={"t_clip": junk})
+                      assets={self.handle: junk})
         self.assertEqual(ctx.exception.code, "bad_asset")
         self.assertEqual(self.created, [])          # nothing was rendered
 
@@ -281,14 +309,14 @@ class AssetStagingTest(unittest.TestCase):
         scene = scene_file()
         with self.assertRaises(ExecutorError) as ctx:
             self._run(remotion.render_still, scene, out("nope2.png"), COMPOSITION,
-                      assets={"t_clip": out("t_absent.mp4")})
+                      assets={self.handle: out("t_absent.mp4")})
         self.assertEqual(ctx.exception.code, "input_missing")
 
     def test_landscape_with_assets_still_writes_a_props_file(self):
         scene = scene_file()
         target = out("still_asset_landscape.png")
         self._run(remotion.render_still, scene, target, COMPOSITION,
-                  assets={"t_clip": self._clip()})
+                  assets={self.handle: self._clip()})
         self.assertTrue(os.path.isfile(target + ".props.json"))
 
     def test_no_assets_means_no_props_file(self):
@@ -304,10 +332,12 @@ class BundleCacheTest(unittest.TestCase):
     """One bundle per content key, reused, and capped at five (owner's 2026-10-30 decision)."""
 
     def setUp(self):
-        guard.ensure_dir(WORK)
+        new_work()
         self.cache = out("bundles")
-        shutil.rmtree(self.cache, ignore_errors=True)
         guard.ensure_dir(self.cache)
+
+    def tearDown(self):
+        drop_work()
 
     def _bundle(self, name, age):
         path = os.path.join(self.cache, name)
@@ -372,7 +402,10 @@ class AssetHandleManifestTest(unittest.TestCase):
     """The step's `assets` input is what puts the footage in the cache key - and the rejections."""
 
     def setUp(self):
-        guard.ensure_dir(WORK)
+        new_work()
+
+    def tearDown(self):
+        drop_work()
 
     def _document(self, clip, handle="footage_a", scene=None):
         return {

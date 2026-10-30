@@ -11,6 +11,7 @@ export * from './text';
 export * from './charts';
 export * from './particles';
 export * from './SceneFrame';
+export * from './kinetic';
 // kit/2 (M5.5B): footage as a HANDLE. Components only - `useAsset` is private to kit/media.tsx, so no
 // resolver reaches a scene (a scene names a handle; the engine maps it to a staged file).
 export {LayeredMedia, Camera, AssetScope} from './media';

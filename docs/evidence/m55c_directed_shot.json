@@ -1,0 +1,42 @@
+{
+  "milestone": "M5.5C",
+  "date": "2026-10-30",
+  "what": "KineticText + MaskWipe, one directed benchmark shot, the vision critic loop",
+  "capture": {
+    "manifest": "out/m55c/batch_directed.json",
+    "run": "out/runs/m55c-directed",
+    "scene": "recapstudio/remotion/src/scenes/directed_shot.tsx",
+    "composition": "bench-directed-shot",
+    "footage": "recapstudio/Projects/regress/footage/real_sample.mp4 (public domain, see m55c_footage.md)",
+    "command": "python -m cutwright run out\\m55c\\batch_directed.json",
+    "stills": [
+      {"frame": 0, "role": "start / establishing plate", "px": [1920, 1080], "bytes": 1807151, "sha256_32": "9dd342e604506cea70d116552ef8087c"},
+      {"frame": 24, "role": "middle / staggered entrance in flight", "px": [1920, 1080], "bytes": 1955421, "sha256_32": "b99d48be1f07c8f570f98e4b872cdada"},
+      {"frame": 48, "role": "impact / fully landed", "px": [1920, 1080], "bytes": 1973531, "sha256_32": "6fe3b0fe606a262ae2b1c441816c9e1c"}
+    ]
+  },
+  "cache": {
+    "first_run": "3 stills, 2 done before the owner's 30 s command cap killed the shell mid-step 3",
+    "resume": "start_000 and middle_024 skipped (cache key unchanged, outputs intact); impact_048 re-ran because its status was 'running'",
+    "after_a_scene_edit": "all 3 re-ran with reason 'cache key changed (inputs, params or executor version)' - the scene file is a declared input"
+  },
+  "checks": {
+    "typecheck": "npx tsc --noEmit -> exit 0",
+    "scene_checker": "node tools/check_scenes.mjs (manifest for directed_shot) -> 0 errors, 0 warnings, cost medium, hasDefault true",
+    "unit_tests": "python -m unittest tests.test_engine_remotion tests.test_engine_manifest tests.test_engine_scene_check -> Ran 77 tests in 17.740s / OK (second consecutive run: Ran 77 tests in 16.847s / OK)"
+  },
+  "critique": {
+    "reviewer": "the agent, looking at the three PNGs directly",
+    "defects_found_and_fixed": [
+      "the sub line ended 95 px from the bottom edge while the spoken captions sit at captionBottom = 97 px - the two would have overlapped in a real render; base is now captionBottom + 84 u (181 px)",
+      "the left-to-right bed at 0.80/0.52 crushed the pre-dawn glow that is the best content in the frame, so frame 0 and frame 48 read as two different grades; softened to 0.70/0.40 with the fade-in cut to 10 frames",
+      "mid-tones were crushed by scrim 0.5 + vignette 0.5 (the footage measured ~10-18 % luma); now 0.42/0.45"
+    ],
+    "verdict": [
+      "no PowerPoint warning sign survives: full-bleed footage, gradient scrim instead of a text box, one accent colour, no bullet list, no default slide layout, no centred stack",
+      "typography: 104 px Arial Black on ~8 % luma background, contrast ratio > 12:1 on every glyph; the gold 'another' is the only colour event and it sits mid-line, not on a decorative word",
+      "cinematic depth: three planes (silhouette ridge / drifting cloud column / smooth sky gradient), an off-centre glow as the light source, a push-in that keeps running, and the type inside the lower-left third - a shot, not a slide"
+    ],
+    "still_open": "whether the 30 fps clip inside a 24 fps shot holds up across the whole 8 s (only 3 stills were looked at)"
+  }
+}

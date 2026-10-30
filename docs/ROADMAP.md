@@ -263,9 +263,21 @@ Three phases, in this order, one session each:
   `recap.py video` is byte-identical (514 frames, 6,834,110 B, video MD5 c671f7a7...).
   NOT settled: the project media on this PC is the engine's synthetic colour bars, so "does it look like real footage"
   cannot be judged here; a real clip is needed for that judgement.
-- **5.5C directed scene + critic loop** (after 5.5B): `KineticText` and `MaskWipe`, one directed scene built
-  from the new primitives, and the loop itself - render frames -> the agent looks at them -> named defects ->
-  revise -> cache the good scenes. Feeds M7/M8.
+- **5.5C directed scene + critic loop** (DONE 2026-10-30, one session): `KineticText` (staggered word/line spring
+  reveals, skew + motion blur + punch-in scale + one accented word, pure Remotion spring math) and `MaskWipe`
+  (animated `clip-path` polygon, square or angled edge, any of four directions) in `kit/kinetic.tsx`; the
+  `bench-directed-shot` benchmark (`src/scenes/directed_shot.tsx`) puts real footage under a `<Camera>` push, a
+  gradient bed, the kinetic headline and two angled wipes. kit goes 2 -> 3; 15 ops, `graphics` envelope 3, unchanged.
+  Result: 3 stills (frames 0/24/48) through ONE manifest, each measured 1920x1080, 1.81/1.96/1.97 MB; the scene
+  checker accepts the shot (0 errors) and rejects the versions that import beyond `remotion`/`react`/`@kit`; editing
+  the scene re-runs its stills ("cache key changed"), a resume skips intact ones. The loop found and fixed three real
+  defects on the stills: the sub line sat in the caption band (95 px vs `captionBottom` 97 px), the left bed crushed
+  the pre-dawn glow so frame 0 and frame 48 read as different grades, and scrim 0.5 + vignette 0.5 kept the footage
+  at 10-18 % luma. The footage is real (NASA Perseverance pre-sunrise, public domain, 1588x892, 8.000 s) and the
+  licence + re-download command are in `docs/evidence/m55c_footage.md`; rows: `docs/evidence/m55c_directed_shot.json`.
+  Also closed: per-test `tempfile.mkdtemp()` isolation (the suite ran 77/77 twice, no staged files left behind) and 6
+  tests pinning the `(size, mtime_ns)` memo + 64 MiB `HASH_LIMIT` (ASSET_HANDLES item 5).
+  NOT settled: motion over the full 8 s and the 30 fps clip inside a 24 fps shot; the 9:16 version of this shot.
 
 Acceptance
 ```powershell

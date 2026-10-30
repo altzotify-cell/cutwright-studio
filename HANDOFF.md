@@ -8,14 +8,14 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M5.5 "Creative rendering slice" - a NEW milestone the owner inserted on 2026-10-30
-                    between M5 and M6 (C-010 decision ii). Why: `docs/VISUAL_STANDARD.md` section 4 names
-                    the cause of "it looks like PowerPoint" - the scene contract bans footage and images and
-                    the kit has only chart/counter/text primitives. Order inside M5.5: 5.5A the Remotion
-                    executor (DONE 2026-10-30: `render_still` + `render_range`, one still ~10 s wall
-                    cold, ~1 s when cached), 5.5B footage handles + `LayeredMedia`/`Camera` + one bundle
-                    per content key (DONE 2026-10-30, kit/2 - see "Next step"), then 5.5C `KineticText`/
-                    `MaskWipe` + the critic loop.
+Current milestone : M5.5 "Creative rendering slice" COMPLETE (2026-10-30, three sessions; a milestone the owner
+                    inserted between M5 and M6, C-010 decision ii). Why: `docs/VISUAL_STANDARD.md` section 4
+                    named the cause of "it looks like PowerPoint" - the scene contract banned footage and
+                    images and the kit had only chart/counter/text primitives. 5.5A (DONE): the Remotion
+                    executor, `render_still` + `render_range`, one still ~10 s cold / ~1 s cached.
+                    5.5B (DONE): footage handles + `LayeredMedia`/`Camera`, one bundle per content key.
+                    5.5C (DONE, this session): `KineticText` + `MaskWipe`, one directed benchmark shot
+                    over real footage, and the critic loop. NEXT: M6 (agent bridge + tool discovery).
                     M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
                     (2,573 lines), its GUI helper (433), its PowerShell window automation (255), the
                     `build` verb and parser, the doctor line, and the four `projects/demo_*` demos
@@ -33,23 +33,22 @@ Last green commit : d55c114 (M5.5B - footage by handle, kit/2), pushed to origin
                     whose message is in `LOG.md` and `git log -1` rather than here so the M5 acceptance
                     grep stays empty), 7a8184c, 0755d92, 498aed1, d072280. This session's own commits
                     are recorded in this line and in `LOG.md`.
-Next step         : M5.5C - `KineticText` + `MaskWipe`, ONE directed scene built from the kit/2 primitives, and
-                    the critic loop (render frames -> look -> name the defect -> revise). 5.5B is DONE
-                    (2026-10-30): kit/2 with `LayeredMedia`/`Camera`, footage by handle, one bundle per
-                    content key. Numbers: 3 stills of a footage scene 26.7 s wall cold / 18.1 s warm /
-                    1.9 s cached (was ~10 s per still), one bundle 38.2 MB with the clip hard-linked
-                    (0 extra bytes), 5 bundles max, a replaced clip changes key + pixels, the checker
-                    rejects Img/OffthreadVideo/staticFile/non-literal/undeclared/path/URL and useAsset;
-                    `recap.py scenes` gives the M0 verdicts and `recap.py video` is byte-identical
-                    (docs/evidence/m55b_handles.json, LOG 2026-10-30 M5.5B). OPEN for 5.5C: every frame
-                    looked at on this PC is the engine's synthetic colour bars, so a real clip is needed
-                    before "looks like a shot, not a slide" can be judged (COMMS C-012). M6-M9 keep their
+Next step         : M5.5 is COMPLETE (2026-10-30, three sessions). 5.5C closed it: `KineticText` + `MaskWipe`
+                    in `kit/kinetic.tsx` (kit 2 -> 3), the `bench-directed-shot` benchmark over real
+                    public-domain footage (NASA Perseverance pre-sunrise, 1588x892, 8 s,
+                    `docs/evidence/m55c_footage.md`), 3 stills at frames 0/24/48 through one manifest
+                    (each measured 1920x1080), and the critic loop - looking at those PNGs found three real
+                    defects (sub line inside the caption band, a bed that killed the pre-dawn glow, crushed
+                    mid-tones), all fixed and re-rendered (rows: `docs/evidence/m55c_directed_shot.json`).
+                    Also closed this session: per-test `tempfile.mkdtemp()` isolation (77/77 twice, nothing
+                    left staged) and 6 tests pinning the digest memo + 64 MiB `HASH_LIMIT`. NOW START
+                    M6: agent bridge (`recap <step> --json`) + focused tool discovery. M6-M9 keep their
                     order after M5.5; M10-M16 are a PARKING LOT (owner decision ii: do not start or
                     expand them).
-Open COMMS        : C-012 (this session) = 5.5B done, kit/2, the measurements, and the ask for a real
-                    clip before 5.5C judges the look. C-011 answered by the owner 2026-10-30 (keys from
-                    inputs, stills by PNG sha256, video by decoded-frame md5s; project media never
-                    committed; 5.5B split from 5.5C). C-010, C-009, C-008, C-007, C-006 answered.
+Open COMMS        : C-013 (this session) = 5.5C done and what the critic loop found; C-012, C-011
+                    (answered by the owner 2026-10-30: keys from inputs, stills by PNG sha256, video by
+                    decoded-frame md5s; project media never committed; 5.5B split from 5.5C). C-010,
+                    C-009, C-008, C-007, C-006 answered.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -191,7 +190,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [x] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | DONE 2026-10-30: `tools/validate/run/resume/status/approve` work on real media; a five-step demo renders frame-exact (ids 24..47 then 1000..1035, beeps at 0/1/2 s) and a run killed during step 3 resumes with steps 1-2 cached. Not built (out of the confirmed scope): `executors/remotion.py`, `pipelines/*.json`, `skills/*.md` - see C-007 |
 | [x] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | DONE 2026-10-30: picture join -> `concat` (4A), mix tracks declared inputs (4A), ffmpeg music arm deleted + `make_music_bed` -> `mix_audio` (4B); regress project byte-identical (514 frames, same stream md5s and sha256); 79.2 s real job rendered and six frames reviewed (`out\m4b\frames\`) |
 | [x] | M5 | Remove the old editor backend completely | DONE 2026-10-30: the timeline writer (2,573 lines), its GUI helper, its PowerShell window-automation script and the `projects/` demos (4 projects, 19 files) deleted; `cli.py` lost `build` + the doctor line and gained a Kinocut line; `doctor` exit 0, 178 tests green, regression pack green |
-| [ ] | M5.5 | Creative rendering slice (NEW, owner 2026-10-30; before M6) | 5.5A DONE 2026-10-30: Remotion executor `render_still` + `render_range` behind the op registry, cold/warm times measured at 16:9 and 9:16, still proven non-blank and looked at. 5.5B (next): footage/stills handle + primitives + critic loop -> owner sees scenes that are not PowerPoint |
+| [x] | M5.5 | Creative rendering slice (NEW, owner 2026-10-30; before M6) | DONE 2026-10-30 in three sessions. 5.5A: Remotion executor `render_still` + `render_range` behind the op registry, cold/warm measured at 16:9 and 9:16. 5.5B: footage by string-literal handle, `LayeredMedia`/`Camera`, one bundle per content key (3 stills 26.7 s cold / 1.9 s cached). 5.5C: `KineticText` + `MaskWipe` (kit/3), one directed benchmark shot over real public-domain footage, and the critic loop that found and fixed 3 defects on the rendered stills (caption-band collision, killed glow, crushed mid-tones) |
 | [ ] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | forbidden flags refused; envelope <= 10 ops |
 | [ ] | M7 | Agent-owned scene loop (old G5) | 3 scenes written by agent, >= 2 first-try, 1 revised after viewing frames |
 | [ ] | M8 | Visual quality overhaul + 5-scene benchmark (old G6) | owner approves >= 4 of 5 at 16:9 and 9:16 |

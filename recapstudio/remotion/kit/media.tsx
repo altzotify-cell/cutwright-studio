@@ -56,12 +56,13 @@ export const Camera: React.FC<{
   shake?: number;
   start?: number;
   duration?: number;
+  curve?: (t: number) => number;   // easing of the move; ease.inOut = a slow documentary push (M5.5C)
   children?: React.ReactNode;
-}> = ({push, pan, panY, shake = 0, start = 0, duration, children}) => {
+}> = ({push, pan, panY, shake = 0, start = 0, duration, curve, children}) => {
   const frame = useCurrentFrame();
   const {durationInFrames, width, height} = useVideoConfig();
   const span = Math.max(1, duration ?? durationInFrames - start);
-  const k = progress(frame, start, start + span);      // 0 -> 1, eased, clamped
+  const k = progress(frame, start, start + span, curve);   // 0 -> 1, clamped
   const scale = push ? lerp(push[0], push[1], k) : 1;
   const x = pan ? lerp(pan[0], pan[1], k) : 0;
   const y = panY ? lerp(panY[0], panY[1], k) : 0;

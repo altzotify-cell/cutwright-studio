@@ -1456,3 +1456,85 @@ Commit     - d55c114 "M5.5B: footage by handle (kit/2 LayeredMedia + Camera), on
              (existed before this session; whether the lock is committed is the owner's call).
 ```
 
+
+## 2026-10-30 (M5.5C) - KineticText + MaskWipe, one directed shot, the critic loop
+
+```
+~13:40  M5.5C    The last two documentary primitives, ONE directed scene built from them, and the loop
+                 the roadmap asked for: render frames -> look at them -> name the defect -> revise ->
+                 render again. Closes M5.5. kit goes 2 -> 3 (kinetic.tsx); the scene contract does not
+                 move again (a scene may still only import 'remotion', 'react' and '@kit').
+TESTED     - real footage, not AI: Wikimedia Commons API -> "Public domain", Andrea Luck / NASA-JPL
+             Perseverance, "Pre-Sunrise on Mars SOL 738"; downloaded the 1080p VP9 derivative, framed it
+             with an FFmpeg crop and kept 8 s of it. `ffprobe` on the result ->
+             "codec_name=h264 / width=1588 / height=892 / nb_frames=240 / duration=8.000000 / size=885128".
+             I looked at 3/9/15/21/27 s of the source before choosing the window: real sky, a glowing
+             pre-dawn source lower-left, thin clouds right of centre, ridge as a silhouette along the
+             bottom (rows 187..1080). Provenance + the exact ffmpeg line: docs/evidence/m55c_footage.md.
+TESTED     - the two primitives against the real static checker (TypeScript AST, not a regex) :
+             `node tools/check_scenes.mjs <manifest with directed_shot>` -> 0 errors, 0 warnings,
+             "cost": "medium", "hasDefault": true. `npx tsc --noEmit` -> exit 0. The first attempt was
+             REJECTED and that was correct: the scene imported '../../scenes_examples' and
+             '../sceneTypes', and a scene may only import 'remotion', 'react', '@kit'.
+TESTED     - 3 stills through the batch executor, `python -m cutwright run out\m55c\batch_directed.json`
+             -> "start_000 / middle_024 / impact_048 done", each "ok size measured [1920, 1080]",
+             "3 of 3 done", production_report.json written. Measured bytes: 1,807,151 / 1,955,421 /
+             1,973,531 for frames 0 / 24 / 48.
+TESTED     - the cache rule on a real edit: after the three critique fixes below, the SAME manifest
+             re-ran all three with "cache key changed (inputs, params or executor version)" - the scene
+             file is a declared input, so editing the shot invalidates its stills. A resume before that
+             edit skipped steps 1-2 as "cached (cache key unchanged, outputs intact)" and re-ran only the
+             step killed mid-render ("step was running, so it runs again").
+TESTED     - the critic loop itself, on the three PNGs, looked at directly: defect 1 - the sub line
+             ended 95 px from the bottom edge and the spoken captions sit at captionBottom = 97 px, so
+             they would have collided in a real render (fixed: base = captionBottom + 84u = 181 px);
+             defect 2 - the left bed at 0.80/0.52 crushed the pre-dawn glow, so frame 0 and frame 48 read
+             as two different grades (fixed: 0.70/0.40, fade-in 14 -> 10 frames); defect 3 - scrim 0.5 +
+             vignette 0.5 kept the footage at ~10-18 % luma and looked muddy (fixed: 0.42/0.45).
+             Re-render -> the frame at 48 holds three planes (silhouette ridge / cloud column / sky
+             gradient), type at >12:1 contrast, gold on ONE word. No PowerPoint warning sign survives.
+             Verdict + numbers: docs/evidence/m55c_directed_shot.json.
+TESTED     - test isolation (task 2) : `python -m unittest tests.test_engine_remotion
+             tests.test_engine_manifest tests.test_engine_scene_check` -> "Ran 77 tests in 17.740s / OK",
+             then the SAME command again -> "Ran 77 tests in 16.847s / OK", and
+             recapstudio/remotion/public/assets was empty afterwards (no staged clip left behind).
+TESTED     - the digest rules (task 3) : 6 new tests, `... tests.test_engine_manifest.DigestIdentityTest`
+             -> "Ran 6 tests in 0.407s / OK" (the 64 MiB threshold, size+mtime above it with sha256_file
+             rigged to raise, the memo hashing once for two calls, the memo's stale-hash risk pinned, and
+             handle tables flattened to "assets[footage_a]").
+FAILED     - downloading the clip, twice : `Invoke-WebRequest` -> "429, Too many requests ... Wikimedia"
+             (also with a custom User-Agent), and images-api.nasa.gov -> "403 Forbidden". Worked:
+             `curl.exe -sSL -A "CutwrightBench/1.0"` -> "HTTP 200 bytes 6291118".
+FAILED     - one `python -m cutwright run` in the foreground : killed by the 30 s command cap mid-step 3
+             ("running"). Recovered the honest way - `status` showed 2 done / 1 running, `resume` re-ran
+             only that step. Nothing was faked and no sleep loop was used.
+NOT TESTED - motion across the full shot : only frames 0/24/48 were looked at, not an 8 s range, and not
+             the 30 fps clip inside a 24 fps composition (cadence / dropped frames unverified).
+NOT TESTED - the 9:16 version of this shot, and the caption overlay in its real position (computed from
+             layout.captionBottom, not seen on a rendered frame).
+NOT TESTED - `recap.py scenes` / `recap.py video` regression for M5.5C : the kit gained no new dependency
+             and the M5.5B regression already covers kit/2, but it was not re-run this session.
+DECISIONS  - 1. Frame the footage at PREP time (crop 1588x893, keeping the bottom) instead of zooming at
+             render time. `object-fit: cover` on a 1.47:1 clip inside 16:9 throws away ~112 px top AND
+             bottom, i.e. exactly the ridge that gives the type its dark bed; an offset that big is
+             impossible without a 1.7x zoom, which softens the picture. Verified by looking at the crop.
+             2. `MaskWipe.angle` is degrees, so it needs the box (a polygon only knows percentages):
+             `box={{width, height}}` makes the edge exactly `angle` degrees, without it the edge leans by
+             `angle` percent of the axis. Nothing is measured at render time - a parallel render may not
+             measure the DOM - so the scene passes the size it set itself.
+             3. A scene file cannot name `LabEntry` or reuse `sampleWords` (imports are restricted to
+             'remotion'/'react'/'@kit'), so `directedEntry` is structurally typed and carries a local
+             `spread()` for its preview words. The checker keeps its one rule; the scene bends.
+             4. `Camera` gained an optional `curve` prop (default unchanged) so the benchmark can use
+             `ease.inOut`: the default ease.out front-loads the move, which reads as a snap in a Ken
+             Burns push, and hiding that behind a 520-frame `duration` would have been a trick.
+             5. Test isolation: every test gets `tempfile.mkdtemp()` inside out/engine_remotion, and the
+             staged-asset test tags its handle names with that folder, because public/assets is shared by
+             every run. Pinned by running the suite twice back to back.
+             6. The digest tests pin the memo's RISK as well as its benefit (same length + same mtime_ns
+             -> stale hash). If someone later makes `memo=True` the default, the test that says "the
+             default hashes again, so outputs_intact does see the rewrite" goes red.
+             7. The footage is NOT tracked by git: recapstudio/.gitignore ignores Projects/* (project media
+             is per-machine). docs/evidence/m55c_footage.md carries the licence, the URL and the exact
+             command to re-create the clip on a fresh checkout.
+```
