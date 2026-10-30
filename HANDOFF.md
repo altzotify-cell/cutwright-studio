@@ -8,13 +8,22 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M2  (equivalence verification: Kinocut vs current code vs direct FFmpeg) status: DONE 2026-10-29
-                    (evidence: docs/CAPABILITY_MATRIX.md, docs/evidence/m2_*.json, LOG.md)
-Last green commit : 0b88b09 "M1 close-out: ...". M2 is NOT committed yet: the owner asked for the matrix
-                    and evidence to be written and then reviewed before anything is staged.
-Next step         : M3 - engine skeleton (executors, registry/discovery, manifest, checkpoints, gates,
-                    validators) using the executor column of docs/CAPABILITY_MATRIX.md
-Open COMMS        : C-004 is INFO. M2 decision summary goes in COMMS as C-005 (executor choices).
+Current milestone : M3  (engine skeleton: executors, registry/discovery, manifest, checkpoints, gates,
+                    validators) - phase 3A DONE 2026-10-29 (Kinocut subprocess adapter), 3B DONE
+                    2026-10-29 (FFmpeg executor, ops.py, registry.py), 3C DONE 2026-10-30
+                    (manifest.py step state machine + checkpoint.py atomic resume/cache_key,
+                    38 new tests). M3 is NOT COMPLETE - see "Remaining" below.
+Last green commit : 3ef6c0b "M2 close-out: ..." - M2 IS committed (matrix + 20 evidence files included).
+                    0b88b09 was the M1 close-out before it. Phases 3A+3B+3C are on disk and were
+                    committed together after the owner's review (see LOG 2026-10-30).
+Next step         : M3 phase 3D - validate.py (post-render media checks, slideshow_risk, asset
+                    provenance), gates.py (approval files in production/<run>/approvals/),
+                    report.py (production_report.json), ids.py, executors/remotion.py,
+                    pipelines/*.json, skills/*.md, then the seven CLI verbs so the roadmap's
+                    acceptance commands run end to end.
+Open COMMS        : C-006 = phase 3C decisions + the two findings that need the owner's eye
+                    (docs/schemas/manifest.example.json is stale against ops.py; there is no
+                    "remotion" executor yet). C-005 = M2 decisions.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -23,6 +32,10 @@ Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python
                     Kinocut: INSTALLED in `.venvs\kinocut` = kinocut 1.16.4 on Python 3.11.9, doctor exit 0.
                     `.venvs/` and `out/` are gitignored. All M0 numbers: docs/ENVIRONMENT.md.
 Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1/M2 (quotes in `LOG.md`):
+  - M3 3C (2026-10-30): `python -m unittest tests.test_engine_manifest -v` -> "Ran 38 tests in
+    6.759s" / "OK"; a real 2-step manifest (Kinocut trim -> ffmpeg fit) wrote exactly 48 and 24
+    frames and a second run reported both steps "skipped (cached (cache key unchanged, outputs
+    intact))"; a truncated checkpoint raises CheckpointError(code="corrupted") instead of resuming.
   - M2: 13 areas measured on real outputs (`tests/kinocut_vs_current/`, 20 evidence files). Headlines:
     kinocut trim/fade/wipe/duck/mix/normalize/subtitles/export/pad-resize PASS; no "exactly N frames"
     op; `composite-layers` drops audio; QC is a global score (no black/silence detection); per-join
@@ -118,7 +131,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [x] | M1 | Kinocut isolated install + interface discovery (Windows) | `kino doctor` OK in `.venvs\kinocut`; `docs/KINOCUT_FINDINGS.md` has no assumptions; licences recorded |
 | [x] | M2 | Equivalence tests: Kinocut vs current code vs direct FFmpeg (frame accuracy, fitting, concat, transitions, audio mix, export, QC, workflow/resume) | `docs/CAPABILITY_MATRIX.md` + `docs/evidence/m2_*.json`; every row measured |
 
-| [ ] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | `tools/validate/run/resume/status` work on real media; resume skips done steps |
+| [ ] | M3 | Engine skeleton: executors (Kinocut+FFmpeg), registry/discovery, manifest, checkpoints, gates, validators | `tools/validate/run/resume/status` work on real media; resume skips done steps - 3A/3B/3C done (manifest+checkpoint proven by 38 tests and a real 2-step run); CLI verbs, validate/gates/report/ids still missing |
 | [ ] | M4 | Move Recap editing onto the engine where parity was proven; delete superseded code | Regression pack unchanged; 60-90 s real job reviewed frame by frame |
 | [ ] | M5 | Remove Shotcut completely | `git grep` check empty; doctor clean; tests + regression pass |
 | [ ] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | forbidden flags refused; envelope <= 10 ops |

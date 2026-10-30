@@ -628,3 +628,130 @@ DECISIONS  - executor per operation fixed by measurement (table: docs/CAPABILITY
              M2 was NOT committed: the owner asked for the matrix and evidence to be reviewed
              before anything is staged.
 
+
+## 2026-10-30 - M3 phase 3B: FFmpeg executor, op table, registry
+
+New (uncommitted until phase 3C, the owner reviewed it first):
+`cutwright/engine/executors/__init__.py` (ExecResult, typed ExecutorError with a `transient` flag,
+one shared kill_tree/first_json), `cutwright/engine/executors/ffmpeg.py` (`fit_to_frames`,
+`crop_to_size`, `overlay_audio`), `cutwright/engine/ops.py` (12 OpSpec rows: name, stage, params,
+validator, the executor `docs/CAPABILITY_MATRIX.md` measured, its evidence file and the reason in
+words), `cutwright/engine/registry.py` (list / describe / envelope / route, plus the installed
+probes), `cutwright/engine/__init__.py`, `tests/test_engine_registry.py`. `cutwright/` stays
+stdlib only; every write still goes through `guard.py`.
+
+TESTED     - whole tree before phase 3C : `python -m unittest discover -s tests -t . -v` ->
+             "Ran 82 tests in 408.551s" / "OK" (0 failures, 0 errors, 0 skips). The "62 tests"
+             previously noted in HANDOFF.md was stale; 82 is the real number at this commit.
+TESTED     - FFmpeg executor on real media : FfmpegRealTest ->
+             "test_fit_clones_the_last_frame_to_hit_an_exact_count ... ok",
+             "test_fit_letterboxes_into_a_size_without_stretching ... ok",
+             "test_crop_fills_the_target_size ... ok",
+             "test_audio_pass_attaches_sound_without_touching_the_frames ... ok",
+             "test_audio_pass_warns_when_it_falls_back_to_shortest ... ok",
+             "test_timeout_is_transient ... ok"
+TESTED     - Kinocut adapter on real media (3A, re-run in the same suite) : KinocutRealTest ->
+             "test_trim_is_frame_exact_after_the_adapter ... ok",
+             "test_merge_crossfade_keeps_the_frame_maths ... ok",
+             "test_mix_audio_accepts_json_tracks ... ok",
+             "test_output_exists_needs_an_explicit_overwrite ... ok",
+             "test_timeout_is_transient_and_kills_the_call ... ok",
+             "test_info_returns_stream_facts ... ok"
+TESTED     - the op table as data : OpsTableTest ->
+             "test_executors_come_from_the_matrix_not_from_taste ... ok",
+             "test_no_op_names_an_executor_without_passing_evidence ... ok",
+             "test_every_op_names_a_real_target_in_its_executor ... ok",
+             "test_names_are_unique_and_stages_are_known ... ok",
+             "test_cross_parameter_rules ... ok"
+TESTED     - routing and discovery : RegistryTest ->
+             "test_route_uses_the_matrix_executor ... ok",
+             "test_route_refuses_a_silent_executor_swap ... ok",
+             "test_route_allows_an_override_only_past_the_reason_gate ... ok",
+             "test_route_reports_an_uninstalled_executor_instead_of_switching ... ok",
+             "test_envelope_is_capped_and_marks_truncation ... ok",
+             "test_installed_reports_the_five_tools ... ok"
+FAILED     - nothing at this phase. Two design gaps were found LATER, in 3C, and are recorded
+             there: an optional param filled in as null could not be re-validated, and op param
+             names did not map 1:1 onto executor kwargs (`trim_exact` speaks frames, `kino trim`
+             speaks seconds).
+NOT TESTED - Remotion executor (the roadmap's `executors/remotion.py` is not written yet), the
+             `current` executor (recap helpers, M4), Kinocut `composite_layers`/`workflow_*`
+             wrappers end to end through the engine, HDR/10-bit and non-24 fps media
+DECISIONS  - the executor for each op is DATA in `ops.py`, copied from the matrix, with the
+             evidence file checked by a test: a row that names Kinocut without a passing evidence
+             file fails the suite, so the table cannot drift from the measurements.
+             FFmpeg video passes are video-only (`-an`) on purpose: M2 measured 13.4-26 ms of
+             drift per join, so a timeline's audio is built as ONE continuous track later.
+             An existing output is refused unless the caller passes `overwrite=True`; the engine
+             (manifest.py, 3C) is the only caller that decides when a re-render may replace one.
+
+
+## 2026-10-30 - M3 phase 3C: execution manifest state machine + atomic checkpoints
+
+New: `cutwright/engine/manifest.py` (load / validate / derive / run / status: ops, params, refs,
+outputs and cache keys derived from data; the `pending|running|done|failed|skipped` state machine;
+retry policy; gates block from data), `cutwright/engine/checkpoint.py` (temp-then-replace JSON, a
+corrupt or schema-mismatched state refused instead of trusted, per-step cache key, the resume rule,
+the cursor), `tests/test_engine_manifest.py` (40 tests). `ops.py` gained `executor_kwargs()` and a
+null param now means "not set". `docs/evidence/m2_*.json` were rewritten by re-running the M2 tests
+(wall-clock `seconds` only) and were RESTORED, not committed.
+
+TESTED     - phase 3C module : `python -m unittest tests.test_engine_manifest -v` ->
+             "Ran 40 tests in 6.979s" / "OK"
+TESTED     - whole tree : `python -m unittest discover -s tests -t . -v` ->
+             "Ran 122 tests in 377.413s" / "OK" (0 failures, 0 errors, 0 skips)
+TESTED     - a real 2-step manifest, Kinocut then ffmpeg (`out/_demo_3c.py`, throwaway) :
+             "validate: {\"ok\": true, \"steps\": 2, \"cost_usd\": 0.0, \"run_dir\": \"out\\\\runs\\\\demo\"}",
+             "run: [[\"cut\", \"done\"], [\"fit\", \"done\"]]", "frames: 48 24",
+             "resume: [[\"cut\", \"skipped\", \"cached (cache key unchanged, outputs intact)\"],
+             [\"fit\", \"skipped\", \"cached (cache key unchanged, outputs intact)\"]]",
+             "cursor: {\"next\": \"\", \"total\": 2, \"done\": [\"cut\", \"fit\"], \"pending\": []}"
+             -> the second run re-encoded nothing and both steps stayed `done`
+TESTED     - cache keys carry the tool version : `manifest.tool_versions()` -> kinocut "Kinocut
+             1.16.4", ffmpeg "7.1-full_build-www.gyan.dev", node "v24.18.0", remotion "4.0.539"
+TESTED     - the roadmap's rejections, as tests : unknown op, missing/unknown input, bad param, a
+             paid step under a $0 cap, an AI-origin VISUAL asset (audio origins such as `user_audio`
+             are exempt), forward reference, output outside the fork, output collision, executor
+             override without a reason, unknown executor, gate before an unknown step, duplicate ids
+TESTED     - resume/retry edges : a deleted output re-runs only that step; a changed param re-runs
+             only that step; `only=` leaves the cursor at the next step; a dry run writes nothing; a
+             truncated checkpoint raises CheckpointError(code="corrupted"); a transient failure is
+             retried once (attempts 2, overwrite only on the retry) and ends `done`; a deterministic
+             failure is not retried (attempts 1, `failed`, the error code recorded)
+FAILED     - three defects my own tests/demo found BEFORE anything was staged; all fixed, each has
+             a test now:
+             1. re-validating a derived step rejected a null default -> "trim_exact rejected (code
+                bad_type) [duration]: expected a number, got None". A null param now means "not
+                set"; only a REQUIRED param given null is `missing_param`.
+             2. op params do not map 1:1 onto executor kwargs (`trim_exact` speaks frames, `kino
+                trim -s/-d` speaks seconds) -> `ops.executor_kwargs()`; a test pins 37/24 and 50/24.
+             3. a cached resume overwrote `done` with `skipped`, so the NEXT resume re-rendered
+                everything (the demo showed the cursor going back to `next: "cut"`). A cached skip
+                now keeps status `done` and records the reason; regression test added.
+FAILED     - `docs/schemas/manifest.example.json` does NOT validate against the real op table:
+             "ERROR fit_1 invalid_params | fit_to_frames rejected (code unknown_param) [size]" and
+             "ERROR export invalid_params | export_h264 rejected (code unknown_param) [crf]" (it also
+             asks for fill="blur" and crf/audio/faststart). Not touched in 3C - the roadmap says to
+             keep the example in sync with the validator, so it is phase 3D's first job.
+NOT TESTED - media/quality validation after a render (validate.py), approval FILES (gates.py; only
+             the manifest's own gate data blocks a step today), production_report.json (report.py),
+             the run-id helpers (ids.py), the seven CLI verbs, the "remotion" executor (not
+             written), Kinocut ops other than `trim` driven through the engine, multi-output ops
+             (refused: every executor writes one file per call)
+DECISIONS  - the cache key is computed when a step is about to run, not when the plan is derived: a
+             step's input is usually the previous step's output, so deriving it early made every
+             chained step look changed on the next resume (caught by test_resume_skips_cached_steps).
+             `strict_files=True` for a run (a missing input fails before any encode), False for
+             `validate` (a plan may be checked before its footage exists); an input produced by an
+             EARLIER step of the same plan is never "missing".
+             A step's declared validation checks are carried through as `not_run` rows - validate.py
+             fills them, so a media check has exactly one implementation.
+             Gates block from manifest data only (id, before_step, approved); approval files are
+             gates.py's job. A blocked step is `skipped`, the run stops, `ok` is false.
+             Checkpoint output paths are repo-relative and resolved against `guard.ROOT`, so
+             `status` works from any CWD and no absolute user path is stored.
+             Outputs are hashed below 64 MiB and identified by size+mtime above it (the rule
+             guard.py already documents): a resume must never re-hash a multi-GB film.
+             `MAX_ATTEMPTS = 2` for transient failures only; a deterministic failure (bad params,
+             refused overwrite, failed validation) is never retried.
+
