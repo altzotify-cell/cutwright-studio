@@ -267,6 +267,13 @@ python -m cutwright run out\m55\range_9x16.json --json      # a 1 s range, 1080x
 Plus, for the milestone: the owner sees at least one scene that is not a card layout, and the cold/warm numbers
 for one look are in `LOG.md`.
 
+Result of 5.5A (2026-10-30): 14 ops, `graphics` envelope 3. Measured through the acceptance commands above - a
+1920x1080 still 7.77 s cold / 8.26 s warm / 0.97 s cached; 1080x1920 7.39 / 6.95 / 1.04 s; a 1 s range 13.20 /
+9.63 / 1.34 s at 16:9 and 10.96 / 11.99 / 1.01 s at 9:16 (rows: `docs/evidence/m55_remotion.json`). Warm costs
+the same as cold because the ~8 s is webpack, not the frame - 5.5B must design its loop around one bundle per
+look. The still is a real picture (distinct tones / stdev in the LOG entry) and the first vision test passed.
+Not settled: whether two renders of the same timeline are byte-identical (see HANDOFF "Known unverified").
+
 ## M6 - Agent bridge and focused tool discovery (old G4 + discovery)
 
 Objective: the agent drives everything through typed commands with `--json`, never raw shell.

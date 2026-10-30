@@ -36,6 +36,19 @@ with `set RECAP_NONINTERACTIVE=1` (PowerShell: `$env:RECAP_NONINTERACTIVE=1`). A
 | `blueprint check`, `direct` | Production Blueprint validation; Director orchestration over backends | **G8** |
 | `make "<request>" --profile` | one-line entry for any video kind | **G9** |
 
+## Engine ops that DRAW (M5.5A, executor `remotion`)
+
+The engine could edit but not draw in code. Two ops now render a scene through the pinned Remotion
+4.0.539 and record the output like any other step (`tools describe` has the full params):
+
+| op | makes | measured cost on this PC (`docs/evidence/m55_remotion.json`) |
+|---|---|---|
+| `render_still` | ONE frame -> PNG (the critic loop's unit) | 1920x1080: 7.8 s cold / 8.3 s warm; 1080x1920: 7.4 / 7.0 s; 1.0 s when the step is cached |
+| `render_range` | a frame range -> H.264 MP4 | 1 s (24 frames) at 1920x1080: 13.2 / 9.6 s; at 1080x1920: 11.0 / 12.0 s |
+
+The SCENE FILE is the op's input, so editing that `.tsx` re-renders it and editing anything else does
+not. `portrait: true` renders the 9:16 shape; a landscape render passes no props at all.
+
 ## Recap Studio steps (`recap.py <step>`), safe vs dangerous
 
 | step | does | agent use |

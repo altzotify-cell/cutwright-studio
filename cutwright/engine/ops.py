@@ -428,6 +428,38 @@ OPS = (
         inputs=("src", "subtitle"),
         params={"style": Param("str", "Kinocut subtitle style preset")}),
     OpSpec(
+        name="render_still", stage="graphics",
+        description="Render ONE frame of a Remotion scene to a PNG - one look at the shot.",
+        executor="remotion", target="render_still",
+        executor_reason="the only renderer here that DRAWS: the pinned Remotion 4.0.539 drew the "
+                        "514-frame M0 timeline within one frame, and one 1920x1080 still of "
+                        "example-stat-ring cost 7.8 s cold / 8.3 s warm / 1.0 s cached "
+                        "(measurements in docs/evidence/m55_remotion.json). No Kinocut row applies "
+                        "- this op draws graphics, it does not edit media",
+        evidence="docs/evidence/m55_remotion.json",
+        inputs=("scene",), outputs=("still",),
+        params={"composition": Param("str", "Remotion composition id (example-stat-ring, "
+                                            "scene-<segment id>)", required=True),
+                "frame": Param("int", "frame to draw", default=0, minimum=0),
+                "portrait": Param("bool", "draw the 9:16 shape (1080x1920) instead of 16:9",
+                                  default=False)}),
+    OpSpec(
+        name="render_range", stage="graphics",
+        description="Render a frame range of a Remotion scene to an H.264 clip.",
+        executor="remotion", target="render_range",
+        executor_reason="same renderer as render_still, for the beats that only read in motion; "
+                        "1 s (24 frames) at 1920x1080 cost 13.2 s cold / 9.6 s warm and decoded back "
+                        "as 24 frames at 24/1 (docs/evidence/m55_remotion.json). M0 measured the "
+                        "full-timeline render within one frame of the ffmpeg join",
+        evidence="docs/evidence/m55_remotion.json",
+        inputs=("scene",), outputs=("video",),
+        params={"composition": Param("str", "Remotion composition id", required=True),
+                "start": Param("int", "first frame of the range", default=0, minimum=0),
+                "frames": Param("int", "how many frames, inclusive (24 = one second at 24 fps)",
+                                default=24, minimum=1),
+                "portrait": Param("bool", "render the 9:16 shape", default=False),
+                "crf": Param("int", "H.264 quality (lower is better)", default=18, minimum=0)}),
+    OpSpec(
         name="export_h264", stage="deliver",
         description="Final H.264/AAC encode: High profile, yuv420p, faststart.",
         executor="kinocut", target="export",

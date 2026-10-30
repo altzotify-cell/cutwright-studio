@@ -1144,3 +1144,174 @@ Commit     - 0755d92 "M4 4B: the ffmpeg music mix is deleted; mix_audio mixes th
              gitignored: they are working evidence, not source.
 
 
+## 2026-10-30 - M5.5A: a Remotion executor behind the op registry, measured cold/warm, first vision test (agent)
+
+Objective (owner decisions in C-010, answered by the owner's brief): (1) docs only, own commit, to add
+M5.5 between M5 and M6; (2) run the recapstudio regression project as the "before"; (3) build
+`cutwright/engine/executors/remotion.py` with `render_still` and `render_range`, registered like the
+other executors, outputs + hashes in the manifest, the scene declared as an input; (4) MEASURE cold and
+warm wall time at 1920x1080 and 1080x1920; (5) look at the stills and check one specific detail;
+(6) record and stop. Not in scope: CONTRACT.md, any kit file, primitives, scene prompts, the critic
+loop, M6.
+
+TESTED     - docs commit first, on its own : `git commit -F msg.txt` -> "2ae8f60 Docs: insert M5.5
+             (creative rendering slice) between M5 and M6", 2 files, +54/-10 (HANDOFF.md,
+             docs/ROADMAP.md). It first went in WITH msg.txt (3 files); `git rm --cached msg.txt` +
+             `git commit --amend` removed it before anything was pushed.
+TESTED     - the regress project's Python is already the current code : sha256 of
+             `recapstudio\_template\{recap,engine_bridge,scenes,timeline,authoring,wordtimes}.py`
+             equals the same file in `recapstudio\Projects\regress` (6 files; e.g. recap.py
+             4ebd59db11aa7007 on both sides). No copy was needed.
+TESTED     - the regression pack, in roadmap order, all exit 0 : in `recapstudio\Projects\regress`,
+             `python recap.py video` -> "Done. recap_final.mp4  (21.4s, expected 21.4s)" (10.7 s wall,
+             six clips cached); `timeline` -> "6 segments, 514 frames (21.4s at 24fps, 1920x1080)" +
+             "Timeline check passed" (25.4 s); `scenes` -> 3 ok / 3 keywords (1.1 s, cached);
+             `remotion` -> "Encoded 514/514" + "PARITY CHECK PASSED ... within one frame" (1.4 min);
+             `premiere` -> exit 0 (4 s). Scene verdicts are the M0 baseline exactly (d_01, d_02, d_03
+             pass; d_04 "x.toUpperCase is not a function"; d_05 BLOCKED on 'fetch'; d_06 "draws
+             nothing"). `demo` and `briefs --demo` were NOT re-run: `demo` refuses a project that
+             already has segments and `--force` is forbidden unattended.
+TESTED     - the video against the M0 baseline, byte for byte : `ffprobe -count_frames` ->
+             "nb_read_frames=514", "r_frame_rate=24/1", "1920x1080", "duration=21.416667",
+             "size=6834110"; `ffmpeg -map 0:v -c copy -f md5 -` ->
+             "MD5=c671f7a76da05927d9a41d4742779268", `-map 0:a` ->
+             "MD5=0064ff59fa0debbc9a47f17cccbb322b"; file sha256 817BA0EA...4479. All equal
+             `docs/ENVIRONMENT.md`'s baseline.
+TESTED     - the Remotion render re-ran and still matches within one frame, but NOT in bytes :
+             `recap_remotion.mp4` -> 514 frames, 24/1, 1920x1080, "duration=21.419000",
+             "size=5904274", video md5 17fd8e0f..., audio md5 4e7a90b5...; the M0 line says
+             5,915,527 B - 11,253 B smaller (0.19%) with the same frames and duration. The `video`
+             step ran BEFORE this re-render, so the byte-identical `recap_final.mp4` above came from
+             the previous render; the order is stated in `docs/ENVIRONMENT.md`.
+FAILED     - the first measured `render_still` run : `python -m cutwright run
+             out\m55\still_16x9.json --json` -> step failed, code `render_failed`, message "Command
+             ...\\recapstudio\\remotion\\src\\index.ts not found.". Cause: I put the entry point
+             BEFORE the command; `@remotion/cli` takes the command first. Fixed in `build_argv()`
+             (the docstring now says so) and re-run. The same failed attempt exposed two smaller
+             defects, both fixed: the error text carried ANSI colour escapes (now stripped) and the
+             props file was written before the availability check (now after it).
+FAILED     - my own probe one-liners, not the project : `python -c "..."` was mangled by PowerShell
+             quoting twice ("SyntaxError: '(' was never closed") and once the `>&2` traceback was
+             swallowed by the pipe; fixed by putting every probe in a script file under `out\m55\`.
+
+
+TESTED     - the two ops exist and route : `python -m cutwright tools describe render_still --json` ->
+             executor "remotion", inputs ["scene"], outputs ["still"], evidence
+             `docs/evidence/m55_remotion.json`; `registry.list_ops("graphics")` ->
+             "['burn_subtitles', 'render_still', 'render_range']"; `envelope("graphics")` returned 3;
+             total ops 14; `registry.installed()` reports remotion "4.0.539", ok True.
+TESTED     - the measured cost, through `python -m cutwright run <manifest> --json`
+             (cold = run folder AND output removed; warm = output removed only; cached = nothing
+             removed):
+             ```
+             still 1920x1080   cold 7.77 s (wall 9.79)   warm 8.26 s (wall 9.69)   cached 0.97 s
+             still 1080x1920   cold 7.39 s (wall 8.69)   warm 6.95 s (wall 8.44)   cached 1.04 s
+             range 1 s 16:9    cold 13.20 s (wall 14.83) warm 9.63 s (wall 11.19)  cached 1.34 s
+             range 1 s 9:16    cold 10.96 s (wall 12.78) warm 11.99 s (wall 13.56) cached 1.01 s
+             ```
+             all 12 runs rc=0; the stills passed `size` (measured [1920,1080] / [1080,1920]); the
+             ranges passed `frame_count` 24, `size` and `decodes_clean`. The cached run's reason is
+             literally "cached (cache key unchanged, outputs intact)". Raw rows:
+             `docs/evidence/m55_remotion.json` and `out\m55\measurements.json`.
+TESTED     - the still is a picture, not a blank frame : `python out\m55\blank_check.py` (ffmpeg
+             decodes each PNG to 64x36 gray, then min/max/mean/stdev/distinct) ->
+             "still_16x9.png ... distinct=133 stdev=26.9", "still_9x16.png ... distinct=145
+             stdev=30.7"; a blank frame is one tone and zero spread.
+TESTED     - the range really is one second : `ffprobe -count_frames` on `range_16x9.mp4` ->
+             "1920,1080,24/1,24," then "1.000000,136500"; `range_9x16.mp4` -> "1080,1920,24,".
+TESTED     - the executor's own tests, 12 of them, no render : `python -m unittest
+             tests.test_engine_remotion -v` -> "Ran 12 tests in 1.353s" / "OK". They pin the measured
+             CLI order (command BEFORE the entry point), the props file (none for landscape), the
+             inclusive frame range, the four refusals (missing scene, existing output, outside the
+             fork, Remotion absent) and that editing the scene file changes the step's cache key.
+TESTED     - the registry and CLI suites still pass with a third executor :
+             `tests.test_engine_registry` -> "Ran 36 tests in 5.509s" / "OK"; `tests.test_engine_cli`
+             -> "Ran 16 tests in 10.648s" / "OK".
+TESTED     - the whole suite, at the end : `python -m unittest discover -s tests -t . -v` ->
+             "Ran 190 tests in 355.182s" / "OK" (178 before + 12 new; 0 failures, 0 errors, 0 skips).
+             The FIRST full run had 1 failure and it was a real find: see FAILED below.
+FAILED     - the first full suite run : 1 failure in `tests.test_engine_manifest`
+             (`test_unknown_executor_is_rejected` -> "AssertionError: [] is not true"). That test used
+             `executor="remotion"` as its example of an executor the engine has NOT wired - which
+             stopped being true in this session. The rule it protects (a name no module answers to is
+             refused with `unknown_executor`) is unchanged; the fixture now says
+             `executor="not_an_executor"`. Re-ran that suite: "Ran 40 tests in 5.530s" / "OK", then
+             the whole suite above.
+TESTED     - the vision test (protocol in DECISIONS 6) : looked at `still_16x9.png` and
+             `still_9x16.png` and wrote the answer down BEFORE reading the scene source. What I was
+             shown and what I answered: a dark frame with a violet-brown vignette; one thick orange
+             ring, ~70 % of it filled starting at 12 o'clock and running clockwise to about 8
+             o'clock, the remainder a dim grey track; an orange glow behind the ring; inside it the
+             number "70" in large white bold digits with a smaller orange "%" to its right; under the
+             ring the label "OF PLAYERS DISAGREED" in white uppercase; focal point = the number;
+             nothing else in the frame and the bottom third-to-40 % empty; at 9:16 the same
+             composition scaled up, the label running almost edge to edge. Ground truth read
+             afterwards from `scenes_examples/stat_ring.tsx` + `index.ts`: props `{value: 70, label:
+             'of players disagreed', unit: '%'}`, label rendered `uppercase`, ring `p.accent` with the
+             track at 12 % alpha, number `AnimatedCounter` at `fontSize size*0.27`, unit at
+             `size*0.15` in accent colour, backdrop a radial accent glow. Every answered detail
+             matches.
+NOT TESTED - whether a second Remotion render of the SAME timeline reproduces the bytes: the M5.5A
+             re-render is 11 KB smaller than the M0 file with identical frames and duration, so
+             something is not deterministic (encoder threading is a hypothesis, not a measurement).
+             One more `recap.py remotion` run would settle it; parked for 5.5B because the editing
+             path - the part that must be reproducible - IS byte-identical.
+NOT TESTED - `render_still`/`render_range` against a scene inside a PROJECT (`scene-<segment id>`):
+             only the two example scenes were rendered. The regress project's own scenes exist, but
+             3 of 6 are keywords fallbacks, so the first honest target is 5.5B's new primitives.
+NOT TESTED - a render on a machine without Chromium: `ensureBrowser()` is never exercised by this
+             executor (the browser came from M0); the CLI would download it, as it did in M0.
+NOT TESTED - the 5.5B hook (a scene importing a footage/still file), the primitives, the critic loop:
+             that is the next session and nothing of it was started.
+
+```
+DECISIONS  - 1. The executor calls the pinned CLI as `node
+             recapstudio/remotion/node_modules/@remotion/cli/remotion-cli.js`, NOT `npx remotion`:
+             npx can resolve another version out of the registry and prints its own noise, and the
+             `.cmd` shim re-parses quotes on Windows. cwd is `recapstudio/remotion` because
+             `remotion.config.ts` resolves the `@kit` alias from `process.cwd()`.
+             2. `--props` gets a PATH to a JSON file written beside the output, never an inline JSON
+             string; and a landscape render passes NO props at all, because SceneLab's defaultProps
+             already say `portrait: false`, so a 16:9 render leaves no extra file. A 9:16 render
+             leaves `<output>.props.json` next to the still: one tiny undeclared file, recorded here
+             rather than hidden. The manifest still declares exactly one output.
+             3. The SCENE FILE is the op's declared input (`inputs=("scene",)`), so the engine digests
+             it into the cache key. Measured both ways in `tests.test_engine_remotion`: same scene +
+             same params -> same key; edited scene -> different key; changed `frame` -> different key.
+             4. Cold vs warm is DEFINED, because "cold" otherwise means anything: cold = run folder
+             and output removed, warm = output removed only (the engine re-runs the same step),
+             cached = nothing removed. The finding that matters for the critic loop: warm is not
+             cheaper than cold (7-8 s either way) - that ~8 s is webpack bundling, not the frame. So
+             one look costs ~10 s wall, and a CACHED re-run of the same scene costs ~1 s. Affordable;
+             a per-frame loop through the CLI is not, which 5.5B has to design around.
+             5. Evidence: the two ops point at `docs/evidence/m55_remotion.json`, not an M2 file. The
+             M2 matrix measures EDITING; nothing in it draws. `tests.test_engine_registry` now allows
+             `docs/evidence/m55_*` for the remotion executor only and still demands `m2_*` for
+             kinocut and ffmpeg - the M3 rule ("no executor without passing evidence") is unchanged
+             in strength, and `evidence_status` proves the new file has rows and verdict PASS.
+             6. Vision-test protocol, so a later session can repeat it: render a still, LOOK at it and
+             write the answer down (composition, focal point, the `docs/VISUAL_STANDARD.md` section 4
+             warning signs, one specific detail), and only THEN read the scene source to check.
+             Reading the source first would have made the test worthless.
+             7. What the stills actually show, in the standard's own words: one centred ring over a
+             dark gradient, a number and a caption under it, nothing else in the frame; at 9:16 the
+             same composition scaled up, the label nearly edge to edge, the bottom 35 % empty. That is
+             the "sentence over a gradient + a stat" default from section 2 and the "same title +
+             subtitle over the same composition" sign in section 4 - so M5.5 is correctly aimed, and
+             the cause is the contract (no footage, no layered media), not the author of this scene.
+             8. Scope kept: no CONTRACT.md, no kit file, no primitive, no scene prompt, no critic
+             loop, no M6. `cutwright/engine/` gained one new file and two lines in `ops.py` +
+             five in `registry.py`; `guard.py`, `probe.py`, `subs.py`, `moments.py`, `frames.py`
+             and every other engine module are untouched (`git diff --stat` in the session report).
+             9. Two kinds of TRACKED file are rewritten by merely RUNNING things, and both were
+             `git checkout`-ed before this commit (the C-006 practice): `docs/evidence/m2_*.json`
+             (the equivalence tests write their own evidence) and
+             `recapstudio/remotion/src/generated/registry.ts` (scenes.py writes the project's scene
+             registry into the shared renderer folder - the pack run turned the committed stub back
+             into the regress project's three scenes + "demo noir" theme). Neither is an M5.5A edit.
+             The next session will see both reappear the moment it runs the pack or the suite; that is
+             expected, not a regression.
+Commit     - see the closing docs commit of this session (the C-009/C-010 pattern: the code commit
+             lands first, then one small docs commit records its hash here and in HANDOFF/COMMS).
+```
+

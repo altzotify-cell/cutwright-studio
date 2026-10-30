@@ -211,21 +211,28 @@ class OpsTableTest(unittest.TestCase):
                             "%s -> %s.%s is missing" % (spec.name, spec.executor, spec.target))
 
     def test_no_op_names_an_executor_without_passing_evidence(self):
-        """Roadmap M3: an op may not claim an executor the matrix has no evidence for."""
+        """Roadmap M3: an op may not claim an executor the matrix has no evidence for.
+
+        M5.5A adds the `remotion` executor, which the M2 matrix has no row for (the matrix measures
+        EDITING; Remotion DRAWS), so its two ops quote their own measurement file instead. Every
+        kinocut and ffmpeg op still has to quote an M2 row.
+        """
         for spec in ops.OPS:
             status = registry.evidence_status(spec)
             self.assertTrue(status["ok"],
                             "%s -> %s: %s" % (spec.name, spec.executor, status["reason"]))
-            self.assertTrue(spec.evidence.startswith("docs/evidence/m2_"), spec.name)
+            prefix = "docs/evidence/m55_" if spec.executor == "remotion" else "docs/evidence/m2_"
+            self.assertTrue(spec.evidence.startswith(prefix), spec.name)
             self.assertTrue(spec.executor_reason, spec.name)
 
     def test_executors_come_from_the_matrix_not_from_taste(self):
         by_executor = {}
         for spec in ops.OPS:
             by_executor.setdefault(spec.executor, []).append(spec.name)
-        self.assertEqual(sorted(by_executor), ["ffmpeg", "kinocut"])
+        self.assertEqual(sorted(by_executor), ["ffmpeg", "kinocut", "remotion"])
         self.assertEqual(sorted(by_executor["ffmpeg"]),
                          ["fit_to_frames", "overlay_audio", "reframe_crop"])
+        self.assertEqual(sorted(by_executor["remotion"]), ["render_range", "render_still"])
 
     def test_defaults_are_filled_in(self):
         params = ops.validate_params("fit_to_frames", {"frames": 53})

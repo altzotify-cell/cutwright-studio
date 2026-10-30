@@ -12,20 +12,22 @@ Current milestone : M5.5 "Creative rendering slice" - a NEW milestone the owner 
                     between M5 and M6 (C-010 decision ii). Why: `docs/VISUAL_STANDARD.md` section 4 names
                     the cause of "it looks like PowerPoint" - the scene contract bans footage and images and
                     the kit has only chart/counter/text primitives. Order inside M5.5: 5.5A the Remotion
-                    executor (DONE 2026-10-30, see below), then 5.5B footage handle + primitives + critic
-                    loop. M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
+                    executor (DONE 2026-10-30: `render_still` + `render_range`, one still ~10 s wall
+                    cold, ~1 s when cached), then 5.5B footage handle + primitives + critic loop.
+                    M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
                     (2,573 lines), its GUI helper (433), its PowerShell window automation (255), the
                     `build` verb and parser, the doctor line, and the four `projects/demo_*` demos
                     (17 files, 1,776 lines) are deleted; `engine/registry.py` + `transcribe.py` wording
                     de-branded; docs/README/PROVENANCE/.gitignore/.clinerules point at docs/legacy for
                     history. `doctor` exit 0 with ffmpeg/ffprobe/Kinocut lines and no editor line;
                     `python -m unittest discover -s tests -t . -v` -> "Ran 178 tests in 380.037s" / "OK";
-                    `git grep` for the removed backend's name over code -> no matches. NOT re-run in this
-                    session: the recapstudio regression pack (roadmap M5 acceptance line 3) - see the
-                    M5 LOG entry.
+                    `git grep` for the removed backend's name over code -> no matches. The recapstudio
+                    regression pack (roadmap M5 acceptance line 3) was NOT re-run in the M5 session; it was
+                    re-run in M5.5A and is byte-identical (see the M5.5A line below).
 Last green commit : 4528c51 (M5 close-out; the message is in `LOG.md` and `git log -1`, not repeated here so
                     the M5 acceptance grep stays empty), pushed to origin main - verified with
-                    `git ls-remote`. Before it: 7a8184c, 0755d92, 498aed1, d072280.
+                    `git ls-remote`. Before it: 7a8184c, 0755d92, 498aed1, d072280. This session's own
+                    commits are recorded in the closing docs commit and in `LOG.md`.
 Next step         : M5.5B - footage/stills handle + scene primitives + the look-at-the-frame critic loop
                     (`docs/ROADMAP.md` M5.5). Not started; the owner's go starts it. M6-M9 keep their
                     order after M5.5; M10-M16 are a PARKING LOT (owner decision ii: do not start or
@@ -42,6 +44,20 @@ Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python
                     Kinocut: INSTALLED in `.venvs\kinocut` = kinocut 1.16.4 on Python 3.11.9, doctor exit 0.
                     `.venvs/` and `out/` are gitignored. All M0 numbers: docs/ENVIRONMENT.md.
 Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1/M2/M3 (quotes in `LOG.md`):
+  - M5.5A (2026-10-30): the engine can DRAW. `render_still` (one frame -> PNG) and `render_range` (a
+    frame range -> H.264) run on the pinned Remotion 4.0.539 behind the op registry (14 ops now), with
+    the scene file as a declared input so a changed scene invalidates the cache. Measured through
+    `python -m cutwright run`: a 1920x1080 still costs 7.77 s (9.79 s wall) cold, 8.26 s warm, 0.97 s
+    when cached; 1080x1920 is slightly cheaper; a 1 s range (24 frames) costs 13.20 / 9.63 s and
+    decodes back as 24 frames at 24/1. Warm is NOT cheaper than cold - the ~8 s is webpack, so one
+    look is ~10 s and a cache hit is ~1 s. The still decodes as a real picture (133/145 distinct
+    tones, stdev 26.9/30.7), and I could SEE it: "70%", "OF PLAYERS DISAGREED", an orange ring on a
+    grey track - every detail matched the scene source. The regression pack re-ran byte-identical on
+    the editing path (514 frames, 6,834,110 B, same stream md5s and sha256).
+  - Vision (M5.5A, moved here from "Known unverified"): DeepSeek through Cline CAN see images. The
+    test was a still of `stat_ring`: I described it and named the number and the label BEFORE reading
+    the scene source, and both were right (plus the detail that the `%` is a separate, smaller,
+    accent-coloured glyph).
   - M4 4B (2026-10-30): the ffmpeg music arm is gone and `make_music_bed` -> `mix_audio` (Kinocut).
     Kinocut refuses an audio-only mix source ("mix_audio requires a video stream"), so the program
     audio is muxed first and the bed is mixed under the muxed file; the video packets come back
@@ -192,7 +208,9 @@ A6 do not touch system Node. A7 repo state unknown. A8 `cutwright/` stays stdlib
 - Recap Studio Phase 3 (Scenes tab, import of agent replies) on Windows. Remotion DOES run now (M0: parity within one frame) and `briefs --demo` ran; the Scenes tab and agent-reply import are still unverified.
 - Whisper word timings from REAL speech: still unverified. The old `metadata_errors` crash did NOT recur in M0 (faster-whisper 1.2.1 loads `base` in 6.50 s and runs inference), but it returns 0 words on the fixture's tone audio, so timings fall back to `even`. Needs real narration to test - not an M0 blocker.
 - Remotion `OffthreadVideo` once failed at frame 71 on a cold run ("No frame found"); a retry exists but never ran.
-- Whether DeepSeek V4 Flash through Cline can SEE images (test first in M7).
+- Whether two Remotion renders of the SAME timeline are byte-identical: the M5.5A re-render came out
+  11 KB smaller than the M0 file with the same 514 frames and duration. Unverified, and the answer
+  decides whether 5.5B can trust "same scene + same props = same pixels" in its cache.
 - Tests under `tests/` (fixtures only): now run on this PC (M0: "Ran 1 test in 0.907s", OK, exit 0).
 
 ## Reporting format (use in every LOG entry and in your messages to the owner)

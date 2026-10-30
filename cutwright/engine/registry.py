@@ -24,13 +24,14 @@ import subprocess
 
 from cutwright import guard
 from cutwright.engine import ops
-from cutwright.engine.executors import ffmpeg, kinocut
+from cutwright.engine.executors import ffmpeg, kinocut, remotion
 
-MODULES = {"kinocut": kinocut, "ffmpeg": ffmpeg}   # "current" (recap helpers) is wired in M4
+MODULES = {"kinocut": kinocut, "ffmpeg": ffmpeg, "remotion": remotion}   # "current" (recap helpers) is wired in M4
 INSTALL = {
     "kinocut": "create .venvs\\kinocut and pip install kinocut==1.16.4 "
                "(docs/KINOCUT_FINDINGS.md section 1)",
     "ffmpeg": "install ffmpeg 7.x on PATH (Gyan build, assumption A5)",
+    "remotion": "npm install in recapstudio/remotion (Remotion stays 4.0.539) and put Node on PATH",
 }
 REMOTION = os.path.join(guard.RECAP, "remotion", "package.json")
 _INSTALLED = {}
@@ -179,14 +180,7 @@ def installed(refresh=False, timeout=30):
     has_kinocut, has_ffmpeg = kinocut.available(), ffmpeg.available()
     ffprobe = shutil.which("ffprobe") or ""
     node = shutil.which("node") or ""
-    remotion_version = ""
-    if os.path.isfile(REMOTION):
-        try:
-            with open(REMOTION, "r", encoding="utf-8") as handle:
-                deps = json.load(handle).get("dependencies") or {}
-            remotion_version = str(deps.get("remotion", ""))
-        except (OSError, ValueError):
-            remotion_version = ""
+    remotion_version = remotion.version()   # one implementation: the executor reads package.json
     rows = {
         "kinocut": {"ok": has_kinocut, "path": kinocut.kino_exe() if has_kinocut else "",
                     "version": kinocut.version() if has_kinocut else "",
@@ -215,6 +209,8 @@ def _executor_ready(executor):
         ok = kinocut.available()
     elif executor == "ffmpeg":
         ok = ffmpeg.available()
+    elif executor == "remotion":
+        ok = remotion.available()
     elif executor == "current":
         ok = True          # recap helpers live in the repo; M4 moves them behind ops
     else:

@@ -282,8 +282,9 @@ class ManifestValidateTest(unittest.TestCase):
         self.assertTrue([w for w in report["warnings"] if w["code"] == "executor_override"])
 
     def test_unknown_executor_is_rejected(self):
-        step = fit_step("a", "@asset.src", 48, "out/runs/v1/a.mp4", executor="remotion",
-                        executor_reason="the bridge is not wired in M3")
+        # M5.5A wired "remotion" in, so the example has to be a name no module answers to.
+        step = fit_step("a", "@asset.src", 48, "out/runs/v1/a.mp4", executor="not_an_executor",
+                        executor_reason="a name that is not wired into the engine")
         self.assertTrue(errors_of(manifest.validate(plan_dict([step])), "unknown_executor"))
 
     def test_gate_before_an_unknown_step_is_rejected(self):

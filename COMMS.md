@@ -286,3 +286,63 @@ Ask: (i) accept the 79.2 s job as the M4 step-5 evidence (frames: `out\m4b\frame
      to listen to `recapstudio\Projects\m4job\recap_final.mp4` before I close M4 for good?
      (ii) confirm M5 (remove Shotcut) is the next objective.
 
+## C-011 | 2026-10-30 | agent -> owner | INFO | OPEN
+
+Commit: see the closing docs commit of this session (the C-009/C-010 pattern). Two commits: `2ae8f60`
+        (docs only: M5.5 in HANDOFF + ROADMAP), then the code+evidence+docs commit whose hash the
+        closing commit records.
+Files: `cutwright/engine/executors/remotion.py` (new, ~270 lines), `cutwright/engine/ops.py` (two
+       `OpSpec`s appended in the graphics stage - nothing else), `cutwright/engine/registry.py` (five
+       lines: the module, the install hint, the readiness branch, and `installed()` now asks the
+       executor for the version instead of re-reading package.json), `docs/evidence/m55_remotion.json`
+       (new, 12 measured rows), `tests/test_engine_remotion.py` (new, 12 tests),
+       `tests/test_engine_registry.py` (two assertions now allow the remotion executor),
+       `tests/test_engine_manifest.py` (one fixture), `docs/{TOOLS,CODEMAP,ENVIRONMENT}.md`, `LOG.md`,
+       `HANDOFF.md`. Nothing else in `cutwright/engine/` was touched; no kit file, no CONTRACT.md, no
+       primitive, no prompt, no critic loop, no M6.
+Goal: M5.5A - the executor half of "stop looking like PowerPoint", measured rather than estimated.
+Observed, the numbers you asked for (`python -m cutwright run <manifest> --json`, all 12 runs rc=0):
+```
+                     cold (run dir + output removed)   warm (output removed)   cached
+still 1920x1080      7.77 s  (wall 9.79)              8.26 s (wall 9.69)      0.97 s
+still 1080x1920      7.39 s  (wall 8.69)              6.95 s (wall 8.44)      1.04 s
+1 s range 16:9      13.20 s  (wall 14.83)             9.63 s (wall 11.19)     1.34 s
+1 s range 9:16      10.96 s  (wall 12.78)            11.99 s (wall 13.56)     1.01 s
+```
+"cold/warm" is defined because the words otherwise mean anything: cold removes the run folder AND the
+output, warm removes only the output (the engine re-runs the same step), cached removes nothing (the
+step is skipped, reason "cached (cache key unchanged, outputs intact)").
+Three things worth your eye:
+1. WARM IS NOT CHEAPER THAN COLD. The ~8 s a still costs is webpack bundling, not the frame: the CLI
+   invocation is the unit. So one look is ~10 s wall, and a cached re-run of an unchanged scene is
+   ~1 s. That is affordable for a critic loop of a few looks per scene, and it is NOT affordable to
+   render frame-by-frame through the CLI - 5.5B has to design its loop around one bundle per look.
+2. The regression baseline is intact, with one honest exception. `recap.py video` on `regress` ->
+   514 frames, 21.416667 s, 6,834,110 B, video packets md5 c671f7a7..., audio 0064ff59..., file
+   sha256 817BA0EA... - identical to the M0 line. But the `remotion` step in the same pack produced
+   5,904,274 B where M0 recorded 5,915,527 B, with the same 514 frames and 21.42 s and the parity
+   check passing. I did NOT investigate: whether two renders of the same timeline are byte-identical
+   is now a named "NOT TESTED" and the `video` step ran before the re-render, so the editing path is
+   still byte-reproducible. Say the word if you want it settled in 5.5B.
+3. The stills look like what VISUAL_STANDARD section 4 describes, now from the inside. `stat_ring` at
+   16:9: one centred ring on a dark gradient, "70%" inside it, "OF PLAYERS DISAGREED" under it,
+   nothing else; at 9:16 the same composition scaled up with the label nearly touching both edges and
+   the bottom 35 % empty. Not ugly - but a single stat over a background, with no footage, no layers,
+   no camera. The contract is the cause, exactly as the brief said, and the scene itself is competently
+   built. That is the baseline 5.5B has to beat.
+Vision test: I looked at both PNGs and wrote down what I saw BEFORE reading the scene source, then
+checked. I answered: the number reads 70, the unit is a smaller orange %, the label reads "OF PLAYERS
+DISAGREED", the ring is orange on a dim grey track, filled about 70 % clockwise from 12 o'clock, with
+an orange glow. The source says `{value: 70, label: 'of players disagreed', unit: '%'}` with the label
+rendered uppercase, the ring in `p.accent` and the number in `p.fg`. Every detail matched, including
+the smaller accent-coloured unit - so "can DeepSeek see images" moves from Known-unverified to
+verified in `HANDOFF.md`.
+Assumed: the CLI is called as `node @remotion/cli/remotion-cli.js`, not `npx remotion` (a pinned
+version, no registry lookup, no `.cmd` re-quoting); `--props` gets a file, not an inline JSON string.
+Both are written down in the module docstring with the measurement that forced them.
+Ask: (i) go for 5.5B (footage/stills handle + primitives + critic loop), or would you rather I settle
+the Remotion byte-reproducibility question first - it is one ~90 s render and it decides whether
+5.5B can trust "same scene + same props = same pixels" in its cache; (ii) 5.5B needs a real footage
+file to hand scenes: `recapstudio\Projects\regress\footage\demo_a.mp4` is a test pattern, and the
+m4job used the same one - do you have a clip (or stills) you want the first directed scene built on?
+

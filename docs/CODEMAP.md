@@ -75,7 +75,7 @@ tools/test_scenes.mjs       bundle once + render sample frames
 | `cli.py` | ~750 | argparse entry; `cmd_doctor` (includes `_doctor_recap`, Kinocut line), probe, subs, moments, verify, transcribe, and the M3 engine verbs |
 | `guard.py` | 150 | the write invariant (`assert_writable`, `write_text/json`), `RECAP` path constant, hashing |
 | `probe.py` `subs.py` `moments.py` `frames.py` `transcribe.py` | | perception tools |
-| `engine/` | | `ops.py` (op data: stage, executor, params), `registry.py` (discovery + routing), `manifest.py` (run/resume/checkpoints), `checkpoint.py`, `gates.py`, `validate.py`, `report.py`, `ids.py`, `executors/{kinocut,ffmpeg}.py` |
+| `engine/` | | `ops.py` (op data: stage, executor, params), `registry.py` (discovery + routing), `manifest.py` (run/resume/checkpoints), `checkpoint.py`, `gates.py`, `validate.py`, `report.py`, `ids.py`, `executors/{kinocut,ffmpeg,remotion}.py` (M5.5A: `render_still` + `render_range`) |
 
 Other: `vendor/videopad/` (VideoPad automation research, PowerShell), `docs/`, `LOG.md`, `COMMS.md`,
 `PROVENANCE.md`, `README.md`, `docs/legacy/` (superseded reports and handoffs).

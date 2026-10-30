@@ -1,0 +1,224 @@
+{
+  "test": "one still and one 1 s range of example-stat-ring at 1920x1080 and 1080x1920, through `python -m cutwright run` (cold, warm and cached)",
+  "source": "recapstudio/remotion/scenes_examples/stat_ring.tsx",
+  "source_props": {
+    "composition": "example-stat-ring",
+    "frame": 90,
+    "range": "frames 0-23 at 24 fps",
+    "sha256": "2a430a29a0bca9e220d1ce1224933731e8bc3327952a61923a1d00952c020a24"
+  },
+  "rows": {
+    "still_16x9_cold": {
+      "case": "still_16x9",
+      "mode": "cold",
+      "status": "done",
+      "wall_seconds": 9.79,
+      "executor_seconds": 7.766,
+      "validation": [
+        "pass"
+      ],
+      "measured": [
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    "still_16x9_warm": {
+      "case": "still_16x9",
+      "mode": "warm",
+      "status": "done",
+      "wall_seconds": 9.69,
+      "executor_seconds": 8.259,
+      "validation": [
+        "pass"
+      ],
+      "measured": [
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    "still_16x9_cached": {
+      "case": "still_16x9",
+      "mode": "cached",
+      "status": "skipped",
+      "wall_seconds": 0.97,
+      "executor_seconds": null,
+      "validation": [],
+      "measured": []
+    },
+    "still_9x16_cold": {
+      "case": "still_9x16",
+      "mode": "cold",
+      "status": "done",
+      "wall_seconds": 8.69,
+      "executor_seconds": 7.393,
+      "validation": [
+        "pass"
+      ],
+      "measured": [
+        [
+          1080,
+          1920
+        ]
+      ]
+    },
+    "still_9x16_warm": {
+      "case": "still_9x16",
+      "mode": "warm",
+      "status": "done",
+      "wall_seconds": 8.44,
+      "executor_seconds": 6.951,
+      "validation": [
+        "pass"
+      ],
+      "measured": [
+        [
+          1080,
+          1920
+        ]
+      ]
+    },
+    "still_9x16_cached": {
+      "case": "still_9x16",
+      "mode": "cached",
+      "status": "skipped",
+      "wall_seconds": 1.04,
+      "executor_seconds": null,
+      "validation": [],
+      "measured": []
+    },
+    "range_16x9_cold": {
+      "case": "range_16x9",
+      "mode": "cold",
+      "status": "done",
+      "wall_seconds": 14.83,
+      "executor_seconds": 13.196,
+      "validation": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "measured": [
+        24,
+        [
+          1920,
+          1080
+        ],
+        "clean"
+      ]
+    },
+    "range_16x9_warm": {
+      "case": "range_16x9",
+      "mode": "warm",
+      "status": "done",
+      "wall_seconds": 11.19,
+      "executor_seconds": 9.63,
+      "validation": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "measured": [
+        24,
+        [
+          1920,
+          1080
+        ],
+        "clean"
+      ]
+    },
+    "range_16x9_cached": {
+      "case": "range_16x9",
+      "mode": "cached",
+      "status": "skipped",
+      "wall_seconds": 1.34,
+      "executor_seconds": null,
+      "validation": [],
+      "measured": []
+    },
+    "range_9x16_cold": {
+      "case": "range_9x16",
+      "mode": "cold",
+      "status": "done",
+      "wall_seconds": 12.78,
+      "executor_seconds": 10.963,
+      "validation": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "measured": [
+        24,
+        [
+          1080,
+          1920
+        ],
+        "clean"
+      ]
+    },
+    "range_9x16_warm": {
+      "case": "range_9x16",
+      "mode": "warm",
+      "status": "done",
+      "wall_seconds": 13.56,
+      "executor_seconds": 11.989,
+      "validation": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "measured": [
+        24,
+        [
+          1080,
+          1920
+        ],
+        "clean"
+      ]
+    },
+    "range_9x16_cached": {
+      "case": "range_9x16",
+      "mode": "cached",
+      "status": "skipped",
+      "wall_seconds": 1.01,
+      "executor_seconds": null,
+      "validation": [],
+      "measured": []
+    }
+  },
+  "stills": {
+    "1920x1080": {
+      "file": "out/m55/work/still_16x9.png",
+      "bytes": {
+        "size": 1780802,
+        "mtime_ns": 1793358384939463500
+      },
+      "samples": 2304,
+      "distinct_tones": 133,
+      "stdev": 26.9,
+      "blank": false
+    },
+    "1080x1920": {
+      "file": "out/m55/work/still_9x16.png",
+      "bytes": {
+        "size": 1913319,
+        "mtime_ns": 1793358403043463400
+      },
+      "samples": 2304,
+      "distinct_tones": 145,
+      "stdev": 30.7,
+      "blank": false
+    }
+  },
+  "area": "graphics (executor: remotion)",
+  "generated_utc": "2026-10-30T11:09:25Z",
+  "versions": {
+    "remotion": "4.0.539",
+    "python": "3.11.9"
+  },
+  "verdict": "PASS",
+  "note": "cold = run folder and output removed; warm = output removed, run folder kept (the engine re-runs the SAME step); cached = nothing removed, the step is skipped. Wall time is the whole CLI run; executor_seconds is the manifest's own measure."
+}

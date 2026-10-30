@@ -203,11 +203,39 @@ Not measured, do not quote: scene-check-only duration (never captured - the `sce
 and no step prints per-phase timings), and the exit codes of `demo`, `briefs`, `video` and the
 standalone `scenes` runs.
 
+### Re-run for M5.5A (2026-10-30, the "before" of the creative-rendering work)
+
+Same project, same order as the roadmap pack: `video` -> `timeline` -> `scenes` -> `remotion` ->
+`premiere`. `demo` and `briefs --demo` were NOT re-run: `recap.py demo` refuses a project that already
+has segments ("Run 'demo' in a FRESH project (or add --force ...)") and `--force` is forbidden
+unattended.
+
+```
+video      exit 0, 10.7 s wall, six clips "cached" -> "Done. recap_final.mp4  (21.4s, expected 21.4s)"
+           514 frames, 1920x1080, 24/1, 21.416667 s, 6,834,110 B; video packets md5 c671f7a7...,
+           audio packets md5 0064ff59..., file sha256 817BA0EA... -> IDENTICAL to the M0 baseline above
+timeline   exit 0, 25.4 s: "6 segments, 514 frames (21.4s at 24fps, 1920x1080)", "Timeline check
+           passed"; scene verdicts unchanged (d_01..d_03 ok, d_04 failed, d_05 blocked, d_06 draws
+           nothing -> 3 keywords fallbacks)
+scenes     exit 0, 1.1 s (fully cached, same verdicts as above)
+remotion   exit 0, "Encoded 514/514", 21.42 s, "PARITY CHECK PASSED ... vs recap_final.mp4: within one
+           frame", 1.4 min wall (the M0 line said 96.4 s). NOTE the file differs in SIZE from the M0
+           line: 5,904,274 B now vs 5,915,527 B then, same 514 frames / 21.419 s; video packets md5
+           17fd8e0f..., audio 4e7a90b5... Whether a second render of the same timeline reproduces the
+           bytes is NOT tested (see LOG M5.5A "NOT TESTED"); the editing path was measured BEFORE this
+           re-render, so recap_final.mp4 above still came from the previous render and is unchanged.
+premiere   exit 0, 4 s, 1 placeholder slate (d_04) as before
+```
+
+
 ## Still unknown after this file was written
 
 - Kinocut install/behaviour on Windows (M1) - `.venvs\kinocut` does not exist.
-- Remotion render *rate*: one DERIVED sample only (5.33 fps, see "Recap regression baseline"); no second
-  sample, nothing measured at another resolution.
+- Remotion render *rate*: TWO samples now - 5.33 fps derived in M0 and 514 frames in 1.4 min (~6.1 fps)
+  in the M5.5A re-run - plus per-op numbers for single stills and 1 s ranges in
+  `docs/evidence/m55_remotion.json`. Still nothing measured at another resolution than 1080p-class.
+  **Not tested**: whether two renders of the same timeline are byte-identical (the M5.5A re-render
+  came out 11 KB smaller than the M0 file with the same frames and duration).
 - Scene-check duration: NEVER CAPTURED - the `scenes` step ran detached and no recap.py step prints
   per-phase timings. Do not quote a scene-check time from this audit.
   `recap.py` exit codes for `premiere`, `remotion` and `timeline` WERE captured later in M0: all 0.
