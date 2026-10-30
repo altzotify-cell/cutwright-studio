@@ -1322,3 +1322,95 @@ Commit     - facc015 "M5.5A: a Remotion executor (render_still, render_range), m
              The commit that follows this entry only records that hash in HANDOFF.md and COMMS.md.
 ```
 
+
+## 2026-10-30 (M5.5B)
+
+```
+~19:10  M5.5B    asset handles + LayeredMedia/Camera + one bundle per content key. The design was shown
+                 first (docs/ASSET_HANDLES.md, owner-amended with 7 items), then built. kit goes 1 -> 2.
+TESTED     - determinism, task 1, before any 5.5B code : two COLD renders of one still -> identical PNG
+             sha256 D1484D9B499CABBA1A4840430391EC3DEDAC9B6D5476BD7F3372DCE0CDAE6C83 both times and the
+             same decoded pixels; two COLD 24-frame ranges -> identical file sha256 796B7F24..., 24/24
+             decoded frame md5s equal, "differing frames: []" (docs/evidence/m55b_determinism.json). So a
+             cache key may be taken from inputs alone - and 5.5B's keys are.
+TESTED     - the handle reaches a real picture : `python -m cutwright run out\m55b\batch_cold.json` ->
+             "3 of 3 done", three stills of example-media-layers at frames 0/48/96, each "ok size
+             measured [1920, 1080]"; I looked at frame 96: the colour-bar clip full-bleed under a scrim
+             and vignette, a 1.02 -> 1.09 push, kicker "1999" over a short accent rule and the headline
+             "The film nobody expected" just above the caption band. The props file records the handle:
+             {"footage_a": {"file": "assets/footage_a.mp4", "kind": "video", "sha256": "..."}}.
+TESTED     - the batch cost, cold vs warm vs cached (rows in docs/evidence/m55b_handles.json) : cold
+             26.7 s wall for 3 stills (steps 5.356 / 5.336 / 6.338 s, the 8.1 s bundle inside the first);
+             same batch with the bundle cached 18.1 s wall (4.987 / 5.278 / 5.740 s); the SAME manifest
+             again -> all three skipped as "cached (cache key unchanged, outputs intact)" in 1.9 s wall.
+             The old path was ~10 s per still because every still re-bundled.
+TESTED     - one bundle containing a real clip, disk and time : 53 files, 38,203,275 B logical
+             (19,878,713 B without source maps), built in 8.1 s; the 4,416,316 B clip inside it shares its
+             inode with recapstudio\Projects\m4job\clips\s_04.mp4 (node: "same inode (one copy on disk):
+             true | nlink 5"), so it costs 0 extra bytes. Cache capped at 5 bundles, oldest by mtime:
+             `prune_bundles` is unit-tested ("keeps five and drops the oldest", ".part never pruned").
+TESTED     - publicDir, the owner's question : `remotion bundle --help` lists `--public-dir` (supported),
+             BUT @remotion/bundler/dist/bundle.js:278-294 copies that folder into EVERY bundle, and
+             copy-dir.js:25 forwards a symlink instead of copying it - and a symlinked public file is NOT
+             servable: "Could not extract frame from compositor Error: Received a status code of 404 while
+             downloading file http://localhost:3000/public/assets/footage_a.mp4". With a real file in the
+             same place the same still rendered (exit 0). So assets are staged and mounted as HARD LINKS
+             (0 bytes, a real file), never symlinks.
+TESTED     - replacing the clip changes the key AND the pixels (amendment 5b) : same handle, same path,
+             the file behind it swapped from s_04's bytes to s_07's -> cache key 34106d5c0ed1332e ->
+             8d4b79d7097b91f2, PNG sha256 6EF21B9F... -> F68FE01E..., and I looked at both: the first is
+             the bars-with-sweep clip, the second a different circular test pattern, same layout, same
+             kicker and headline.
+TESTED     - an undeclared handle at RENDER time (a strict copy of the scene with no `fallback`,
+             registered for one run through src/generated/registry.ts and removed afterwards) :
+             `python -m cutwright run out\m55b\strict_noassets.json` -> step failed with 'no asset
+             "footage_a" was declared for this render: add it to the step's "assets" input in the
+             manifest (kit/2).'
+```
+TESTED     - the scene checker, all six rejections with line numbers (tests/test_engine_scene_check.py,
+             "Ran 3 tests ... OK") : Img / OffthreadVideo / staticFile imported (line 4 each), a
+             non-literal asset (line 9), an undeclared handle (line 9), a path (line 9), a URL (line 9 plus
+             "contains an internet address"), and `import {useAsset} from '@kit'` -> "Module '\"@kit\"' has
+             no exported member 'useAsset'".
+TESTED     - the engine side, 28 tests in tests/test_engine_remotion.py, "OK" : staging + reuse, a
+             non-media extension refused ("bad_asset"), a missing asset refused, the props table shape,
+             the clip in the cache key, the handle table passed as a KEYWORD (never positional), an
+             undeclared handle, a handle pointing at another asset ("bad_handle_ref"), an asset id that is
+             a path ("bad_asset_id"), an M5.5A manifest still deriving, the bundle key following scene and
+             kit edits, a cached bundle reused with no Popen, and the 5-bundle prune.
+TESTED     - the full suite : `python -m unittest discover -s tests -t . -v` -> "Ran 209 tests in
+             358.374s" / "OK". (The first run of the same command, before two fixes, was "Ran 209 tests
+             in 686.180s" with 2 failures - both mine, see DECISIONS 4 and 5; nothing of the old pack
+             moved.)
+TESTED     - kit/2 did not break the old scenes or the timeline (amendment 7) : `node tools\check_scenes.mjs`
+             over all four examples -> errors=0 warnings=0 for stat_ring, timeline_reveal, quote_moment and
+             media_layers; in recapstudio\Projects\regress `python recap.py scenes` -> "3 scene(s) passed,
+             3 replaced by the keywords scene." with the M0 verdicts exactly (d_04 "x.toUpperCase is not a
+             function", d_05 "uses 'fetch'", d_06 "draws nothing"); `python recap.py video` -> "Done.
+             recap_final.mp4  (21.4s, expected 21.4s)" and the file is BYTE-IDENTICAL to the M0 baseline:
+             514 frames, 24/1, 1920x1080, duration=21.416667, size=6834110, video
+             MD5=c671f7a76da05927d9a41d4742779268, sha256 817BA0EA... - and that run renders every scene
+             through the real bundler, so kit/2 bundles too.
+FAILED     - a symlinked public asset : first cold run of the batch -> "render_still failed (render_failed)
+             ... Received a status code of 404 while downloading file
+             http://localhost:3000/public/assets/footage_a.mp4". Tried: replaced the symlink with a copy of
+             the same file inside the same bundle -> the identical still rendered, exit 0. Staging is a
+             hard link now, and the design note's "symlink, 0 bytes copied" claim is corrected.
+FAILED     - one bundling attempt, once : `python -m cutwright run out\m55b\strict_ok.json` -> "the bundle
+             has no index.html" with no stderr. Cause not captured, because `ensure_bundle` passed
+             `stderr or "<fallback text>"` to `error_from`, DISCARDING what the CLI had put on stdout.
+             Fixed to surface the real output; the same manifest succeeded on a rebuilt bundle. Recorded
+             as unreproduced, not as fixed.
+FAILED     - the known OffthreadVideo failure past frame 71 did NOT reproduce : stills at frames 120
+             (6.9 s) and 140 (8.0 s) both rendered from the cold clip, and 140 is past the clip's 129
+             frames - the source holds its last frame instead of failing. Not reproduced, not "fixed".
+NOT TESTED - "does it look like real footage": the project's own media on this PC is the engine's synthetic
+             colour bars with a burned timecode (recapstudio\Projects\m4job\clips\*, footage\demo_a.mp4,
+             char_burn\*, images\demo_still.png - I looked at all four). The handle pipeline is proven end
+             to end on it, but a slide-likeness judgement needs a real clip, so none is claimed.
+NOT TESTED - `render --sequence` (7.0 s for 3 frames, writes a directory): parked as a 5.5C option by the
+             owner; the engine keeps one output per step.
+NOT TESTED - a portrait (9:16) still of the footage scene, and the pack's `remotion` and `premiere` steps
+             (`scenes` and `video` were enough to prove kit/2 bundles and the timeline is byte-identical).
+
+

@@ -1,4 +1,4 @@
-# Recap Studio scene contract and helper kit (kit version 1)
+# Recap Studio scene contract and helper kit (kit version 2)
 
 A scene is ONE .tsx file that draws the whole picture of one segment of the video (a stat, a timeline, a quote,
 a comparison, a visual metaphor). It replaces the footage for that segment. The spoken captions, chapter cards,
@@ -37,7 +37,8 @@ export default MyScene;               // required
 
 1. Imports ONLY from `'remotion'`, `'react'` and `'@kit'`. No other packages, no relative imports.
 2. From `'remotion'` you may NOT use: `Audio`, `Video`, `OffthreadVideo`, `Img`, `IFrame`, `staticFile`, `delayRender`,
-   `continueRender`, `getInputProps`. No images or fonts from files or the internet: draw with SVG and CSS.
+   `continueRender`, `getInputProps`. No fonts from files or the internet: draw with SVG and CSS. REAL FOOTAGE goes
+   through `<LayeredMedia asset="handle" />` (kit/2) - see "Footage and stills" below.
 3. No network (`fetch`, `XMLHttpRequest`, URLs in strings), no `eval`, `Function`, dynamic `import()`, `window`,
    `document`, `localStorage`, `setTimeout`, `setInterval`, `requestAnimationFrame`.
 4. Everything must be a pure function of the frame number. No `Math.random()` (use `random('seed')` from remotion),
@@ -51,7 +52,34 @@ export default MyScene;               // required
    full-frame background from `theme.palette`.
 9. Use theme colours and fonts, never fixed hex colours for the main look: the same scene must suit different movies.
 
+## Footage and stills (kit/2, M5.5B)
+
+A scene never sees a file path. It names a HANDLE, and the step that renders it declares what that handle is:
+
+```tsx
+import {Camera, LayeredMedia, RevealText} from '@kit';
+//  step input:  "assets": {"footage_a": "@asset.footage_a"}
+<Camera push={[1.02, 1.09]} pan={[0, -26]} shake={0.5}>
+  <LayeredMedia asset="footage_a" scrim={0.45} tint={theme.palette.accent} tintStrength={0.06} vignette={0.55}>
+    <div style={{position: 'absolute', left: layout.safeSide, bottom: layout.safeBottom + 40 * layout.u}}>
+      <RevealText text={props.headline ?? ''} size={72 * layout.u} color={theme.palette.fg} font={theme.fonts.heading} weight={900} />
+    </div>
+  </LayeredMedia>
+</Camera>
+```
+
+- `asset` must be a plain string literal matching `^[a-z][a-z0-9_]{0,31}$` and a handle the step DECLARED. A variable, a
+  path, a URL or an undeclared handle is a check error (with its line number) and the scene is never bundled.
+- There is no `useAsset` and no other resolver to import: the kit loads the file, the scene cannot.
+- `LayeredMedia` props: `asset`, `scrim` (0..1 dark gradient, default 0.35), `tint` + `tintStrength`, `vignette`, `zoom`,
+  `offsetX`/`offsetY` (crop), `startFrom` (frames into the clip), `playbackRate`, `fallback` (drawn when no handle was
+  staged - the reference scene uses it so the Studio preview still shows something; a real step must not need it).
+- `Camera` props: `push` `[from, to]` scale, `pan` `[from, to]` px, `panY`, `shake` (px at 1080p), `start`, `duration`.
+  It transforms everything inside it, so text moves with the shot.
+- Cost: `LayeredMedia` with video decodes a clip per frame - call it `medium`, and `high` with heavy overlay filters.
+
 ## Cost (this video is rendered on a laptop without a graphics card)
+
 
 - `low`: a handful of shapes and text, no filters. Default choice.
 - `medium`: up to about 60 particles, a few `drop-shadow` or gradients, SVG with up to a few hundred elements.
@@ -88,10 +116,15 @@ Keep beats at least ~0.4 s apart and let the main idea be readable for at least 
 
 **Particles:** `Particles({count?, seed?, color, mode: 'ambient'|'burst'|'rise', start?, duration?, size?, spread?, originX?, originY?, opacity?, period?})` (max 80).
 
+**Media (kit/2):** `LayeredMedia({asset, scrim?, tint?, tintStrength?, vignette?, zoom?, offsetX?, offsetY?, startFrom?, playbackRate?, fallback?, children})` (full-bleed footage or a still + scrim/tint/vignette),
+`Camera({push?, pan?, panY?, shake?, start?, duration?, children})` (a shot, not a slideshow), `AssetScope({table, children})` (the render shell provides it; a scene never needs it).
+
 **Theme helpers:** `withAlpha('#ffd23f', 0.4)`, `energyOf(theme)` -> `{speed, amp}` (scale your animation speed / distance by them so calm / punchy / chaotic themes feel different).
 
 Everything else (React, `interpolate`, `spring`, `Easing`, `random`, `useCurrentFrame`, `useVideoConfig`, `AbsoluteFill`, `Sequence`, `Series`) comes from `'remotion'` / `'react'`.
 
 ## Reference scenes
 
-`remotion/scenes_examples/` has three complete working scenes (`stat_ring`, `timeline_reveal`, `quote_moment`). They show a good structure, both aspect ratios, narration sync and honest costs. Copy their approach.
+`remotion/scenes_examples/` has four complete working scenes (`stat_ring`, `timeline_reveal`, `quote_moment`, `media_layers` -
+the last one is the kit/2 footage example). They show a good structure, both aspect ratios, narration sync and honest costs.
+Copy their approach.

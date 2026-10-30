@@ -13,7 +13,9 @@ Current milestone : M5.5 "Creative rendering slice" - a NEW milestone the owner 
                     the cause of "it looks like PowerPoint" - the scene contract bans footage and images and
                     the kit has only chart/counter/text primitives. Order inside M5.5: 5.5A the Remotion
                     executor (DONE 2026-10-30: `render_still` + `render_range`, one still ~10 s wall
-                    cold, ~1 s when cached), then 5.5B footage handle + primitives + critic loop.
+                    cold, ~1 s when cached), 5.5B footage handles + `LayeredMedia`/`Camera` + one bundle
+                    per content key (DONE 2026-10-30, kit/2 - see "Next step"), then 5.5C `KineticText`/
+                    `MaskWipe` + the critic loop.
                     M5 DONE (2026-10-30). The old editor backend is OUT of the code: the timeline writer
                     (2,573 lines), its GUI helper (433), its PowerShell window automation (255), the
                     `build` verb and parser, the doctor line, and the four `projects/demo_*` demos
@@ -30,14 +32,23 @@ Last green commit : facc015 (M5.5A - the Remotion executor), pushed to origin ma
                     whose message is in `LOG.md` and `git log -1` rather than here so the M5 acceptance
                     grep stays empty), 7a8184c, 0755d92, 498aed1, d072280. This session's own commits
                     are recorded in this line and in `LOG.md`.
-Next step         : M5.5B - footage/stills handle + scene primitives + the look-at-the-frame critic loop
-                    (`docs/ROADMAP.md` M5.5). Not started; the owner's go starts it. M6-M9 keep their
+Next step         : M5.5C - `KineticText` + `MaskWipe`, ONE directed scene built from the kit/2 primitives, and
+                    the critic loop (render frames -> look -> name the defect -> revise). 5.5B is DONE
+                    (2026-10-30): kit/2 with `LayeredMedia`/`Camera`, footage by handle, one bundle per
+                    content key. Numbers: 3 stills of a footage scene 26.7 s wall cold / 18.1 s warm /
+                    1.9 s cached (was ~10 s per still), one bundle 38.2 MB with the clip hard-linked
+                    (0 extra bytes), 5 bundles max, a replaced clip changes key + pixels, the checker
+                    rejects Img/OffthreadVideo/staticFile/non-literal/undeclared/path/URL and useAsset;
+                    `recap.py scenes` gives the M0 verdicts and `recap.py video` is byte-identical
+                    (docs/evidence/m55b_handles.json, LOG 2026-10-30 M5.5B). OPEN for 5.5C: every frame
+                    looked at on this PC is the engine's synthetic colour bars, so a real clip is needed
+                    before "looks like a shot, not a slide" can be judged (COMMS C-012). M6-M9 keep their
                     order after M5.5; M10-M16 are a PARKING LOT (owner decision ii: do not start or
                     expand them).
-Open COMMS        : C-011 = M5.5A: the Remotion executor (`render_still`, `render_range`), the measured
-                    cold/warm numbers, the first vision test, and the regression baseline re-run.
-                    C-010 answered (M5 closed on doctor + suite; M5.5 inserted before M6).
-                    C-009 answered, C-008 answered, C-007 answered, C-006 answered.
+Open COMMS        : C-012 (this session) = 5.5B done, kit/2, the measurements, and the ask for a real
+                    clip before 5.5C judges the look. C-011 answered by the owner 2026-10-30 (keys from
+                    inputs, stills by PNG sha256, video by decoded-frame md5s; project media never
+                    committed; 5.5B split from 5.5C). C-010, C-009, C-008, C-007, C-006 answered.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 

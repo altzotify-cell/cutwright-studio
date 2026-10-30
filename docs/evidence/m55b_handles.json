@@ -1,0 +1,95 @@
+{
+  "milestone": "M5.5B - asset handles, LayeredMedia/Camera, one bundle per content key",
+  "measured": "2026-10-30 on the owner's i5 Windows PC, Remotion 4.0.539, Python 3.11.9",
+  "footage": {
+    "handle": "footage_a",
+    "path": "recapstudio/Projects/m4job/clips/s_04.mp4",
+    "bytes": 4416316,
+    "frames": 129,
+    "rate": "24/1",
+    "size": [1920, 1080],
+    "note": "the project's own clip; its CONTENT is the engine's synthetic colour bars with a burned timecode, which is why no judgement of 'looks like real footage' is claimed anywhere"
+  },
+  "three_stills_of_the_footage_scene": {
+    "frames": [0, 48, 96],
+    "composition": "example-media-layers",
+    "cold_wall_seconds": 26.7,
+    "cold_step_seconds": [5.356, 5.336, 6.338],
+    "bundle_seconds_included_in_the_first_step": 8.1,
+    "warm_bundle_wall_seconds": 18.1,
+    "warm_bundle_step_seconds": [4.987, 5.278, 5.74],
+    "cached_steps_wall_seconds": 1.9,
+    "previous_path_seconds_per_still": 10.0,
+    "note": "one output per step, so a batch is three render_still steps that share one cached bundle; `render --sequence` (7.0 s for three frames, writes a directory) stays a 5.5C option"
+  },
+  "bundle": {
+    "key": "7cdd148ced47fba3",
+    "key_inputs": "sha256 over kit/**, src/**, scenes_examples/**, remotion.config.ts, package.json",
+    "files": 53,
+    "logical_bytes": 38203275,
+    "logical_bytes_without_source_maps": 19878713,
+    "clip_inside_bundle_bytes": 4416316,
+    "clip_shares_inode_with_source": true,
+    "extra_disk_for_the_clip": 0,
+    "cache_limit": 5
+  },
+  "public_dir_question": {
+    "supported": true,
+    "evidence": "node_modules/@remotion/cli prints --public-dir for bundle/still/render; src/index.ts bundle accepts --out-dir",
+    "copies_the_folder_into_every_bundle": true,
+    "bundle_js_line": "@remotion/bundler/dist/bundle.js:278-294 (copyDir)",
+    "symlink_forwarding": "@remotion/bundler/dist/copy-dir.js:25 forwards a symlink instead of copying it",
+    "symlinked_public_file_result": "FAILED - 'Could not extract frame from compositor Error: Received a status code of 404 while downloading file http://localhost:3000/public/assets/footage_a.mp4'",
+    "real_file_same_place_result": "the same still rendered (exit 0)",
+    "decision": "stage and mount HARD LINKS (0 extra bytes, real file for the server), never symlinks"
+  },
+  "asset_swap": {
+    "case": "same handle, same path, the file behind it replaced (s_04.mp4 content -> s_07.mp4 content)",
+    "cache_key_before": "34106d5c0ed1332e",
+    "cache_key_after": "8d4b79d7097b91f2",
+    "png_sha256_before": "6EF21B9FE26E30943B88E19FB72940EE64F38018E9C7AB2C8FC62A9B00E6C530",
+    "png_sha256_after": "F68FE01EA7BBD40A",
+    "pixels_changed": true
+  },
+  "late_frames": {
+    "known_failure_expected": "a cold still past frame 71 of the clip",
+    "frame_120": "rendered (late120.png), 6.9 s wall cold",
+    "frame_140": "rendered (late140.png), 8.0 s wall cold; the clip is 129 frames, so this is past its end and the source holds its last frame",
+    "reproduced": false
+  },
+  "undeclared_handle_at_render": {
+    "run": "out/runs/m55b-strict-NOassets (a strict copy of the scene with no `fallback`, registered for one run and removed)",
+    "quoted": "no asset \"footage_a\" was declared for this render: add it to the step's \"assets\" input in the manifest (kit/2).",
+    "result": "the render failed with that message instead of drawing a picture"
+  },
+  "scene_checker": {
+    "examples_checked": ["stat_ring", "timeline_reveal", "quote_moment", "media_layers"],
+    "result": "errors=0 warnings=0 for all four (cost low/low/low/medium)",
+    "rejections_tested": {
+      "Img imported": "line 4: imports 'Img' from 'remotion', which loads image files (draw with SVG / CSS instead)",
+      "OffthreadVideo imported": "line 4: imports 'OffthreadVideo' from 'remotion', which loads video files",
+      "staticFile imported": "line 4: imports 'staticFile' from 'remotion', which reads project files",
+      "non-literal asset": "line 9: has a non-literal 'asset' ({h}): write asset=\"footage_a\", a plain string literal naming a handle",
+      "undeclared handle": "line 9: uses asset=\"shot_b\", but this step declares no such handle (declared: footage_a)",
+      "path": "line 9: has asset=\"../../clips/s_04.mp4\", which is not a handle: ... never a path or a URL",
+      "url": "line 9: has asset=\"https://example.com/a.mp4\", which is not a handle ... + contains an internet address",
+      "useAsset imported from @kit": "line 4: Module '\"@kit\"' has no exported member 'useAsset'"
+    },
+    "suite": "tests/test_engine_scene_check.py - 3 tests, OK"
+  },
+  "engine_test_suite": {
+    "file": "tests/test_engine_remotion.py",
+    "tests": 28,
+    "result": "OK",
+    "new_cases": ["staging/reuse of a handle", "bad extension refused", "missing asset refused", "props table shape",
+                  "cache key follows the clip", "handle table as a kwarg", "undeclared handle refused",
+                  "handle cannot point at another asset", "path as an asset id refused",
+                  "M5.5A manifests still derive", "bundle key follows scene and kit", "cached bundle reused",
+                  "prune keeps 5 and drops the oldest", "a .part bundle is never pruned"]
+  },
+  "regression": {
+    "scenes_check": "recapstudio/Projects/regress: `python recap.py scenes` -> '3 scene(s) passed, 3 replaced by the keywords scene.' with the M0 verdicts (d_04 x.toUpperCase, d_05 'fetch', d_06 draws nothing)",
+    "timeline_render": "`python recap.py video` -> 'Done. recap_final.mp4 (21.4s, expected 21.4s)'",
+    "timeline_bytes": "514 frames, 24/1, 1920x1080, duration=21.416667, size=6834110, video MD5=c671f7a76da05927d9a41d4742779268, sha256 817BA0EA... - all equal to the M0 baseline"
+  }
+}

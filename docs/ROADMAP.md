@@ -250,11 +250,22 @@ Three phases, in this order, one session each:
   new npm package. The scene file is the op's declared INPUT, so a changed scene invalidates the cache; outputs
   and their hashes land in the run checkpoint like every other op. Cold and warm cost is measured, not estimated,
   because the point of a critic loop is knowing what one look costs.
-- **5.5B footage handle + primitives** (next session): a typed footage/still handle the scene author can use
-  (real files, never generated), and the kit primitives a directed shot needs; `docs/VISUAL_STANDARD.md`
-  section 5 fields become real.
-- **5.5C critic loop**: render frames -> the agent looks at them -> named defects -> revise -> cache the good
-  scenes. Feeds M7/M8.
+- **5.5B asset handles + media primitives** (DONE 2026-10-30, one session): a scene names real footage/still through a
+  string-literal *handle* (`asset="footage_a"`), the engine manifest maps handles to validated paths and digests them
+  into the step cache key, the static checker allows the kit media components and nothing else
+  (`docs/ASSET_HANDLES.md` is the design). Kit gains `LayeredMedia` and `Camera` (push/pan/subtle shake) with measured
+  render cost; the executor bundles ONCE per content hash and renders several stills from that bundle.
+  Result: kit/2, 15 ops unchanged, 3 stills of the footage scene in 26.7 s wall cold / 1.9 s cached (5.4/5.3/6.3 s of
+  render) versus ~10 s each before; one bundle 38.2 MB with the 4.4 MB clip mounted as a hard link (0 extra bytes, 5
+  bundles max); a replaced clip changes both the cache key and the pixels; the scene checker rejects an imported
+  `Img`/`OffthreadVideo`/`staticFile`, a non-literal `asset`, an undeclared handle, a path, a URL and `useAsset`
+  (rows: `docs/evidence/m55b_handles.json`). Regression: `recap.py scenes` gives the M0 verdicts and
+  `recap.py video` is byte-identical (514 frames, 6,834,110 B, video MD5 c671f7a7...).
+  NOT settled: the project media on this PC is the engine's synthetic colour bars, so "does it look like real footage"
+  cannot be judged here; a real clip is needed for that judgement.
+- **5.5C directed scene + critic loop** (after 5.5B): `KineticText` and `MaskWipe`, one directed scene built
+  from the new primitives, and the loop itself - render frames -> the agent looks at them -> named defects ->
+  revise -> cache the good scenes. Feeds M7/M8.
 
 Acceptance
 ```powershell

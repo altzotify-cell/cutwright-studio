@@ -201,19 +201,31 @@ def is_done(state, step_id):
     """Has this step finished in this state (regardless of its cache key)?"""
 
 # ------------------------------------------------------------------ identity of what a step consumes
-def digest_file(path):
+_DIGEST_MEMO = {}      # (abspath, size, mtime_ns) -> sha256. A run digests the same clip many times.
+
+
+def digest_file(path, memo=False):
     """Identity of one file: {'sha256', 'size'} below HASH_LIMIT, else {'size', 'mtime_ns'}.
 
     A path that does not exist digests to {} -- the caller decides whether that is an error
     (running) or just a warning (validating a plan whose media is produced later).
+
+    `memo=True` (M5.5B, inputs only) reuses a sha256 keyed on (path, size, mtime_ns), so a 3-still
+    batch does not rehash the same clip three times. It is NOT the default: an output can be rewritten
+    with the same length inside one mtime tick, and `outputs_intact` must see that.
     """
     if not path or not os.path.isfile(path):
         return {}
-    size = os.path.getsize(path)
-    if size <= HASH_LIMIT:
-        return {"sha256": guard.sha256_file(path), "size": size}
     sig = guard.file_sig(path)
-    return {"size": sig["size"], "mtime_ns": sig["mtime_ns"]}
+    size = sig["size"]
+    if size <= HASH_LIMIT:
+        if not memo:
+            return {"sha256": guard.sha256_file(path), "size": size}
+        key = (os.path.abspath(path), size, sig["mtime_ns"])
+        if key not in _DIGEST_MEMO:
+            _DIGEST_MEMO[key] = guard.sha256_file(path)
+        return {"sha256": _DIGEST_MEMO[key], "size": size}
+    return {"size": size, "mtime_ns": sig["mtime_ns"]}
 
 
 def input_digests(inputs):
@@ -221,13 +233,22 @@ def input_digests(inputs):
 
     `path` is stored relative to the repo when possible, so a checkpoint is readable and does not
     leak an absolute user path; the digest is what the resume decision actually compares.
+
+    A MAPPING input (M5.5B's handle table) is flattened to `assets[footage_a]` rows, so two handles
+    that swap files, or a handle that moves to another clip, change the key.
     """
     rows = []
     for name, value in sorted((inputs or {}).items()):
+        if isinstance(value, dict):
+            for handle in sorted(value):
+                item = value[handle]
+                rows.append({"name": "%s[%s]" % (name, handle), "index": 0,
+                             "path": guard.rel(str(item)), "digest": digest_file(str(item), memo=True)})
+            continue
         values = value if isinstance(value, (list, tuple)) else [value]
         for index, item in enumerate(values):
             rows.append({"name": name, "index": index, "path": guard.rel(str(item)),
-                         "digest": digest_file(str(item))})
+                         "digest": digest_file(str(item), memo=True)})
     return rows
 
 

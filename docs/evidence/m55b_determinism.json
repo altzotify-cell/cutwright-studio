@@ -1,0 +1,120 @@
+{
+  "scene": "recapstudio/remotion/scenes_examples/stat_ring.tsx",
+  "cold": "two separate engine runs, both cold (own run folder)",
+  "still": {
+    "runs": [
+      {
+        "tag": "a",
+        "seconds": 10.97,
+        "file_bytes": 1819488,
+        "sha256": "D1484D9B499CABBA1A4840430391EC3DEDAC9B6D5476BD7F3372DCE0CDAE6C83",
+        "pixels_sha256": "A3C9DAEBEF3EC308C1D87CCE3F317D81256C27D926DD2F415DFBFF030DC9AE97",
+        "raw_pixel_bytes": 6220800
+      },
+      {
+        "tag": "b",
+        "seconds": 14.1,
+        "file_bytes": 1819488,
+        "sha256": "D1484D9B499CABBA1A4840430391EC3DEDAC9B6D5476BD7F3372DCE0CDAE6C83",
+        "pixels_sha256": "A3C9DAEBEF3EC308C1D87CCE3F317D81256C27D926DD2F415DFBFF030DC9AE97",
+        "raw_pixel_bytes": 6220800
+      }
+    ],
+    "same_file_bytes": true,
+    "same_sha256": true,
+    "same_pixels": true
+  },
+  "video": {
+    "runs": [
+      {
+        "tag": "a",
+        "seconds": 17.64,
+        "file_bytes": 145516,
+        "sha256": "796B7F241E17F48EFCAD84E9CFA8648C3007B3A2039DA464D2578196C1D7A4A9",
+        "frames": 24,
+        "frame_md5s": [
+          "ac0fd3ec906707b2906e5c757c196103",
+          "8657e1e7505048a5d205dc8ca4a7ccf1",
+          "78781d2f90cd2e8f77c23194bfc47cd2",
+          "16ba5fe53cd50c3eabff9571d2abe1b7",
+          "204f3142855fb87cfc89e7708885d52b",
+          "8c717fbb098f8fd1f10c2d90c417a074",
+          "2785e7b447741628ad9e356653eae391",
+          "96281a4238707addc7e79ac967d39c19",
+          "81d2bce319a7c4fe6ca26e1fca58fc44",
+          "5c63aef09fe04af31eedbc2fde7404f3",
+          "e3adb31ff654d9724812c08ed871b87c",
+          "82d9bbf19ed508e0015723e07ae1ab5a",
+          "bd6ae9e52282d88cd17b9577fe68a026",
+          "2776fbbcff01bfb58c56425e9a6e3043",
+          "5220bc5f455d36e2b2473dd0a261b46a",
+          "baea9642484e22dcc8097b06ae18f9b3",
+          "7c25a6f3a93da92ea986d3c9a17f9486",
+          "21e7550bdbef27fefb7610e52220c124",
+          "bec4e95108a408e3d4474e52e7b3aefd",
+          "e9d65f111dfa2f2825034a9c3a205014",
+          "ee7559b4acf91a2f538468550b4d706c",
+          "06830a103feaaffbaafd67574d2b2aee",
+          "f35b2ddba272ff2233f2d120fd490a1a",
+          "2a6ab2126a0f565782bee460872582f2"
+        ]
+      },
+      {
+        "tag": "b",
+        "seconds": 14.79,
+        "file_bytes": 145516,
+        "sha256": "796B7F241E17F48EFCAD84E9CFA8648C3007B3A2039DA464D2578196C1D7A4A9",
+        "frames": 24,
+        "frame_md5s": [
+          "ac0fd3ec906707b2906e5c757c196103",
+          "8657e1e7505048a5d205dc8ca4a7ccf1",
+          "78781d2f90cd2e8f77c23194bfc47cd2",
+          "16ba5fe53cd50c3eabff9571d2abe1b7",
+          "204f3142855fb87cfc89e7708885d52b",
+          "8c717fbb098f8fd1f10c2d90c417a074",
+          "2785e7b447741628ad9e356653eae391",
+          "96281a4238707addc7e79ac967d39c19",
+          "81d2bce319a7c4fe6ca26e1fca58fc44",
+          "5c63aef09fe04af31eedbc2fde7404f3",
+          "e3adb31ff654d9724812c08ed871b87c",
+          "82d9bbf19ed508e0015723e07ae1ab5a",
+          "bd6ae9e52282d88cd17b9577fe68a026",
+          "2776fbbcff01bfb58c56425e9a6e3043",
+          "5220bc5f455d36e2b2473dd0a261b46a",
+          "baea9642484e22dcc8097b06ae18f9b3",
+          "7c25a6f3a93da92ea986d3c9a17f9486",
+          "21e7550bdbef27fefb7610e52220c124",
+          "bec4e95108a408e3d4474e52e7b3aefd",
+          "e9d65f111dfa2f2825034a9c3a205014",
+          "ee7559b4acf91a2f538468550b4d706c",
+          "06830a103feaaffbaafd67574d2b2aee",
+          "f35b2ddba272ff2233f2d120fd490a1a",
+          "2a6ab2126a0f565782bee460872582f2"
+        ]
+      }
+    ],
+    "same_file_bytes": true,
+    "same_sha256": true,
+    "same_frame_count": true,
+    "same_decoded_frames": true,
+    "differing_frames": []
+  },
+  "test": "M5.5B task 1: render the same output twice and compare. Owner rule: cache keys come from inputs, never from output bytes; compare PNG sha256 for stills and decoded-frame md5s for video.",
+  "batch_baseline": {
+    "bundle_cli_seconds": 7.2,
+    "still_from_bundle_seconds": [
+      5.1,
+      4.6,
+      4.7
+    ],
+    "still_from_bundle_frame90_sha256": "D1484D9B499CABBA1A4840430391EC3DEDAC9B6D5476BD7F3372DCE0CDAE6C83",
+    "same_pixels_as_source_entry_render": true,
+    "render_sequence_3_frames_seconds": 7.0,
+    "render_sequence_files": [
+      "element-00.png",
+      "element-48.png",
+      "element-96.png"
+    ],
+    "note": "remotion 4.0.539 accepts a bundle DIRECTORY as the entry for still/render; the 3 x ~10 s baseline from C-011 becomes 7.2 s bundle + 4.6-5.1 s per still, and ~7.0 s for 3 frames in one --sequence run (writes a directory, not one file)."
+  }
+}

@@ -11,6 +11,7 @@ the suite):
   * `RemotionManifestTest` - the claim that makes the op cacheable: the scene file is a declared
     INPUT, so editing it changes the step's cache key in a real `manifest.derive()`.
 """
+import json
 import os
 import shutil
 import unittest
@@ -51,6 +52,18 @@ def fake_popen(created, payload=b"\x89PNG\r\n\x1a\n"):
     return Proc
 
 
+def fake_bundle(op=None, scene=None, timeout=None):
+    """Stand-in for ensure_bundle: a real directory with the marker file, no webpack run.
+
+    The bundler itself is measured live (LOG 2026-10-30 M5.5B) and its reuse policy is tested in
+    BundleCacheTest; the argv tests care only about what a render is told to use.
+    """
+    path = out("bundle")
+    guard.ensure_dir(path)
+    guard.write_text(os.path.join(path, "index.html"), "<html></html>\n")
+    return path, "testbundle"
+
+
 class RemotionArgvTest(unittest.TestCase):
     def setUp(self):
         shutil.rmtree(WORK, ignore_errors=True)      # a clean slate: the outputs are real files
@@ -59,16 +72,17 @@ class RemotionArgvTest(unittest.TestCase):
 
     def _run(self, func, *args, **kwargs):
         with mock.patch.object(remotion, "available", lambda: True), \
+                mock.patch.object(remotion, "ensure_bundle", fake_bundle), \
                 mock.patch.object(remotion.subprocess, "Popen", fake_popen(self.created)):
             return func(*args, **kwargs)
 
-    def test_still_argv_puts_the_command_before_the_entry_point(self):
+    def test_still_argv_renders_from_the_cached_bundle(self):
         scene = scene_file()
         target = out("still.png")
         result = self._run(remotion.render_still, scene, target, COMPOSITION, frame=90)
         argv = self.created[0]["argv"]
         self.assertEqual(argv[2], "still")                     # command FIRST (measured)
-        self.assertEqual(argv[3], remotion.entry_point())
+        self.assertEqual(argv[3], out("bundle"))               # the BUNDLE, not src/index.ts (M5.5B)
         self.assertEqual(argv[4], COMPOSITION)
         self.assertEqual(argv[5], target)
         self.assertIn("--frame=90", argv)
@@ -77,6 +91,7 @@ class RemotionArgvTest(unittest.TestCase):
         self.assertEqual(self.created[0]["cwd"], remotion.remotion_dir())
         self.assertEqual(result.executor, "remotion")
         self.assertEqual(result.payload["command"], "still")
+        self.assertEqual(result.payload["bundle"], "testbundle")
         self.assertTrue(os.path.isfile(target))
 
     def test_landscape_writes_no_props_file(self):
@@ -202,5 +217,234 @@ class RemotionManifestTest(unittest.TestCase):
         self.assertEqual(ctx.exception.code, "missing_param")
 
 
+class AssetStagingTest(unittest.TestCase):
+    """kit/2 (M5.5B): a handle becomes a staged file plus a props table - and bad handles stop early."""
+
+    def setUp(self):
+        shutil.rmtree(WORK, ignore_errors=True)
+        guard.ensure_dir(WORK)
+        self.created = []
+        self.staged_root = os.path.join(remotion.remotion_dir(), "public", "assets")
+        guard.ensure_dir(self.staged_root)
+
+    def tearDown(self):
+        for name in os.listdir(self.staged_root):
+            if name.startswith("t_"):
+                os.remove(os.path.join(self.staged_root, name))
+
+    def _run(self, func, *args, **kwargs):
+        with mock.patch.object(remotion, "available", lambda: True), \
+                mock.patch.object(remotion, "ensure_bundle", fake_bundle), \
+                mock.patch.object(remotion.subprocess, "Popen", fake_popen(self.created)):
+            return func(*args, **kwargs)
+
+    def _clip(self, name="t_clip.mp4", data=b"\0\0\0\x18ftypmp42" + b"\0" * 64):
+        path = out(name)
+        guard.write_bytes(path, data)
+        return path
+
+    def _image(self):
+        path = out("t_still.png")
+        guard.write_bytes(path, b"\x89PNG\r\n\x1a\n" + b"\0" * 32)
+        return path
+
+    def test_a_video_handle_is_staged_once_and_reaches_the_props(self):
+        scene = scene_file()
+        clip = self._clip()
+        target = out("still_asset.png")
+        self._run(remotion.render_still, scene, target, COMPOSITION, assets={"t_clip": clip})
+        with open(target + ".props.json", "r", encoding="utf-8") as handle:
+            props = json.load(handle)
+        self.assertEqual(props["assets"]["t_clip"]["kind"], "video")
+        self.assertEqual(props["assets"]["t_clip"]["file"], "assets/t_clip.mp4")
+        self.assertEqual(len(props["assets"]["t_clip"]["sha256"]), 64)
+        staged = os.path.join(self.staged_root, "t_clip.mp4")
+        self.assertTrue(os.path.exists(staged))
+        self.assertEqual(remotion.link_or_copy(clip, staged), "existing")   # never re-staged
+
+    def test_a_still_is_an_image_handle(self):
+        table = remotion.stage_assets("render_still", {"t_still": self._image()})
+        self.assertEqual(table["t_still"]["kind"], "image")
+        self.assertTrue(table["t_still"]["file"].endswith(".png"))
+
+    def test_a_file_that_is_not_footage_is_refused(self):
+        scene = scene_file()
+        junk = out("t_notes.txt")
+        guard.write_text(junk, "not media\n")
+        with self.assertRaises(ExecutorError) as ctx:
+            self._run(remotion.render_still, scene, out("nope.png"), COMPOSITION,
+                      assets={"t_clip": junk})
+        self.assertEqual(ctx.exception.code, "bad_asset")
+        self.assertEqual(self.created, [])          # nothing was rendered
+
+    def test_a_missing_asset_file_is_refused(self):
+        scene = scene_file()
+        with self.assertRaises(ExecutorError) as ctx:
+            self._run(remotion.render_still, scene, out("nope2.png"), COMPOSITION,
+                      assets={"t_clip": out("t_absent.mp4")})
+        self.assertEqual(ctx.exception.code, "input_missing")
+
+    def test_landscape_with_assets_still_writes_a_props_file(self):
+        scene = scene_file()
+        target = out("still_asset_landscape.png")
+        self._run(remotion.render_still, scene, target, COMPOSITION,
+                  assets={"t_clip": self._clip()})
+        self.assertTrue(os.path.isfile(target + ".props.json"))
+
+    def test_no_assets_means_no_props_file(self):
+        scene = scene_file()
+        target = out("still_plain.png")
+        self._run(remotion.render_still, scene, target, COMPOSITION)
+        self.assertFalse(os.path.exists(target + ".props.json"))
+        self.assertEqual(remotion.stage_assets("render_still", None), {})
+
+
+
+class BundleCacheTest(unittest.TestCase):
+    """One bundle per content key, reused, and capped at five (owner's 2026-10-30 decision)."""
+
+    def setUp(self):
+        guard.ensure_dir(WORK)
+        self.cache = out("bundles")
+        shutil.rmtree(self.cache, ignore_errors=True)
+        guard.ensure_dir(self.cache)
+
+    def _bundle(self, name, age):
+        path = os.path.join(self.cache, name)
+        guard.ensure_dir(path)
+        guard.write_text(os.path.join(path, remotion.BUNDLE_MARK), "<html></html>\n")
+        stamp = 1000000000 + age
+        os.utime(path, (stamp, stamp))
+        return path
+
+    def test_the_key_follows_the_scene_and_the_kit_not_the_footage(self):
+        scene = scene_file("bundle_scene.tsx", "// one\n")
+        first = remotion.bundle_key(scene)
+        self.assertEqual(first, remotion.bundle_key(scene))       # stable without an edit
+        guard.write_text(scene, "// two\n")
+        self.assertNotEqual(first, remotion.bundle_key(scene))    # an edited scene rebuilds
+        kit_file = os.path.join(remotion.remotion_dir(), "kit", "media.tsx")
+        before = remotion.bundle_key(scene)
+        with open(kit_file, "rb") as handle:
+            original = handle.read()
+        try:
+            guard.write_bytes(kit_file, original + b"\n// a kit edit must rebuild every bundle\n")
+            self.assertNotEqual(before, remotion.bundle_key(scene))
+        finally:
+            guard.write_bytes(kit_file, original)
+        self.assertEqual(before, remotion.bundle_key(scene))
+
+    def test_a_finished_bundle_is_reused_without_building(self):
+        scene = scene_file("reuse_scene.tsx", "export default () => null;\n")
+        key = remotion.bundle_key(scene)
+        self._bundle(key, 0)
+        with mock.patch.object(remotion, "BUNDLE_CACHE", self.cache), \
+                mock.patch.object(remotion.subprocess, "Popen",
+                                  side_effect=AssertionError("it rebuilt a cached bundle")):
+            path, used = remotion.ensure_bundle("render_still", scene)
+        self.assertEqual(used, key)
+        self.assertEqual(path, os.path.join(self.cache, key))
+
+    def test_pruning_keeps_five_and_drops_the_oldest(self):
+        names = [os.path.basename(self._bundle("b%d" % index, index)) for index in range(7)]
+        removed = remotion.prune_bundles(keep=names[-1], limit=5, cache=self.cache)
+        left = sorted(os.listdir(self.cache))
+        self.assertEqual(len(left), 5)
+        self.assertIn(names[-1], left)                     # the one in use is never deleted
+        self.assertNotIn(names[0], left)                   # the oldest went first
+        self.assertEqual(sorted(removed), sorted(names[:2]))
+
+    def test_pruning_never_touches_a_half_written_bundle(self):
+        stale = os.path.join(self.cache, "abc.part")
+        guard.ensure_dir(stale)
+        for index in range(6):
+            self._bundle("c%d" % index, index)
+        remotion.prune_bundles(keep="", limit=5, cache=self.cache)
+        self.assertTrue(os.path.isdir(stale))
+
+
 if __name__ == "__main__":
     unittest.main()
+
+
+
+class AssetHandleManifestTest(unittest.TestCase):
+    """The step's `assets` input is what puts the footage in the cache key - and the rejections."""
+
+    def setUp(self):
+        guard.ensure_dir(WORK)
+
+    def _document(self, clip, handle="footage_a", scene=None):
+        return {
+            "schema": 1, "run_id": "m55b-assets", "fps": 24, "size": [1920, 1080],
+            "budget": {"mode": "cap", "cap_usd": 0.0},
+            "constraints": {"ai_generated_images": False},
+            "assets": [{"id": handle, "path": clip, "origin": "footage"}],
+            "gates": [],
+            "steps": [{
+                "id": "still", "op": "render_still",
+                "inputs": {"scene": scene or scene_file("asset_scene.tsx"),
+                           "assets": {handle: "@asset.%s" % handle}},
+                "params": {"composition": COMPOSITION, "frame": 90},
+                "outputs": {"still": out("asset_still.png")},
+                "status": "pending", "attempts": 0, "cache_key": None, "cost_usd": 0.0,
+            }],
+        }
+
+    def _plan(self, document):
+        return manifest.derive(document, versions={"remotion": remotion.version()},
+                               strict_files=True)
+
+    def test_replacing_the_clip_changes_the_cache_key(self):
+        clip = out("asset_clip.mp4")
+        guard.write_bytes(clip, b"\0" * 128)
+        first = self._plan(self._document(clip)).steps[0]
+        self.assertEqual(first.inputs["assets"], {"footage_a": clip})
+        guard.write_bytes(clip, b"\0" * 129)          # a different file, same name
+        second = self._plan(self._document(clip)).steps[0]
+        self.assertNotEqual(first.cache_key, second.cache_key)
+
+    def test_the_handle_table_reaches_the_executor_as_a_keyword(self):
+        clip = out("asset_clip2.mp4")
+        guard.write_bytes(clip, b"\0" * 64)
+        step = self._plan(self._document(clip)).steps[0]
+        kwargs = ops.executor_kwargs(step.spec, step.params, fps=24.0, inputs=step.inputs)
+        self.assertEqual(kwargs["assets"], {"footage_a": clip})
+        self.assertEqual(ops.positional_inputs(step.spec), ["scene"])   # never positional
+
+    def test_an_undeclared_handle_is_refused(self):
+        clip = out("asset_clip3.mp4")
+        guard.write_bytes(clip, b"\0" * 64)
+        document = self._document(clip)
+        document["steps"][0]["inputs"]["assets"] = {"shot_b": "@asset.shot_b"}
+        with self.assertRaises(manifest.ManifestError) as ctx:
+            self._plan(document)
+        self.assertEqual(ctx.exception.code, "unknown_handle")
+
+    def test_a_handle_cannot_point_at_another_asset(self):
+        clip = out("asset_clip4.mp4")
+        guard.write_bytes(clip, b"\0" * 64)
+        document = self._document(clip)
+        document["assets"].append({"id": "second", "path": clip, "origin": "footage"})
+        document["steps"][0]["inputs"]["assets"] = {"footage_a": "@asset.second"}
+        with self.assertRaises(manifest.ManifestError) as ctx:
+            self._plan(document)
+        self.assertEqual(ctx.exception.code, "bad_handle_ref")
+
+    def test_a_path_as_an_asset_id_is_refused(self):
+        clip = out("asset_clip5.mp4")
+        guard.write_bytes(clip, b"\0" * 64)
+        document = self._document(clip, handle="../x")
+        document["steps"][0]["inputs"]["assets"] = {"../x": "@asset.../x"}
+        with self.assertRaises(manifest.ManifestError) as ctx:
+            self._plan(document)
+        self.assertEqual(ctx.exception.code, "bad_asset_id")
+
+    def test_a_step_without_assets_still_derives(self):
+        scene = scene_file("plain_scene.tsx")
+        clip = out("asset_clip6.mp4")
+        guard.write_bytes(clip, b"\0" * 64)
+        document = self._document(clip, scene=scene)
+        del document["steps"][0]["inputs"]["assets"]
+        step = self._plan(document).steps[0]
+        self.assertEqual(sorted(step.inputs), ["scene"])       # M5.5A manifests still work

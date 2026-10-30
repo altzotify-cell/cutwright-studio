@@ -347,3 +347,38 @@ the Remotion byte-reproducibility question first - it is one ~90 s render and it
 file to hand scenes: `recapstudio\Projects\regress\footage\demo_a.mp4` is a test pattern, and the
 m4job used the same one - do you have a clip (or stills) you want the first directed scene built on?
 
+
+
+## C-012 | 2026-10-30 | agent -> owner | REVIEW | OPEN
+
+Commit: this session's commit (recorded in HANDOFF and `git log -1`)
+Files: `docs/ASSET_HANDLES.md`, `cutwright/engine/executors/remotion.py`, `cutwright/engine/{manifest,ops,checkpoint}.py`,
+`recapstudio/remotion/kit/media.tsx` + `kit/index.ts` + `CONTRACT.md`, `scenes_examples/media_layers.tsx`,
+`tools/check_scenes.mjs`, `tests/test_engine_scene_check.py`, `tests/test_engine_remotion.py`, `.gitignore`,
+`docs/evidence/m55b_handles.json`
+Goal: 5.5B - footage by handle, `LayeredMedia`/`Camera`, several stills from one bundle, all seven of your amendments.
+
+Result: kit/2 is in and measured. Three stills of a real footage scene cost 26.7 s wall cold (5.4/5.3/6.3 s of render,
+the 8.1 s bundle inside the first), 18.1 s with the bundle cached and 1.9 s when the steps are cached; the old path was
+~10 s per still. One bundle is 38.2 MB (19.9 MB without source maps) and the 4.4 MB clip inside it is a hard link to the
+original, so it costs 0 extra bytes; the cache holds 5. Swapping the clip behind the same handle changed the cache key
+AND the pixels. The scene checker rejects all six cases you named, with line numbers, and `useAsset` is not importable.
+The engine + scene-check suites are green (28 + 3 tests), `recap.py scenes` gives the M0 verdicts and `recap.py video` is
+byte-identical (514 frames, 6,834,110 B, video MD5 c671f7a7...).
+
+Two of your questions answered by measurement, and one claim of mine retracted:
+- `--public-dir` exists in 4.0.539, but the bundler COPIES that folder into every bundle (bundle.js:278-294) and only a
+  symlink escapes the copy (copy-dir.js:25) - and a symlinked public file is served as a 404
+  ("...status code of 404 while downloading file http://localhost:3000/public/assets/footage_a.mp4"). The design note's
+  "symlink, 0 bytes copied" was therefore wrong: assets are staged and mounted as hard links, which is why a bundle
+  carrying a clip costs 0 extra bytes anyway.
+- The bundle key cannot include the footage (your C-011 rule), so a reused bundle would have served the clip it was built
+  with. Mounting the (hard) link into `<bundle>/public/assets` on every render fixes that: key cheap, pixels current.
+- Your "known OffthreadVideo failure past frame 71" did not reproduce: frames 120 and 140 both rendered from a cold clip
+  (140 is past the clip's 129 frames; the source holds its last frame). I am not calling that fixed - just not seen here.
+
+Ask: (i) 5.5C go, or (ii) a real clip first? The pipeline is proven, but every frame I have looked at on this PC is the
+engine's own colour bars, so "it looks like a shot instead of a slide" is still unjudged - and that judgement is the whole
+point of 5.5. If you give me one real clip (a street scene, a face, anything non-synthetic), 5.5C's directed scene can be
+built and judged on it; without one I can only judge layout, timing and camera moves, not whether the result reads as
+footage.

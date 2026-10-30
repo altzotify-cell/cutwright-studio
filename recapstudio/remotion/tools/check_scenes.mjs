@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 // Static check for generated scenes (gameplan 4b). Usage:  node tools/check_scenes.mjs <manifest.json>
 //
-//   manifest: {"out": "report.json", "scenes": [{"id": "d_02", "file": "<absolute path of the staged .tsx>"}]}
+//   manifest: {"out": "report.json", "handles": ["footage_a"],
+//              "scenes": [{"id": "d_02", "file": "<absolute path of the staged .tsx>"}]}
 //   report:   {"scenes": {"d_02": {"errors": [{"line": 3, "message": "..."}], "warnings": [...], "cost": "low", "hasDefault": true}}}
 //
 // It parses every scene with the real TypeScript compiler (so strings, comments and look-alike names are handled
 // properly) and REJECTS scenes that: import anything but 'remotion' / 'react' / '@kit', use the network, the
 // filesystem, eval / Function / dynamic import, DOM or timer globals, or clock / random sources that would make
-// frames differ between renders. A scene with errors is never bundled or run.
+// frames differ between renders. kit/2 adds one rule: an `asset` attribute must be a plain literal naming a handle
+// the step declared (`handles`), so a scene can neither spell a path nor name footage the run did not stage.
+// A scene with errors is never bundled or run.
 //
 // Honest limits: this catches mistakes and obvious hazards in code an AI wrote. It is not a hardened sandbox.
 // The scene still only ever runs inside the headless browser Remotion renders with, never with Node access,
@@ -98,6 +101,13 @@ const GLOBALS = {
 
 const BANNED_JSX = new Set(['script', 'iframe', 'object', 'embed', 'link', 'base', 'frame', 'frameset']);
 const URL_RE = /(?:^|[^A-Za-z0-9])(?:https?:)?\/\/[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+|\bhttps?:\/\//i;
+
+// kit/2 (M5.5B): an `asset` attribute names a handle the STEP declared (`"handles": [...]` in this
+// manifest, which stdlib/scene_check.py fills from the step's `inputs.assets` keys). The same pattern
+// the engine enforces on asset ids: a name, never a path.
+const HANDLE_RE = /^[a-z][a-z0-9_]{0,31}$/;
+const HANDLE_RULE = 'lowercase letters, digits and _ only, starting with a letter, at most 32 characters';
+const handles = new Set(manifest.handles ?? []);
 
 const FATAL_DIAG = new Set([
   2304, // Cannot find name
@@ -213,6 +223,22 @@ for (const entry of manifest.scenes) {
       if (BANNED_JSX.has(tag)) err(node, `uses the <${tag}> element, which loads outside content`);
     } else if (ts.isJsxAttribute(node) && node.name.getText(sf) === 'dangerouslySetInnerHTML') {
       err(node, 'uses dangerouslySetInnerHTML (return React elements instead)');
+    } else if (ts.isJsxAttribute(node) && node.name.getText(sf) === 'asset') {
+      // kit/2 (M5.5B): `asset` names a HANDLE the step declared - a plain literal, on a component.
+      const host = node.parent && node.parent.parent;
+      const tag = host && host.tagName ? host.tagName.getText(sf) : '';
+      const init = node.initializer;
+      if (!/^[A-Z]/.test(tag)) {
+        err(node, `puts an 'asset' attribute on <${tag || 'an element'}>, which is not a component`);
+      } else if (!init || !ts.isStringLiteral(init)) {
+        err(node, `has a non-literal 'asset' (${init ? init.getText(sf) : 'no value'}): write asset="footage_a", a plain string literal naming a handle`);
+      } else if (!HANDLE_RE.test(init.text)) {
+        err(node, `has asset="${init.text}", which is not a handle: ${HANDLE_RULE} - never a path or a URL`);
+      } else if (!handles.has(init.text)) {
+        err(node, `uses asset="${init.text}", but this step declares no such handle`
+          + (handles.size ? ` (declared: ${[...handles].join(', ')})` : '')
+          + `: add "assets": {"${init.text}": "@asset.${init.text}"} to the step's inputs`);
+      }
     } else if (ts.isStringLiteralLike(node) || ts.isTemplateHead(node) || ts.isTemplateMiddle(node) || ts.isTemplateTail(node)) {
       if (URL_RE.test(node.text) && !(node.parent && ts.isImportDeclaration(node.parent))) {
         err(node, 'contains an internet address; scenes cannot load anything from outside (draw it with SVG / CSS)');

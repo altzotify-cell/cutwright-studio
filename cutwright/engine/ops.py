@@ -51,15 +51,19 @@ class OpSpec:
     evidence: str                   # docs/evidence/m2_*.json
     inputs: tuple = ("src",)
     outputs: tuple = ("video",)
+    optional_inputs: tuple = ()     # inputs a step may omit (M5.5B: an op's `assets` handles)
     params: dict = dataclasses.field(default_factory=dict)
     validator: object = None        # optional cross-parameter rule
 
     def to_dict(self):
-        return {"name": self.name, "stage": self.stage, "description": self.description,
-                "executor": self.executor, "target": self.target,
-                "executor_reason": self.executor_reason, "evidence": self.evidence,
-                "inputs": list(self.inputs), "outputs": list(self.outputs),
-                "params": {key: param.to_dict() for key, param in self.params.items()}}
+        out = {"name": self.name, "stage": self.stage, "description": self.description,
+               "executor": self.executor, "target": self.target,
+               "executor_reason": self.executor_reason, "evidence": self.evidence,
+               "inputs": list(self.inputs), "outputs": list(self.outputs),
+               "params": {key: param.to_dict() for key, param in self.params.items()}}
+        if self.optional_inputs:
+            out["optional_inputs"] = list(self.optional_inputs)
+        return out
 
     def defaults(self):
         """Parameter defaults, for a manifest that omitted them."""
@@ -213,7 +217,7 @@ def _sounds(spec, params):
 
 
 # Inputs that reach the executor as a NAMED argument built from params, never positionally.
-KWARG_INPUTS = ("tracks",)
+KWARG_INPUTS = ("tracks", "assets")
 
 
 def positional_inputs(spec):
@@ -283,6 +287,10 @@ def executor_kwargs(spec, params, fps=24.0, inputs=None):
         out["transition_duration"] = out.pop("duration")
     elif spec.name == "mix_audio":
         out["tracks"] = mix_tracks(spec, out, inputs)
+    if "assets" in spec.inputs or "assets" in spec.optional_inputs:
+        # M5.5B: the handle -> path table is an INPUT (digested into the cache key), handed to the
+        # executor as a keyword. A scene names a handle; only this side ever sees a path.
+        out["assets"] = dict((inputs or {}).get("assets") or {})
     return out
 
 
@@ -437,7 +445,7 @@ OPS = (
                         "(measurements in docs/evidence/m55_remotion.json). No Kinocut row applies "
                         "- this op draws graphics, it does not edit media",
         evidence="docs/evidence/m55_remotion.json",
-        inputs=("scene",), outputs=("still",),
+        inputs=("scene",), outputs=("still",), optional_inputs=("assets",),
         params={"composition": Param("str", "Remotion composition id (example-stat-ring, "
                                             "scene-<segment id>)", required=True),
                 "frame": Param("int", "frame to draw", default=0, minimum=0),
@@ -452,7 +460,7 @@ OPS = (
                         "as 24 frames at 24/1 (docs/evidence/m55_remotion.json). M0 measured the "
                         "full-timeline render within one frame of the ffmpeg join",
         evidence="docs/evidence/m55_remotion.json",
-        inputs=("scene",), outputs=("video",),
+        inputs=("scene",), outputs=("video",), optional_inputs=("assets",),
         params={"composition": Param("str", "Remotion composition id", required=True),
                 "start": Param("int", "first frame of the range", default=0, minimum=0),
                 "frames": Param("int", "how many frames, inclusive (24 = one second at 24 fps)",

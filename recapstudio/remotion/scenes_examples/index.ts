@@ -3,6 +3,7 @@ import type {Word} from '../kit';
 import StatRing, {cost as statCost} from './stat_ring';
 import TimelineReveal, {cost as timelineCost} from './timeline_reveal';
 import QuoteMoment, {cost as quoteCost} from './quote_moment';
+import MediaLayers, {cost as mediaCost} from './media_layers';
 
 // The hand-written reference scenes. They are (1) previews in Remotion Studio ("example-..." compositions),
 // (2) the patterns the scene-authoring prompt shows Claude (Phase 3), and (3) test material:
@@ -73,5 +74,14 @@ export const exampleScenes: Record<string, LabEntry> = {
     {quote: 'Every man dies. Not every man really lives.', author: 'Braveheart', highlight: ['lives']},
     QuoteMoment,
     quoteCost
+  ),
+  media_layers: make(
+    'media_layers',
+    'Media layers (footage + camera)',
+    6,
+    'The archive footage was found in a box, and nobody had seen it in twenty years.',
+    {kicker: '1999', headline: 'The film nobody expected'},
+    MediaLayers,
+    mediaCost
   ),
 };

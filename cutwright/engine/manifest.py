@@ -29,6 +29,7 @@ import dataclasses
 import inspect
 import json
 import os
+import re
 
 from cutwright import guard
 from cutwright.engine import checkpoint, gates, ops, registry
@@ -40,6 +41,11 @@ SCHEMA = 1
 MAX_ATTEMPTS = 2                      # roadmap: 2 for transient failures, 1 for deterministic ones
 RUNS_DIR = os.path.join(guard.OUT, "runs")
 ALLOWED_ORIGINS = ("footage", "user_image", "code_graphic", "stock_licensed")
+# The scene-facing handle (M5.5B). Same pattern as the checker and the kit: lowercase, digits,
+# underscores - a NAME a scene can spell in a literal, never a path.
+HANDLE_RE = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
+HANDLE_RULE = "lowercase letters, digits and _ only, starting with a letter, at most 32 characters"
+
 AUDIO_ONLY_EXTS = (".wav", ".mp3", ".m4a", ".aac", ".flac", ".ogg", ".opus", ".aiff", ".txt", ".srt")
 DEFAULT_FPS = 24.0
 
@@ -196,6 +202,9 @@ def _assets(manifest, allowed, strict_files, errors, warnings):
 
     Origin is checked for VISUAL assets only: the constraint set is about pictures and video
     (no AI-generated frames), while `user_audio` is a legitimate origin for a voice track.
+    The id is also the SCENE-facing HANDLE (M5.5B: `<LayeredMedia asset="footage_a"/>`), so it
+    must be spellable as a bare name - `../x` or `C:\clips\a.mp4` would smuggle a path past the
+    scene boundary, and is refused here, long before a render.
     """
     paths = {}
     rows = manifest.get("assets") or []
@@ -207,6 +216,11 @@ def _assets(manifest, allowed, strict_files, errors, warnings):
             _error(errors, "bad_asset", "every asset needs an id and a path")
             continue
         asset_id = str(row["id"])
+        if not HANDLE_RE.match(asset_id):
+            _error(errors, "bad_asset_id",
+                   "asset id %r is not a handle: %s" % (asset_id, HANDLE_RULE),
+                   suggested="a handle is a name, not a path: use footage_a, not ../footage_a")
+            continue
         if asset_id in paths:
             _error(errors, "duplicate_asset", "asset id %r is used twice" % asset_id)
             continue
@@ -239,7 +253,31 @@ def _resolve(value, step_id, assets, produced, declared, errors, warnings):
     Two reference forms, both resolved here so no later code sees an '@': `@asset.<id>` and
     `@<step>.<output>`. A reference to a LATER step is a forward reference and is refused: the
     engine runs steps in manifest order, so it would read a file that does not exist yet.
+
+    A MAPPING is the step's handle table (M5.5B): `{"footage_a": "@asset.footage_a"}` -> the same
+    keys, resolved. The handle is what the scene says; the path stays here.
     """
+    if isinstance(value, dict):
+        if not value:
+            _error(errors, "bad_input", "the input is an empty mapping", step=step_id,
+                   suggested='give at least one handle, or drop the input')
+            return None
+        out = {}
+        for handle, item in value.items():
+            if str(handle) not in assets:
+                _error(errors, "unknown_handle",
+                       "no asset %r is declared, so the step cannot hand it to a scene" % (handle,),
+                       step=step_id, suggested="declare it under 'assets', or check the spelling")
+                continue
+            if not isinstance(item, str) or item != "@asset.%s" % handle:
+                _error(errors, "bad_handle_ref",
+                       "handle %r must point at its own asset, as \"@asset.%s\", not %r"
+                       % (handle, handle, item), step=step_id,
+                       suggested="the step names handles it uses; it cannot rewire them")
+                continue
+            out[str(handle)] = _resolve(item, step_id, assets, produced, declared,
+                                        errors, warnings)
+        return None if len(out) != len(value) or any(v is None for v in out.values()) else out
     if isinstance(value, (list, tuple)):
         if not value:
             _error(errors, "bad_input", "the input is an empty list", step=step_id,
@@ -365,8 +403,11 @@ def _steps(manifest, assets, cap_usd, fps, versions, strict_files, errors, warni
             _error(errors, "bad_inputs", "'inputs' is a mapping of name -> path or @ref",
                    step=step_id)
             continue
-        missing = [name for name in spec.inputs if name not in given]
-        unknown = [name for name in given if name not in spec.inputs]
+        allowed = tuple(spec.inputs) + tuple(n for n in spec.optional_inputs
+                                             if n not in spec.inputs)
+        missing = [name for name in spec.inputs
+                   if name not in given and name not in spec.optional_inputs]
+        unknown = [name for name in given if name not in allowed]
         if missing:
             _error(errors, "missing_input", "op %s needs input(s) %s"
                    % (spec.name, ", ".join(missing)), step=step_id,
@@ -374,13 +415,14 @@ def _steps(manifest, assets, cap_usd, fps, versions, strict_files, errors, warni
         if unknown:
             _error(errors, "unknown_input", "op %s has no input(s) %s"
                    % (spec.name, ", ".join(unknown)), step=step_id,
-                   suggested="the op takes: %s" % ", ".join(spec.inputs))
+                   suggested="the op takes: %s" % ", ".join(allowed))
         if missing or unknown:
             continue
         inputs = {}
-        for name in spec.inputs:
-            inputs[name] = _resolve(given[name], step_id, assets, produced, declared,
-                                    errors, warnings)
+        for name in allowed:
+            if name in given:
+                inputs[name] = _resolve(given[name], step_id, assets, produced, declared,
+                                        errors, warnings)
         if any(value is None for value in inputs.values()):
             continue
 

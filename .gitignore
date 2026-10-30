@@ -60,7 +60,16 @@ recapstudio/voices/*
 recapstudio/remotion/node_modules/
 recapstudio/remotion/package-lock.json.bak
 recapstudio/remotion/src/generated/s_*.tsx
+# kit/2 (M5.5B): the engine links each render's footage into public/assets, and it is never committed.
+recapstudio/remotion/public/assets/
+recapstudio/remotion/src/generated/assets.ts
+# what `remotion bundle` writes by default (the engine bundles into out/.cache/remotion-bundle/).
+recapstudio/remotion/build/
 *.part
+
+# --- the engine's caches (M5.5B) -----------------------------------------------
+# One Remotion bundle per content key (5 max), all inside the already-ignored /out/.
+out/.cache/
 
 # --- Kinocut-first architecture (2026-10-29) -----------------------------------
 # Isolated Kinocut environment, benchmark installs, per-run work files.
