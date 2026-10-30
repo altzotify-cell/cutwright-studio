@@ -233,8 +233,9 @@ Observed: `join_av` no longer gives ffmpeg a third (music) input; the program au
 
 ## C-010 | 2026-10-30 | agent -> owner | INFO | OPEN
 
-Commit: the M5 close-out commit on main ("M5 close-out: remove obsolete Shotcut MLT backend, GUI, and
-        tests"); its hash is recorded in the docs commit that follows it (the C-009/M4 pattern).
+Commit: 4528c51 ("M5 close-out: remove obsolete Shotcut MLT backend, GUI, and tests"), pushed to origin main;
+        verified with `git ls-remote origin refs/heads/main` -> 4528c5117f1de4dd78a934a93840feaf4f419e8b.
+        This docs commit records that hash (the C-009/M4 pattern).
 Files: deleted `cutwright/mlt.py` (2,573 L), `cutwright/gui.py` (433 L), `cutwright/tools/shotcut_window.ps1`
        (255 L), `projects/demo_{cuts,fade,cross,title}` (17 files, 1,776 L); renamed `REPORT.md` ->
        `docs/legacy/REPORT_shotcut_era.md` and `docs/VISION_cutwright_v2.md` -> `docs/legacy/`; added

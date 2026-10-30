@@ -18,9 +18,9 @@ Current milestone : M5 DONE (2026-10-30). The old editor backend is OUT of the c
                     `git grep` for the removed backend's name over code -> no matches. NOT re-run in this
                     session: the recapstudio regression pack (roadmap M5 acceptance line 3) - see the
                     M5 LOG entry.
-Last green commit : the M5 close-out commit on main (its message is quoted, with the hash, in LOG.md,
-                    entry "2026-10-30 - M5 close-out"); the docs commit after it records the hash.
-                    Before it: 7a8184c, 0755d92, 498aed1, d072280.
+Last green commit : 4528c51 (M5 close-out; the message is in `LOG.md` and `git log -1`, not repeated here so
+                    the M5 acceptance grep stays empty), pushed to origin main - verified with
+                    `git ls-remote`. Before it: 7a8184c, 0755d92, 498aed1, d072280.
 Next step         : M6 - agent bridge (`recap <step> --json`) + focused tool discovery
                     (`docs/ROADMAP.md` M6). Nothing of M6 starts without the owner's go; the
                     regression pack named in C-010 can run first if the owner wants it before M6.

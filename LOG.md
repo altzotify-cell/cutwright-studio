@@ -1053,10 +1053,10 @@ DECISIONS  - 1. What went: cutwright/mlt.py (2,573 lines), cutwright/gui.py (433
              recapstudio/remotion/package-lock.json stays untracked (C-006).
              6. The earlier attempt's unbacked HANDOFF claim ("M5 DONE ... 178 tests green, regression pack
              green") was replaced with what this session measured, including the un-run regression pack.
-Commit     - "M5 close-out: remove obsolete Shotcut MLT backend, GUI, and tests" on main. The hash is
-             recorded by the docs commit that follows this entry (same pattern as C-009/M4), because a
-             commit cannot contain its own id. Pushed to origin main; `git ls-remote origin refs/heads/main`
-             quoted in the close-out report.
+Commit     - 4528c51 "M5 close-out: remove obsolete Shotcut MLT backend, GUI, and tests" on main, pushed to
+             origin main; `git ls-remote origin refs/heads/main` -> 4528c5117f1de4dd78a934a93840feaf4f419e8b.
+             The message names the removed editor, which is why it is quoted here (an excluded file) and
+             not in HANDOFF/TOOLS, so the roadmap's acceptance grep stays empty.
 ```
 
              projects/demo_* folders it produced were data, not tests, and are deleted.
