@@ -1414,3 +1414,45 @@ NOT TESTED - a portrait (9:16) still of the footage scene, and the pack's `remot
              (`scenes` and `video` were enough to prove kit/2 bundles and the timeline is byte-identical).
 
 
+DECISIONS  1. The staged handle table travels in the render's PROPS file, not in a generated
+             src/generated/assets.ts. Assumption: the kit must not import a file that only exists after
+             a render, because a fresh checkout would then fail to bundle anything (the timeline path
+             included). Verified by `recap.py video` and `recap.py scenes` on a tree with no generated
+             files present, and .gitignore now covers both anyway.
+             2. Assets are staged AND mounted as hard links (see FAILED 1), which also fixes a stale-bundle
+             bug the symlink plan hid: the bundle key is code-only, so a reused bundle would have served
+             the clip it was built with. Mounting on every render keeps the key cheap and the picture
+             current; the swap test is the proof.
+             3. The bundle key covers kit/**, src/**, scenes_examples/**, remotion.config.ts and
+             package.json, and the scene path only when it lives outside those (a test scene in out/).
+             scenes_examples had to be added once I saw SceneLab imports it - without it an edited example
+             scene would be served from a stale bundle.
+             4. `checkpoint.digest_file(path, memo=True)` is used for INPUTS only. The first suite run
+             failed `test_outputs_intact_detects_missing_and_changed_files` because a memo keyed on
+             (path, size, mtime) cannot see a same-length rewrite inside one mtime tick, and that test is
+             exactly that case. Outputs stay exact; a 3-still batch still hashes its clip once.
+             5. `link_or_copy` compares with os.path.samefile, not realpath: two hard links have different
+             realpath but are the same file, and the first version re-linked on every render (my own test
+             caught it).
+             6. kit/index.ts exports components only (LayeredMedia, Camera, AssetScope) plus the AssetInfo
+             type. `useAsset` stays private to kit/media.tsx, which is what makes the checker's "Module
+             '@kit' has no exported member 'useAsset'" rejection possible.
+             7. The reference scene keeps a `fallback` so the Studio preview and `recap.py scenes` can
+             render it without staged footage; every real step is gated earlier (checker + manifest), and
+             the strict-copy run above shows a scene without `fallback` fails loudly instead.
+             8. Two tracked files were rewritten by merely running things and were `git checkout`-ed before
+             this commit (same practice as M5.5A): docs/evidence/m2_*.json (the equivalence tests write
+             their own evidence) and recapstudio/remotion/src/generated/registry.ts (scenes.py writes the
+             project registry into the shared renderer - the regress run put its three scenes back).
+             Expect both to reappear after any pack or suite run; not a regression.
+             9. The scene-check test fixtures live in src/generated as s_check_*.tsx (the one place that
+             resolves 'react'/'remotion' and is already gitignored) and are DELETED when the test ends:
+             they are deliberately broken, so leaving them would make `tsc -p` red and would change the
+             bundle key of every scene.
+Commit     - d55c114 "M5.5B: footage by handle (kit/2 LayeredMedia + Camera), one bundle per content key"
+             (21 files, +1543/-71) on main, pushed to origin main; `git ls-remote origin refs/heads/main`
+             -> d55c11402e95f873c7c96c0eed554a7a83b7e2b4. The commit that follows this entry only records
+             that hash in HANDOFF.md. Left untracked on purpose: recapstudio/remotion/package-lock.json
+             (existed before this session; whether the lock is committed is the owner's call).
+```
+
