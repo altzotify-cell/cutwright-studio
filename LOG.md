@@ -1571,6 +1571,9 @@ DECISIONS  - the authoring brief is data checked against kit/** by tests, not pr
              loop's hit rate stays honest: it caught both planted ones and 2 of 4 unaided.
 DECISIONS  - the cache behaved as designed after a scene edit: same manifest, same run folder, all
              three steps re-ran with "cache key changed".
+COMMITTED  - M7 is 43fa769 on main (13 files, +801/-41), pushed to origin main
+             (git ls-remote -> 43fa769318ef48cbe147268c5f47fc74efc295a1). The commit after it only
+             records that hash.
 
              `curl.exe -sSL -A "CutwrightBench/1.0"` -> "HTTP 200 bytes 6291118".
 FAILED     - one `python -m cutwright run` in the foreground : killed by the 30 s command cap mid-step 3

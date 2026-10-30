@@ -22,10 +22,12 @@ Current milestone : M7 "Agent-owned scene loop" COMPLETE (2026-10-30). Vision wo
                     measurement, 2 revisions (the max), pass 3 clears the caption band at 205 px. Known gap:
                     G5's 3-demo-brief harness was not run (one beat proved the loop instead). Before it: M6 DONE
                     (bridge + stage envelopes), M5.5 DONE, M5 DONE (the old editor backend is out of the code).
-Last green commit : the commit that follows this line records it (M7 touched cutwright/{cli,engine/envelopes,
-                    engine/scenecraft}.py, tests, SceneLab + the new scene, docs). Before it: d070fbb, fcae302
-                    (M6), 66c1b97 (M5.5C), 20a5052, d55c114, 5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd,
-                    4528c51 (M5 close-out), 7a8184c, 0755d92, 498aed1, d072280.
+Last green commit : 43fa769 "M7: the render line closed, and scene authoring with a brief + critic loop" (13 files,
+                    +801/-41) on main, pushed to origin main; `git ls-remote origin refs/heads/main` ->
+                    43fa769318ef48cbe147268c5f47fc74efc295a1. The commit that follows it only records that
+                    hash in this line. Before it: d070fbb (M6 close-out), fcae302 (M6), 66c1b97 (M5.5C),
+                    20a5052, d55c114, 5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd, 4528c51 (M5 close-out),
+                    7a8184c, 0755d92, 498aed1, d072280.
 Next step         : M8 - visual quality overhaul and benchmark (old G6): five distinct benchmark scenes at
                     16:9 and 9:16, the owner approves >= 4 of 5, `validate` keeps slideshow_risk below "high".
                     Read `docs/ROADMAP.md` M8 and `docs/VISUAL_STANDARD.md` sections 2-9 first. Decide with the
