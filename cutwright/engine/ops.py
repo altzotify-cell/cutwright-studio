@@ -168,13 +168,18 @@ def _check(op, key, param, value):
         return number
     if kind == "tracks":
         if not isinstance(value, (list, tuple)) or not value:
-            raise OpError(op, "expected a non-empty list of track dicts", code="bad_type",
-                          param=key, suggested='[{"path": "music.wav", "volume": 0.35}]')
+            raise OpError(op, "expected a non-empty list of track settings", code="bad_type",
+                          param=key, suggested='[{"volume": 0.35}] plus one "tracks" input')
         for index, track in enumerate(value):
-            if not isinstance(track, dict) or not track.get("path"):
-                raise OpError(op, "track %d has no path" % index, code="bad_type", param=key,
-                              suggested='each track needs {"path": ...} (KINOCUT_FINDINGS 11)')
-        return list(value)
+            if not isinstance(track, dict):
+                raise OpError(op, "track setting %d is not an object" % index, code="bad_type",
+                              param=key, suggested='[{"volume": 0.35}]')
+            if track.get("path"):
+                raise OpError(op, "track setting %d carries a path" % index,
+                              code="unknown_param", param=key,
+                              suggested='declare the file as the op\'s "tracks" INPUT and keep '
+                                        'only settings here (COMMS C-007 finding 3)')
+        return [dict(track) for track in value]
     if not isinstance(value, str):
         raise OpError(op, "expected a string, got %r" % (value,), code="bad_type", param=key,
                       suggested=param.doc)
@@ -204,20 +209,63 @@ def _sounds(spec, params):
     """mix_audio without a track is a no-op that costs a re-encode; refuse it."""
     if not params.get("tracks"):
         raise OpError(spec.name, "no tracks to mix", code="invalid_combination", param="tracks",
-                      suggested='tracks=[{"path": "music.wav", "volume": 0.35}]')
+                      suggested='one "tracks" input plus tracks=[{"volume": 0.35}]')
+
+
+# Inputs that reach the executor as a NAMED argument built from params, never positionally.
+KWARG_INPUTS = ("tracks",)
+
+
+def positional_inputs(spec):
+    """The inputs an executor takes positionally, in order (everything except KWARG_INPUTS).
+
+    `manifest._call` builds its argument list from this, so an input that the executor takes as a
+    keyword (mix_audio's track FILES, paired with their settings by `mix_tracks`) cannot end up in
+    the wrong positional slot.
+    """
+    return [name for name in spec.inputs if name not in KWARG_INPUTS]
+
+
+def mix_tracks(spec, params, inputs):
+    """Pair the declared track FILES (inputs) with their settings (params), by position.
+
+    COMMS C-007 finding 3, fixed here: a track named only in `params` is not part of a step's cache
+    key, so replacing `music.wav` did not invalidate the mix. The file is now an input of the op --
+    digested, hashed into the key -- and the settings stay params. Pairing is by position; a count
+    mismatch is refused rather than guessed, because guessing would silently move the music.
+    """
+    value = (inputs or {}).get("tracks")
+    if isinstance(value, (list, tuple)):
+        paths = list(value)
+    else:
+        paths = [] if value is None else [value]
+    settings = list(params.get("tracks") or [])
+    if len(paths) != len(settings):
+        raise OpError(spec.name, "%d track file(s) in inputs.tracks but %d track setting(s) in "
+                      "params.tracks" % (len(paths), len(settings)),
+                      code="invalid_combination", param="tracks",
+                      suggested="give one input path per setting, in the same order")
+    tracks = []
+    for path, setting in zip(paths, settings):
+        track = dict(setting)
+        track["path"] = str(path)
+        tracks.append(track)
+    return tracks
 
 
 # ------------------------------------------------------- manifest params -> executor kwargs
-def executor_kwargs(spec, params, fps=24.0):
+def executor_kwargs(spec, params, fps=24.0, inputs=None):
     """Checked manifest params -> keyword arguments for the executor function.
 
-    Most ops forward their params unchanged. Two do not, and both for a measured reason:
+    Most ops forward their params unchanged. Three do not, and each for a measured reason:
 
       * `trim_exact` speaks FRAMES (`start_frame`, `frames`) while `kino trim` takes `-s`/`-d` in
         SECONDS, so the conversion needs the timeline's fps. Doing it here keeps the manifest's
         vocabulary frame-based (M2 measured trim by frame ids) and the adapter unchanged.
       * `transition` passes `type`/`duration` to `kino merge -t`/`-td`, whose wrapper names them
         `transition`/`transition_duration`.
+      * `mix_audio` gets its track FILES from the step's `tracks` input and its per-track settings
+        from `params.tracks`; `mix_tracks()` pairs them, so the file is part of the cache key.
 
     `manifest.py` filters the result against the executor function's signature, so an unused
     param (`accurate`, a default) cannot become a TypeError at render time.
@@ -233,6 +281,8 @@ def executor_kwargs(spec, params, fps=24.0):
     elif spec.name == "transition":
         out["transition"] = out.pop("type")
         out["transition_duration"] = out.pop("duration")
+    elif spec.name == "mix_audio":
+        out["tracks"] = mix_tracks(spec, out, inputs)
     return out
 
 
@@ -343,13 +393,15 @@ OPS = (
                 "release": Param("float", "release in seconds", minimum=0)}),
     OpSpec(
         name="mix_audio", stage="edit",
-        description="Mix extra tracks under the existing audio (music, SFX, stings).",
+        description="Mix extra track files under the existing audio (music, SFX, stings).",
         executor="kinocut", target="mix_audio",
         executor_reason="mix-audio hit -15.9 LUFS / -9.0 dBTP with exact onsets; --sounds takes "
                         "JSON track descriptions, not a path",
         evidence="docs/evidence/m2_audio.json",
-        inputs=("src",),
-        params={"tracks": Param("tracks", 'list of {"path", "start", "volume", ...}',
+        inputs=("src", "tracks"),
+        params={"tracks": Param("tracks", 'per-track settings ({"volume", "start", "fade_in", '
+                                           '"fade_out"}), one per "tracks" input, same order: the '
+                                           'FILES are the input, the settings are params',
                                 required=True),
                 "keep_source": Param("bool", "keep the source audio under the mix", default=True),
                 "bitrate": Param("str", "output audio bitrate")},

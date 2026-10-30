@@ -53,7 +53,6 @@ def fixtures(frames_a=120, frames_b=36):
 def document(frames_b=36):
     """The five-step plan: cut 48 frames, fit to 24, join b, mix a bed, export."""
     joined = 24 + frames_b
-    music = manifest.resolve_path("out/fx/music.wav")
     return {
         "schema": 1, "run_id": "demo", "pipeline": "recap", "fps": 24, "size": [160, 90],
         "budget": {"mode": "cap", "cap_usd": 0.0},
@@ -83,8 +82,9 @@ def document(frames_b=36):
              "outputs": {"video": WORK + "/join.mp4"},
              "validation": [{"check": "frame_count", "expect": joined},
                             {"check": "constant_fps", "expect": 24}]},
-            {"id": "mix", "op": "mix_audio", "inputs": {"src": "@join.video"},
-             "params": {"tracks": [{"path": music, "volume": 0.35}], "keep_source": True},
+            {"id": "mix", "op": "mix_audio",
+             "inputs": {"src": "@join.video", "tracks": ["@asset.music"]},
+             "params": {"tracks": [{"volume": 0.35}], "keep_source": True},
              "outputs": {"video": WORK + "/mix.mp4"},
              "validation": [{"check": "decodes_clean"}, {"check": "has_audio"}]},
             {"id": "export", "op": "export_h264", "inputs": {"src": "@mix.video"},
@@ -94,8 +94,9 @@ def document(frames_b=36):
                             {"check": "frame_count", "expect": joined},
                             {"check": "constant_fps", "expect": 24}]},
         ],
-        "note": "Built by tests/engine_demo.py. The mix track is absolute because Kinocut opens it "
-                "itself, outside this process' working directory.",
+        "note": "Built by tests/engine_demo.py. The mix track is a declared INPUT "
+                "(inputs.tracks) so its digest is part of that step's cache key: replacing "
+                "music.wav now invalidates the mix (COMMS C-007 finding 3, fixed in M4).",
     }
 
 

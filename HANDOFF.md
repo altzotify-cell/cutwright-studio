@@ -8,18 +8,20 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M4  (move Recap Studio's editing onto the engine where M2 proved parity; delete
-                    what it replaces). M3 is COMPLETE and CLOSED 2026-10-30 - phase 3D added the six
-                    CLI verbs, post-render validation, approval files, the production report, and ran
-                    the whole acceptance ladder on real media.
-Last green commit : b831112 "M3 close-out: engine skeleton, CLI verbs, validation gates, and manifest
-                    runner" (2026-10-30; quotes in LOG.md, entry "2026-10-30 - M3 phase 3D"). Before it:
-                    1f2f2cf "M3 3C close-out", 29fb366 "M3 3A+3B+3C", 3ef6c0b "M2 close-out".
-Next step         : M4 - NOT started. Nothing of M4 begins without the owner's go.
-Open COMMS        : C-007 = 3D decisions + three measured findings that matter for M4 (kino merge
-                    re-times heterogeneous inputs to 30 fps; a mix track file is not in the cache key;
-                    fit_to_frames drops audio by design), plus three questions. C-006 = 3C
-                    decisions, ANSWERED 2026-10-30. C-005 = M2 decisions.
+Current milestone : M4  (move Recap Studio's editing onto the engine where M2 proved parity; then
+                    delete what it replaces). Phase 4A is DONE and VERIFIED 2026-10-30: mix_audio's
+                    track files are declared inputs (C-007 finding 3 fixed, cache-key proof on real
+                    media) and Recap's picture join runs on the engine (`concat`, Kinocut merge) with
+                    byte-identical regression output. NOT started: 4B (deleting the superseded code)
+                    and the 60-90 s real job (roadmap step 5).
+Last green commit : 4f7291c "M3 docs: record the close-out commit hash b831112". The 4A commit hash
+                    is recorded in LOG.md (entry "2026-10-30 - M4 phase 4A"). Before it: b831112,
+                    1f2f2cf, 29fb366, 3ef6c0b.
+Next step         : M4 phase 4B - delete the superseded picture-join code in recap.py in its own
+                    commit, then the 60-90 s real job. Nothing of 4B starts without the owner's go.
+Open COMMS        : C-008 = 4A decisions, parity numbers, three findings and two questions (approve
+                    4B? supply footage/voice for the real job?). C-007 = 3D decisions; its finding 3
+                    is now FIXED. C-006 answered. C-005 = M2 decisions.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -28,6 +30,10 @@ Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python
                     Kinocut: INSTALLED in `.venvs\kinocut` = kinocut 1.16.4 on Python 3.11.9, doctor exit 0.
                     `.venvs/` and `out/` are gitignored. All M0 numbers: docs/ENVIRONMENT.md.
 Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1/M2/M3 (quotes in `LOG.md`):
+  - M4 4A (2026-10-30): the regress project was re-run on the swapped path and is byte-identical to
+    the M0 baseline (514 frames, 21.416667 s, 6,834,110 B, aac 48k/2, video md5 c671f7a7..., audio
+    md5 0064ff59...); replacing a mix track now re-runs the mix ("cache key changed") and puts the
+    new tone in the output (Goertzel 3,526,719 @320 Hz vs 755 @1 kHz). Nothing deleted yet.
   - M3 3D (2026-10-30): the six roadmapped acceptance commands pass. `python -m cutwright run
     out\fx\demo_manifest.json --json` renders five steps (Kinocut trim -> ffmpeg fit -> Kinocut
     concat -> Kinocut mix -> Kinocut export) and the final file decodes to 60 frames, ids 24..47 then

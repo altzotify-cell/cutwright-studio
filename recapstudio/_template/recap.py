@@ -4068,10 +4068,15 @@ def write_concat_list(path, files):
 def join_av(items, out, vlist_name, music=None):
     """Concats the picture clips and mixes narration (+ ducked original audio + music) into one mp4."""
     os.makedirs(TIKTOK_TEMP, exist_ok=True)
-    vlist = os.path.join(TIKTOK_TEMP, f"{vlist_name}_video.txt")
     alist = os.path.join(TIKTOK_TEMP, f"{vlist_name}_audio.txt")
     olist = os.path.join(TIKTOK_TEMP, f"{vlist_name}_orig.txt")
-    write_concat_list(vlist, [i["video_file"] for i in items])
+    # M4: the picture is ONE engine concat of video-only clips (`cutwright.engine` op "concat",
+    # Kinocut merge, docs/CAPABILITY_MATRIX.md row 6); the audio stays ONE continuous track built
+    # after it and muxed in a second pass. Joining picture and audio in a single merge is what
+    # re-timed a 24 fps render to 30 fps (COMMS C-007 finding 1), so the two passes are deliberate.
+    import engine_bridge
+    picture = os.path.join(TIKTOK_TEMP, f"{vlist_name}_picture.mp4")
+    engine_bridge.concat_picture([i["video_file"] for i in items], picture)
     write_concat_list(alist, [i["audio_file"] for i in items])
     use_orig = any(i["orig_file"] for i in items)
     if use_orig:
@@ -4084,7 +4089,7 @@ def join_av(items, out, vlist_name, music=None):
                 files.append(silent_wav(i["frames"], i["fps"], sf))
         write_concat_list(olist, files)
 
-    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", vlist,
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", picture,
            "-f", "concat", "-safe", "0", "-i", alist]
     n_audio = 1
     if use_orig:

@@ -428,6 +428,13 @@ def _steps(manifest, assets, cap_usd, fps, versions, strict_files, errors, warni
             checks.append({"check": str(check["check"]), "expect": check.get("expect"),
                            "result": None, "status": "not_run"})
         digests = checkpoint.input_digests(inputs)
+        # The last pure check before anything runs: can these params become executor kwargs? For
+        # mix_audio that pairs each declared track FILE with its settings, so a count mismatch is
+        # caught here (microseconds) instead of after a render.
+        try:
+            ops.executor_kwargs(spec, params, fps=float(fps), inputs=inputs)
+        except ops.OpError as exc:
+            _error(errors, exc.code, exc.message, step=step_id, suggested=exc.suggested)
         if strict_files:
             planned = set(os.path.normcase(path) for outputs in produced.values()
                           for path in outputs.values())
@@ -612,12 +619,12 @@ def _call(step, overwrite=False):
     route = registry.route(step.spec.name, params=step.params, executor=step.executor,
                            reason=step.executor_reason
                            if step.executor != step.spec.executor else "")
-    kwargs = ops.executor_kwargs(step.spec, route.params, fps=step.fps)
+    kwargs = ops.executor_kwargs(step.spec, route.params, fps=step.fps, inputs=step.inputs)
     accepted = inspect.signature(route.function).parameters
     kwargs = {key: value for key, value in kwargs.items() if key in accepted}
     if overwrite and "overwrite" in accepted:
         kwargs["overwrite"] = True
-    arguments = [step.inputs[name] for name in step.spec.inputs]
+    arguments = [step.inputs[name] for name in ops.positional_inputs(step.spec)]
     target = step.outputs[step.spec.outputs[0]]
     guard.ensure_dir(os.path.dirname(target))
     return route.function(*arguments, target, **kwargs)

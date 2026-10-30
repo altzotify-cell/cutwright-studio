@@ -272,15 +272,21 @@ class OpsTableTest(unittest.TestCase):
             ops.validate_params("fit_to_frames", {"frames": 10, "width": 1920})
         self.assertEqual(half.exception.code, "invalid_combination")
         with self.assertRaises(ops.OpError) as tracks:
-            ops.validate_params("mix_audio", {"tracks": [{"volume": 0.3}]})
+            ops.validate_params("mix_audio", {"tracks": ["music.wav"]})
         self.assertEqual(tracks.exception.code, "bad_type")
         self.assertEqual(tracks.exception.param, "tracks")
 
-    def test_tracks_are_validated_as_track_descriptions(self):
-        good = [{"path": "music.wav", "volume": 0.35}]
+    def test_tracks_are_validated_as_track_settings(self):
+        good = [{"volume": 0.35}, {"volume": 0.1, "start": 2.0}]
         self.assertEqual(ops.validate_params("mix_audio", {"tracks": good})["tracks"], good)
         with self.assertRaises(ops.OpError):
             ops.validate_params("mix_audio", {"tracks": []})
+        # The FILE is the op's "tracks" input, never a param: a path here is refused, because a
+        # param is not digested and would not invalidate the cache key (COMMS C-007 finding 3).
+        with self.assertRaises(ops.OpError) as path:
+            ops.validate_params("mix_audio", {"tracks": [{"path": "music.wav"}]})
+        self.assertEqual(path.exception.code, "unknown_param")
+        self.assertIn("tracks", path.exception.suggested)
 
     def test_unknown_op_is_reported_with_the_catalogue(self):
         with self.assertRaises(ops.OpError) as ctx:

@@ -54,8 +54,13 @@ Locations (see `docs/CODEMAP.md` for current line numbers; re-grep, lines drift)
 | `render_video_clip`, `fit_graph` | cut + fit footage to voice length (frame-exact, pad/blur fill, speed) | trim/fit/resize tests | replace by op if passes; else keep as named ffmpeg op |
 | `render_image_clip` | still -> clip with motion | fit test | same |
 | `fit_audio` | fit voice audio to frames | audio test | same |
-| `join_av`, `write_concat_list` | concat clips + music | concat/audio tests | replace by `concat` + `mix_audio` ops |
+| `join_av`, `write_concat_list` | concat clips + music | concat/audio tests | picture concat -> `concat` op (M4 4A, via `engine_bridge.concat_picture`); the one continuous audio track stays (M2 gap 3); `mix_audio` for music is 4B |
 | `make_music_bed` | music loop/fade/duck | audio test | replace by `mix_audio` |
+
+M4 status (phase 4A, 2026-10-30): `recapstudio/_template/engine_bridge.py` is the only bridge to
+`cutwright.engine`; `join_av` now asks the engine for the picture join (`concat`, Kinocut merge) and
+keeps Recap's own single-pass audio chain. Nothing was deleted from `recap.py` yet - that is 4B,
+after the regression pack passes on the swapped path.
 | `burn_character`, comic compose | character/comic layers | composite test | only if parity; comics stay "only if asked" |
 | `write_premiere_xml`, `write_videopad_project` | exports | none | PRESERVE |
 | Remotion render/captions/overlays/scenes | motion graphics | none | PRESERVE (M9 may add HyperFrames data, nothing earlier) |

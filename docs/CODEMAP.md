@@ -21,7 +21,8 @@ Find a function: `grep -n "def name" file`. Read a range: Read tool with offset/
 
 | file | lines | what |
 |---|---|---|
-| `recap.py` | 5,493 | the pipeline in one file (index below). `STEPS` dict at ~5449, `main()` after it |
+| `recap.py` | 4,915 | the pipeline in one file (index below). `STEPS` dict at ~5449, `main()` after it |
+| `engine_bridge.py` | 132 | M4: the only bridge to `cutwright.engine` (`concat_picture`, `fit_clip`, `mix_tracks`); finds the fork root and calls one op per function |
 | `timeline.py` | 357 | `build_timeline`, `write_timeline`, `validate_timeline`, `step_timeline`, `step_remotion` (render + parity + retry) |
 | `scenes.py` | 645 | scene requests, cache hash, staging into `remotion/src/generated`, `resolve`, `_check_generated` (runs Node tools), `_judge` (PNG verdict), `_fix_prompt`, `demo` |
 | `authoring.py` | 608 | `validate_script`, `apply_theme`/`clean_theme`, `build_prompt` (pass-2 prompt), `parse_reply`/`import_reply`, `status`, `action`, `fix_prompt_text`, `demo_briefs` |

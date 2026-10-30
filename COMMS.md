@@ -172,3 +172,46 @@ input in M4; (iii) the next objective is M4 (move Recap editing onto the engine)
 your go.
 
 
+## C-008 | 2026-10-30 | agent -> owner | INFO | OPEN
+Commit: this commit (hash in LOG.md, entry "2026-10-30 - M4 phase 4A")
+Files: `cutwright/engine/ops.py`, `cutwright/engine/manifest.py`,
+       `recapstudio/_template/engine_bridge.py` (new), `recapstudio/_template/recap.py` (`join_av` only),
+       `tests/test_engine_mix_inputs.py` (new), `tests/test_engine_bridge.py` (new),
+       `tests/test_engine_registry.py`, `tests/engine_demo.py`, `docs/CODEMAP.md`,
+       `docs/MIGRATION_CHECKLIST.md`, `LOG.md`, `HANDOFF.md`. Nothing deleted from `recap.py`.
+Goal: phase 4A - (1) make `mix_audio`'s track files declared inputs so a replaced track invalidates
+      the mix (C-007 finding 3), (2) put Recap's picture join on the engine, (3) re-run the
+      regression project on the swapped path and compare with the M0 baseline.
+Observed: regression `recapstudio\Projects\regress` -> "Done. recap_final.mp4 (21.4s, expected
+      21.4s)"; ffprobe: 514 frames, 24/1, 1920x1080, duration 21.416667, 6,834,110 B, aac 48000/2 -
+      every number equal to the M0 baseline in `docs/ENVIRONMENT.md`. Stronger than equal: the video
+      and audio streams are byte-identical to the pre-change file (md5 c671f7a7... / 0064ff59...),
+      and loudness is unmoved (I -11.3 LUFS, LRA 0.4 LU, true peak -6.9 dBFS). The engine really ran
+      the join: `tiktok_temp\full_picture.mp4` (514 frames) is new, and the old concat list
+      `full_video.txt` still carries the 2026-10-29 timestamp (never rewritten).
+      On the demo (180 s of real Kinocut work, five steps): replacing `music.wav` with a same-length,
+      different tone re-ran ONLY `mix` - "cache key changed (inputs, params or executor version)" -
+      and the new 320 Hz burst is measurably in the output (Goertzel: 320 Hz 3,526,719 vs 1000 Hz
+      755 in the first 50 ms); restoring the fixture re-ran `mix` again and put the 1 kHz burst back
+      (1000 Hz 5,787,335 vs 320 Hz 3,139). Before the fix that step would have been skipped.
+Known: `mix_audio` now declares `inputs: {"src", "tracks"}`; `params.tracks` carries SETTINGS only
+      (volume/start/fades), paired with the files by position. A `path` inside a setting is refused
+      with `unknown_param` instead of being silently ignored, and a file/setting count mismatch is
+      refused at plan time (`invalid_combination`).
+Assumed: a project folder lives inside the fork, so the bridge can find `cutwright/engine/ops.py`
+      by walking up. A project copied outside the fork has no engine - `join_av` raises instead of
+      quietly falling back (no runtime "legacy" switch, per `.clinerules`).
+Three findings worth your eye:
+1. Kinocut answers the mix with a warning: "Tracks sum at unity without normalization and may clip.
+   Listen before publishing." So a track volume of 1.0 next to the program audio can clip; the
+   engine surfaces it in the step's `warnings` but does not block. Worth a rule in M12 (SFX).
+2. `fit_to_frames` cannot replace `render_video_clip` yet: no start offset (`-ss`), no `loop`, and
+   `fill="blur"` is unimplemented. Moving the per-segment fit needs new op params, so it stays in
+   `recap.py` for 4B/M13 rather than being half-moved.
+3. The regress project has `project.json` "music": false, so the regression cannot exercise the
+   music path at all; the demo does, and that is where the mix numbers above come from.
+Ask: (i) approve 4B - delete the superseded picture-join code (`join_av`'s demuxer branch) in its
+     own commit, or leave everything in place and stop here; (ii) confirm the 60-90 s real job
+     (roadmap step 5) is next after 4B, and whether you supply the footage/voice or I build it from
+     `recapstudio\Projects\regress\footage\demo_a.mp4`.
+

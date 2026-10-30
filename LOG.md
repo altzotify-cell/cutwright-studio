@@ -842,3 +842,96 @@ Commit     - b831112 "M3 close-out: engine skeleton, CLI verbs, validation gates
              "b831112244f142ac12b953a8e6a2f9d16cc7892d  refs/heads/main" == local HEAD. The commit that
              follows this entry only records that hash in HANDOFF.md + here.
 
+## 2026-10-30 - M4 phase 4A: mix tracks as declared inputs, Recap's picture join on the engine (agent)
+
+Objective (owner-approved, phase 4A only): (1) make `mix_audio`'s track files explicitly declared
+inputs and prove a cache-key change when a track changes; (2) wire the replacement of superseded
+`recap.py` editing functions to `cutwright.engine` with a picture-only concat + one continuous audio
+track; (3) re-run `recapstudio\Projects\regress` on the swapped path and compare duration, frame
+count and audio with the M0 baseline. Nothing deleted from `recap.py` (that is 4B).
+
+TESTED     - the new op contract : `python -m unittest tests.test_engine_mix_inputs -v` ->
+             "Ran 7 tests in 0.973s" / "OK" - `mix_audio` declares inputs ("src","tracks"),
+             `positional_inputs` keeps the file out of the argument list, files pair with settings by
+             position, a count mismatch is `invalid_combination`, replacing a track changes the
+             step's cache key and restoring the identical bytes restores the key (sha256, not mtime).
+TESTED     - the bridge : `python -m unittest tests.test_engine_bridge -v` -> "Ran 5 tests in
+             0.039s" / "OK" - `repo_root()` resolves the fork from `_template` and from a copied
+             `Projects\<job>` folder, a folder outside the fork has no engine, and each call declares
+             the right op/inputs/params.
+TESTED     - the engine's own table : `python -m unittest tests.test_engine_registry
+             tests.test_engine_mix_inputs -v` -> "Ran 43 tests in 19.969s" / "OK".
+TESTED     - five-step demo on real media, fresh run dir : `python -m cutwright run
+             out\fx\m4_manifest.json` -> mix "done", validations "ok decodes_clean measured clean"
+             and "ok has_audio measured True", then `approve` + re-run -> "export export_h264 done"
+             with "ok frame_count measured 60" and "ok constant_fps measured {'frames': 60,
+             'interval': 0.041667, 'fps': 24.0, 'jitter': 1e-06}"; `python -m cutwright status
+             out\runs\m4demo --json` -> "\"done\": [\"cut\",\"fit\",\"join\",\"mix\",\"export\"]" and
+             executors "kinocut", "ffmpeg", "kinocut", "kinocut", "kinocut", `"ok": true`.
+TESTED     - the cache-key fix on real media : replaced `out\fx\music.wav` with a same-length 320 Hz
+             bed (`python out\m4\swap_track.py swap`) and re-ran ->
+             "[+] mix mix_audio done cache key changed (inputs, params or executor version)" while
+             cut/fit/join stayed "cached (cache key unchanged, outputs intact)", and export re-ran
+             too. The new tone really landed in the output: Goertzel over the first 50 ms of
+             `out\runs\m4demo\final.mp4` -> "320 Hz: 3526719 | 1000 Hz: 755". Restoring the fixture
+             re-ran mix again -> "320 Hz: 3139 | 1000 Hz: 5787335". Before the fix that step was
+             skipped, which is exactly COMMS C-007 finding 3.
+TESTED     - the regression project on the swapped path : copied the updated `recap.py` +
+             `engine_bridge.py` into `recapstudio\Projects\regress` (the copy differed from
+             `_template` by these 5 lines only: `git diff --no-index` shows one hunk in `join_av`),
+             ran `python recap.py video` -> "Done. recap_final.mp4  (21.4s, expected 21.4s)", all six
+             clips "cached", no warnings. ffprobe -> "nb_read_frames=514", "r_frame_rate=24/1",
+             "width=1920", "height=1080", "duration=21.416667", "size=6834110", "codec_name=aac",
+             "sample_rate=48000", "channels=2" - every number equal to the M0 baseline in
+             `docs/ENVIRONMENT.md`. Stronger than equal: the streams are BYTE-IDENTICAL to the
+             pre-change file - video "MD5=c671f7a76da05927d9a41d4742779268" and audio
+             "MD5=0064ff59fa0debbc9a47f17cccbb322b" before and after - and loudness is unmoved
+             ("I: -11.3 LUFS", "LRA: 0.4 LU", "Peak: -6.9 dBFS" both runs).
+TESTED     - that the engine actually did the join : `tiktok_temp\full_picture.mp4` exists with
+             "nb_read_frames=514" and a 10/30 09:32:35 timestamp, while the old concat list
+             `tiktok_temp\full_video.txt` still carries 10/29 21:42:49 and was never rewritten.
+TESTED     - what is still in `recap.py` : `Select-String -Path recapstudio\_template\recap.py
+             -Pattern "write_concat_list|join_av|fit_graph"` -> only `fit_graph` (647, used at 2467
+             and 2477), `write_concat_list` (4056, now audio lists only at 4080/4090), `join_av`
+             (4068) and its two call sites (4126, 4320). Nothing was deleted.
+TESTED     - the whole suite : `python out\run_tests.py` -> "Ran 178 tests in 364.720s" / "RESULT:
+             OK  (178 run, 0 failures, 0 errors)"; that is every module, including the 12 new tests
+             (7 mix-input, 5 bridge). The M2 evidence JSONs were rewritten by that run (wall-clock
+             only) and restored, not committed - the C-006 practice.
+
+
+FAILED     - `python -m cutwright approve out\runs\m4demo final_ok --note "M4 4A: mix track ..."` :
+             PowerShell split the note on its spaces -> "cutwright: error: unrecognized arguments:
+             4A: mix track declared as input". Re-ran with a hyphenated note
+             (`M4-4A-mix-track-input`) -> "APPROVED final_ok in out\runs\m4demo".
+FAILED     - measuring the swapped tone with an ffmpeg filter string : `-af
+             "bandpass=f=320:width_type=h:w=120,volumedetect"` -> "[Parsed_bandpass_0] ... Unable to
+             parse option value \"=h\"" (PowerShell/ffmpeg quoting). Replaced with a stdlib Goertzel
+             in `out\m4\tone_check.py` (decode to mono wav, two magnitudes) - the number quoted above.
+FAILED     - process hygiene, not code : the first full-suite run was started in the background, a
+             second one overlapped it, and two suites competed for the same `out\` folders; both were
+             killed and the clean single run is the one quoted.
+NOT TESTED - `recap.py`'s music path through the engine's `mix_audio`: the regress project has
+             `project.json` "music": false, so `join_av` receives `music=None` and never mixes a bed.
+             The op is proven on the demo above instead; wiring `make_music_bed` -> `mix_audio` is 4B.
+NOT TESTED - the TikTok variant (`step_tiktok` -> `join_av`) and the Premiere XML / Remotion steps:
+             not touched in 4A, not re-run.
+NOT TESTED - a project copied OUTSIDE the fork: the bridge raises "no cutwright/engine found". No
+             such project exists here; `repo_root("C:\\Windows")` is unit-tested to return None.
+NOT TESTED - `fit_to_frames` as a replacement for `render_video_clip`: it has no start offset
+             (`-ss`), no `loop` and no `fill="blur"`, so the per-segment fit stays in `recap.py`.
+DECISIONS  - 1. The mix track FILE is a declared input and only its settings stay params; pairing is
+             by position and a mismatch is refused at plan time. A `path` inside a setting is REFUSED
+             (`unknown_param`) rather than silently overridden, because the old form was exactly what
+             hid the file from the cache key. 2. The bridge imports `cutwright.engine` in-process
+             from the fork root (the roadmap allows "path-safe import or subprocess"); the manifest
+             runner stays the tool for a whole production plan (M6), so neither is a second
+             implementation of an op. 3. Only the picture concat moved: `render_video_clip`,
+             `fit_graph`, `fit_audio` and the audio chain stay until an op can express what they do -
+             a half-moved op is worse than a late one. 4. No runtime fallback or "legacy" switch: if
+             the engine is unreachable, the recap step raises. 5. Parity was judged on frames,
+             duration, stream parameters, stream md5s and loudness, and came out byte-identical -
+             stronger than the roadmap's "within one frame / 0.5 LU" bar. 6. Kinocut's own warning
+             ("Tracks sum at unity without normalization and may clip") is surfaced in the step's
+             warnings and NOT auto-corrected; it needs a rule when SFX arrive (M12).
+
