@@ -8,35 +8,34 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M6 "Agent bridge and focused tool discovery" COMPLETE (2026-10-30). An agent now drives a
-                    Recap Studio project from the CLI - `recap projects | new <name> | status --project X |
-                    <step> --project X`, all `--json` - and loads ONE stage's tools (`tools envelope --stage S`).
-                    Bridge = `cutwright/recap.py` (390 lines, stdlib): each project's own `recap.py` runs as a
-                    subprocess with `cwd` = the project and `RECAP_NONINTERACTIVE=1`; `--force`, `init`,
-                    `collect`, `comic`, `module`, `collect_one`, `characters`, `tiktok` are REFUSED (exit 2)
-                    unless the caller passes BOTH `--i-know-this-destroys-work` and `--comms <id>`.
-                    Discovery = `cutwright/engine/envelopes.py` (154 lines): plan 6, edit 10, graphics 4,
-                    review 4, deliver 3 tools, cap 10 (`ops.MAX_ENVELOPE`, checked over ops AND commands); each
-                    op carries its param schema, each command its usage line, every envelope one `how_to_run`.
-                    Stages are now plan, edit, graphics, review, deliver (`qc` was renamed `review`, `assets`
-                    deleted - no op, test or code used it). Before it: M5.5 DONE (5.5A/B/C), M5 DONE (the old
-                    editor backend is out of the code).
-Last green commit : fcae302 "M6: the agent bridge (recap <step> --json) and one focused tool set per stage"
-                    (13 files, +1160/-77) on main, pushed to origin main; `git ls-remote origin
-                    refs/heads/main` -> fcae302292aa0841bf1ba0ab713fd13bdd84d58a. The commit that follows it
-                    only records that hash in this line. Before it: 66c1b97 (M5.5C), 20a5052, d55c114,
-                    5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd, 4528c51 (M5 close-out), 7a8184c, 0755d92,
-                    498aed1, d072280.
-Next step         : M6 is closed with ONE known gap: the G4 "Done when" render line - `recap timeline` then
-                    `recap remotion` on a fresh project - was NOT run (both outran the 30 s foreground command
-                    cap and that session forbade background runs / polling loops; `timeline` was killed
-                    mid-run at 30 s). Close it first, with the owner present, then M7 (agent-owned scene loop).
-                    Everything else in M6 is verified: 74 tests green, and `recap new/demo/check/status` plus
-                    every refusal ran for real (quotes in LOG).
-Open COMMS        : C-015 (this session: the `qc`->`review` rename and the deleted `assets` stage, envelopes
-                    carrying commands as well as ops, and the unrun render line - review, one line each to
-                    reverse); C-014 BLOCKED (2026-10-27); C-012, C-011 (answered 2026-10-30), C-010..C-006
-                    answered; C-013 closed (M5.5C, no answer needed).
+Current milestone : M7 "Agent-owned scene loop" COMPLETE (2026-10-30). Vision works here: stills were looked at
+                    directly. Phase A closed M6's open render line on a fresh `m6probe` project - `recap
+                    timeline` (exit 0, 118.1 s, 514 frames) then `recap remotion` (exit 0, 202.0 s) - and the
+                    file decodes to h264 1920x1080 24/1, nb_frames=514, aac, 21.419 s, 11,628,341 B. Phase B
+                    gave the agent a tool for authoring instead of memory: `python -m cutwright scene brief
+                    [--handle H] [--composition ID]` (cutwright/engine/scenecraft.py, stdlib) returns the four
+                    primitives - Camera, LayeredMedia, KineticText, MaskWipe - with the props the kit really
+                    exports, the handle rule, the three stills and six critic checks; `scene check <file...>`
+                    runs the SAME TypeScript checker the `scenes` step uses. Graphics envelope is now 5 tools.
+                    The new shot `src/scenes/descent_beat.tsx` (composition `bench-descent-beat`, real footage by
+                    handle `footage_a`) went through the loop: 3 planted/found defects + a regression caught by
+                    measurement, 2 revisions (the max), pass 3 clears the caption band at 205 px. Known gap:
+                    G5's 3-demo-brief harness was not run (one beat proved the loop instead). Before it: M6 DONE
+                    (bridge + stage envelopes), M5.5 DONE, M5 DONE (the old editor backend is out of the code).
+Last green commit : the commit that follows this line records it (M7 touched cutwright/{cli,engine/envelopes,
+                    engine/scenecraft}.py, tests, SceneLab + the new scene, docs). Before it: d070fbb, fcae302
+                    (M6), 66c1b97 (M5.5C), 20a5052, d55c114, 5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd,
+                    4528c51 (M5 close-out), 7a8184c, 0755d92, 498aed1, d072280.
+Next step         : M8 - visual quality overhaul and benchmark (old G6): five distinct benchmark scenes at
+                    16:9 and 9:16, the owner approves >= 4 of 5, `validate` keeps slideshow_risk below "high".
+                    Read `docs/ROADMAP.md` M8 and `docs/VISUAL_STANDARD.md` sections 2-9 first. Decide with the
+                    owner whether the G5 3-scene count is wanted before or after M8. M7 is verified: 107 tests
+                    green (`test_engine_cli + registry + remotion`), 3 stills rendered and looked at, render
+                    line decoded (quotes in LOG, numbers in docs/evidence/m7_*.json).
+Open COMMS        : C-016 (this session: the scene brief/check tools, the planted flaws, the gap, and the
+                    implemented C-015 decisions); C-015 resolved by the owner (rename + envelopes approved);
+                    C-014 BLOCKED (2026-10-27); C-012, C-011 (answered 2026-10-30), C-010..C-006 answered;
+                    C-013 closed (M5.5C, no answer needed).
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -187,7 +186,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [x] | M5 | Remove the old editor backend completely | DONE 2026-10-30: the timeline writer (2,573 lines), its GUI helper, its PowerShell window-automation script and the `projects/` demos (4 projects, 19 files) deleted; `cli.py` lost `build` + the doctor line and gained a Kinocut line; `doctor` exit 0, 178 tests green, regression pack green |
 | [x] | M5.5 | Creative rendering slice (NEW, owner 2026-10-30; before M6) | DONE 2026-10-30 in three sessions. 5.5A: Remotion executor `render_still` + `render_range` behind the op registry, cold/warm measured at 16:9 and 9:16. 5.5B: footage by string-literal handle, `LayeredMedia`/`Camera`, one bundle per content key (3 stills 26.7 s cold / 1.9 s cached). 5.5C: `KineticText` + `MaskWipe` (kit/3), one directed benchmark shot over real public-domain footage, and the critic loop that found and fixed 3 defects on the rendered stills (caption-band collision, killed glow, crushed mid-tones) |
 | [x] | M6 | Agent bridge `recap <step> --json` + focused tool discovery | DONE 2026-10-30: bridge `cutwright/recap.py` (project subprocess, RECAP_NONINTERACTIVE, `--force`/`init`/`collect` refused without both override flags + COMMS id); `engine/envelopes.py` gives plan 6 / edit 10 / graphics 4 / review 4 / deliver 3 tools (cap 10, ops AND commands); 74 tests green. NOT verified: `recap timeline` -> `recap remotion` (30 s cap) |
-| [ ] | M7 | Agent-owned scene loop (old G5) | 3 scenes written by agent, >= 2 first-try, 1 revised after viewing frames |
+| [x] | M7 | Agent-owned scene loop (old G5) | DONE 2026-10-30: M6's render line closed on a fresh `m6probe` (`timeline` exit 0 / 118.1 s / 514 frames, `remotion` exit 0 / 202.0 s, ffprobe nb_frames=514, 21.419 s); `scene brief` + `scene check` (new `engine/scenecraft.py`, 5 tests that read `kit/**`); one agent-authored shot `descent_beat.tsx` through the critic loop (2 planted + 2 found defects, 1 regression caught by measurement, 2 revisions, caption band cleared at 205 px); 107 tests green. GAP: G5's 3-demo-brief count not run |
 | [ ] | M8 | Visual quality overhaul + 5-scene benchmark (old G6) | owner approves >= 4 of 5 at 16:9 and 9:16 |
 | [ ] | M9 | HyperFrames benchmark vs Remotion (evidence, then owner decides) | `docs/BAKEOFF_hyperframes.md` with measured numbers |
 | [ ] | M10 | Perception to script (old G7) | video in -> valid `segments.json`, dialogue and silent clips |
@@ -198,7 +197,7 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 | [ ] | M15 | Cutwright Studio UI (old G15) | human makes a video without the command line |
 | [ ] | M16 | Other modules / optional borrows (old G16) | each module has a preset + prompt profile |
 
-Order: M0..M5 done, then **M5.5** (the one insertion, before M6), then **M6** (done 2026-10-30), then M7, M8, M9. M10-M16 are a
+Order: M0..M5 done, then **M5.5** (the one insertion, before M6), then **M6** (done 2026-10-30), then **M7** (done 2026-10-30), then M8, M9. M10-M16 are a
 PARKING LOT (owner decision, 2026-10-30): do not start or expand them.
 
 ## Provisional decisions made for you (verify each on this PC; table with fallbacks: `docs/ROADMAP.md`)

@@ -35,7 +35,9 @@ with `set RECAP_NONINTERACTIVE=1` (PowerShell: `$env:RECAP_NONINTERACTIVE=1`). A
 | `status <run-dir>` | the cursor, every step, its outputs and whether they still match (stale) | works (M3) |
 | `approve <run-dir> <gate>` | write `approvals/<gate>.json`, releasing the step behind that gate | works (M3) |
 | `recap projects\|new\|status\|<step>` | non-interactive bridge: one project step, `--project`, `--json`; `--force`/`init`/`collect` refused without the gate | works (M6) |
-| `scene brief/write/check/sheet/metrics` | agent scene-authoring loop | **G5** |
+| `scene brief [--handle H] [--composition ID]` | the authoring brief: the 4 primitives + their real props, the handle rule, the 3 stills, the critic's checks | works (M7) |
+| `scene check <file...> [--handle H]` | the real TypeScript static check of scene files (same checker `scenes` uses), `--json` | works (M7) |
+| `scene write/sheet/metrics` | the rest of the G5 loop (write into the project, contact sheet, numbers) | **G5 remainder** |
 | `analyze`, `script check`, `profile show` | perception pack, script validation, prompt profiles | **G7** |
 | `blueprint check`, `direct` | Production Blueprint validation; Director orchestration over backends | **G8** |
 | `make "<request>" --profile` | one-line entry for any video kind | **G9** |
@@ -97,11 +99,13 @@ Side effects: some steps open an Explorer window (`reveal()`); `tts` rewrites `c
 `STATE.md` (resume snapshot), `scenes_report.json` + `SCENE_FIX_PROMPT.txt`, `timeline.json`
 (`validate_timeline` messages), `credits.txt`, `shot_manifest.csv`, `chapters.txt`, `audio/_manifest.json`.
 
-## Review loop for visuals (rule; tools arrive in G5)
+## Review loop for visuals (rule; `scene brief` + `scene check` arrived in M7)
 
-write scene -> `scene check` -> `scene sheet` (one contact-sheet PNG) -> LOOK -> say in one line what is weak
-(composition, hierarchy, contrast, cropping, density, movement) -> revise (max 2 rounds) -> keep the best ->
-if still weak mark `needs_owner`. Preserve passing scenes through the cache; never regenerate everything.
+`scene brief` -> write the scene -> `scene check` -> render 3 stills (`render_still` at the frames the brief
+names) -> LOOK -> say in one line what is weak (composition, hierarchy, contrast, depth, motion contrast,
+caption band) -> revise (max 2 rounds) -> keep the best -> if still weak mark `needs_owner`. Preserve passing
+scenes through the cache; never regenerate everything. `scene sheet` (one contact-sheet PNG) and `scene metrics`
+are still G5 remainder; three stills at 1920x1080 cost ~6 s each once the bundle exists.
 Automated metrics report facts; they never decide that a scene is good.
 
 ## Paths the tools write (guard)

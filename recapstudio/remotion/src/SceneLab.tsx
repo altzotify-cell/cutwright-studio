@@ -4,6 +4,7 @@ import {mergeTheme} from '../kit';
 import {exampleScenes} from '../scenes_examples';
 import {generated, projectTheme} from './generated/registry';
 import {directedEntry} from './scenes/directed_shot';
+import {descentEntry} from './scenes/descent_beat';
 import {makeLayout} from './layout';
 import {LabEntry} from './sceneTypes';
 import {AssetScope, AssetTable, SceneFrame} from '../kit';
@@ -82,7 +83,9 @@ export const labCompositions = (): React.ReactElement[] => {
   Object.entries(generated).forEach(([id, entry]) => add('scene', id, entry));
   Object.entries(exampleScenes).forEach(([id, entry]) => add('example', id, entry));
   // M5.5C: the directed benchmark shot (src/scenes/directed_shot.tsx) - the visual standard's evidence.
-  Object.entries({directed_shot: directedEntry}).forEach(([id, entry]) => add('bench', id, entry));
+  // M7: the Descent beat (src/scenes/descent_beat.tsx) - the agent-authored narrative shot.
+  Object.entries({directed_shot: directedEntry, descent_beat: descentEntry})
+    .forEach(([id, entry]) => add('bench', id, entry));
   out.push(
     <Composition
       key="empty-ref"

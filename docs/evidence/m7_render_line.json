@@ -1,0 +1,32 @@
+{
+  "milestone": "M7 phase A - the G4 render line M6 could not run (fresh project, CLI only)",
+  "date": "2026-10-30",
+  "project": "recapstudio/Projects/m6probe",
+  "why": "M6 closed with one gap: `recap timeline` -> `recap remotion` outran the 30 s foreground cap. Both were run detached here, each writing its exit code to a file, and the file they produced was decoded.",
+  "steps": [
+    {
+      "command": "python -m cutwright recap new m6probe --json",
+      "result": {"ok": true, "created": true, "files": "template copy, 5 bridge files present"}
+    },
+    {
+      "command": "python -m cutwright recap demo --project m6probe --json",
+      "result": {"ok": true, "exit_code": 0, "seconds": 6.4, "files_changed_count": 14}
+    },
+    {
+      "command": "python -m cutwright recap timeline --project m6probe --json",
+      "result": {"ok": true, "exit_code": 0, "seconds": 118.1, "files_changed_count": 50,
+                 "timeline": {"fps": 24, "totalFrames": 514, "width": 1920, "height": 1080}}
+    },
+    {
+      "command": "python -m cutwright recap remotion --project m6probe --json",
+      "result": {"ok": true, "exit_code": 0, "seconds": 202.0,
+                 "output": "recapstudio/Projects/m6probe/recap_remotion.mp4"}
+    }
+  ],
+  "decoded_output": {
+    "command": "ffprobe -v error -show_entries format=duration,size:stream=codec_name,width,height,nb_frames,avg_frame_rate recapstudio/Projects/m6probe/recap_remotion.mp4",
+    "codec_name": "h264", "width": 1920, "height": 1080, "avg_frame_rate": "24/1",
+    "nb_frames": 514, "audio": "aac, nb_frames 1006", "duration": 21.419, "size": 11628341
+  },
+  "verdict": "The G4 done-when is closed: new project -> demo -> timeline -> render, CLI only, exit 0 twice, and the file decodes to exactly the 514 frames the timeline asked for."
+}

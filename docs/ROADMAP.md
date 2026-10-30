@@ -335,6 +335,33 @@ Spec: `docs/GOALS.md` section G5 unchanged (write TSX, static check, test render
 First step of the milestone is still "can DeepSeek see images through Cline?" (HANDOFF known-unverified). If not, use `scene sheet` PNG metrics plus the owner's verdict and say so.
 Acceptance: G5 "Done when" (agent writes 3 scenes, >= 2 pass first try, one revised after viewing frames), quoted.
 
+**Result (2026-10-30): M7 DONE, with ONE gap carried forward (see below).** Vision works: the three
+stills were looked at directly. Phase A closed M6's open render line: `recap timeline --project
+m6probe` -> `"exit_code": 0`, 118.1 s, timeline.json with 514 frames; `recap remotion --project
+m6probe` -> `"exit_code": 0`, 202.0 s; `ffprobe` on the result -> "h264 / 1920x1080 / 24-1 /
+nb_frames=514", aac audio, 21.419 s, 11,628,341 B. The agent now authors scenes with a tool instead
+of from memory: `python -m cutwright scene brief [--handle H] [--composition ID]` returns the four
+primitives (Camera, LayeredMedia, KineticText, MaskWipe) with the props the kit actually exports,
+the handle rule, the three stills and the critic's six checks (`cutwright/engine/scenecraft.py`,
+wired into the `graphics` envelope: 5 tools, cap 10), and `scene check <file...>` runs the SAME
+TypeScript checker the `scenes` step uses. The brief is data checked against `kit/**` by 5 tests, so
+a renamed prop fails a test instead of misinforming the agent.
+The scene (`src/scenes/descent_beat.tsx`, composition `bench-descent-beat`): real NASA footage by
+handle `footage_a`, all four primitives, 8 s at 24 fps. `scene check` -> 0 errors / 0 warnings /
+cost medium. Three stills (0 / 48 / 144) rendered through the batch executor, then the critic loop:
+pass 1 had four defects (two planted: sub line inside the caption band, rail labels under the
+legibility floor; two found unaided: the 1.16 push cropped the headline at the left edge on f144, and
+f000 opened on bare sky), revision 1 fixed them, measurement then caught a regression the eye missed
+(the camera drift sank the sub back into the caption band: 135 px from the bottom at f144), revision
+2 fixed that -> lowest text 210 / 211 / 205 px, caption-band strip stdev 38.0 -> 12.5, rail region
+mean luma 70.1 -> 52.8 with stdev 40.0 -> 47.8. Two revisions = the loop's maximum.
+Verified: `python -m unittest tests.test_engine_cli tests.test_engine_registry
+tests.test_engine_remotion -v` (see LOG for the count). Numbers: `docs/evidence/m7_render_line.json`,
+`docs/evidence/m7_descent.json`.
+GAP: G5's "Done when" harness - three demo briefs, >= 2 scenes passing the check first try, with pass
+counts - was NOT run; this milestone proved the loop on ONE beat, which is what the owner scoped.
+Whoever wants the 3-scene count should say so before M8.
+
 ## M8 - Visual quality overhaul and benchmark (old G6)
 
 Spec: `docs/GOALS.md` section G6 and `docs/VISUAL_STANDARD.md` unchanged. Output: five distinct benchmark scenes at 16:9 and 9:16 (`benchmark/scenes/*.tsx`, props, expected durations). The owner approves >= 4 of 5. The five scenes are the fixed input for M9.

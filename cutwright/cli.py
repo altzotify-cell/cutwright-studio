@@ -37,7 +37,7 @@ from . import probe
 from . import recap as bridge
 from . import subs
 from . import transcribe
-from .engine import checkpoint, gates, manifest, ops, registry, report, validate
+from .engine import checkpoint, gates, manifest, ops, registry, report, scenecraft, validate
 from .engine.executors import kinocut as kino
 
 VERSION = "0.1.0"
@@ -731,6 +731,65 @@ def cmd_tools(args):
     return 0
 
 
+def cmd_scene(args):
+    """The authoring loop's two cheap halves: the brief before writing, the check after (M7)."""
+    action = getattr(args, "action", "") or "brief"
+    handles = list(getattr(args, "handle", None) or [])
+    try:
+        if action == "check":
+            data = scenecraft.check(args.file, handles)
+            data["files"] = list(args.file)
+            if _json_mode(args):
+                _dump(data)
+            else:
+                _print_scene_check(data)
+            return 0 if data["ok"] else 2
+        data = scenecraft.brief(handles[0] if handles else "",
+                                getattr(args, "composition", "") or "",
+                                getattr(args, "duration", 192) or 192)
+        data["ok"] = True
+        if _json_mode(args):
+            _dump(data)
+        else:
+            _print_scene_brief(data)
+        return 0
+    except scenecraft.SceneError as exc:
+        return _reject(args, "scene", exc)
+
+
+def _print_scene_brief(data):
+    rule()
+    print("SCENE BRIEF   %d frames   imports: %s" % (data["duration_frames"],
+                                                     ", ".join(data["imports"])))
+    rule()
+    for row in data["primitives"]:
+        print("  %-13s %-18s %s" % (row["name"], row["file"], row["job"]))
+        print("      props  %s" % ", ".join(row["props"]))
+    print("  handle       %s" % data["handles"]["rule"])
+    print("  composition  %s" % data["composition"]["rule"])
+    print("  stills       %s" % ", ".join("%s@%d" % (row["look"], row["frame"])
+                                          for row in data["stills"]))
+    print("  critic       %s" % "; ".join(row["check"] for row in data["review"]))
+    print("  revisions    at most %d, then mark it needs_owner (%s)"
+          % (data["max_revisions"], data["standard"]))
+    rule()
+
+
+def _print_scene_check(data):
+    rule()
+    print("SCENE CHECK   %d error(s), %d warning(s), %ss"
+          % (data["errors"], data["warnings"], data["seconds"]))
+    rule()
+    for name, row in sorted((data.get("scenes") or {}).items()):
+        row = row or {}
+        print("  %-16s cost=%-6s default=%s" % (name, row.get("cost"), row.get("hasDefault")))
+        for kind in ("errors", "warnings"):
+            for item in row.get(kind) or []:
+                print("    %-8s line %-5s %s" % (kind[:-1], item.get("line", "?"),
+                                                 item.get("message", "")))
+    rule()
+
+
 def _print_plan(data):
     rule()
     print("PLAN  %s   %d step(s), $%s" % (data.get("run_dir", ""), data.get("steps", 0),
@@ -1108,6 +1167,23 @@ def build_parser():
     p.set_defaults(func=cmd_transcribe)
 
     # --- the engine (M3): thin verbs over cutwright/engine/* -------------------------------
+    p = sub.add_parser("scene", help="write a scene: the authoring brief, then the static check")
+    ssub = p.add_subparsers(dest="action", metavar="ACTION")
+    ssub.required = True
+    q = ssub.add_parser("brief", help="the four primitives, the handle rule, the stills, the critic")
+    q.add_argument("--handle", action="append", default=[],
+                   help="a footage handle the step will declare (repeatable)")
+    q.add_argument("--composition", default="", help="the composition id the step will name")
+    q.add_argument("--duration", type=int, default=192, help="frames (192 = 8 s at 24 fps)")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_scene)
+    q = ssub.add_parser("check", help="static check of scene .tsx files with the real TypeScript")
+    q.add_argument("file", nargs="+", help="one or more scene files")
+    q.add_argument("--handle", action="append", default=[],
+                   help="a handle the scene may name (repeatable)")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_scene)
+
     p = sub.add_parser("tools", help="what the engine can do, and what is installed")
     p.add_argument("--json", action="store_true", help="print JSON")
     tsub = p.add_subparsers(dest="action", metavar="ACTION")

@@ -21,7 +21,7 @@ import wave
 from unittest import mock
 
 from cutwright import cli, guard, probe
-from cutwright.engine import envelopes, ops, registry
+from cutwright.engine import envelopes, ops, registry, scenecraft
 from cutwright.engine.executors import ExecutorError, ExecutorTimeout
 from cutwright.engine.executors import ffmpeg, kinocut
 from tests import media_fixtures as mf
@@ -478,6 +478,57 @@ class StageEnvelopeTest(unittest.TestCase):
             self.assertEqual(sorted(positionals), sorted(row["args"]), name)
             self.assertTrue(row["usage"].startswith("python -m cutwright "), name)
 
+
+class SceneBriefTest(unittest.TestCase):
+    """M7: the authoring brief, checked against the real kit so it cannot invent a primitive."""
+
+    def test_the_brief_names_the_four_directed_primitives(self):
+        data = scenecraft.brief("footage_a", "bench-descent-beat", 192)
+        self.assertEqual([row["name"] for row in data["primitives"]],
+                         ["Camera", "LayeredMedia", "KineticText", "MaskWipe"])
+        self.assertEqual(data["imports"], ["remotion", "react", "@kit"])
+        self.assertEqual(data["handles"]["declared"], ["footage_a"])
+        self.assertEqual(data["composition"]["id"], "bench-descent-beat")
+        self.assertIn("caption band", [row["check"] for row in data["review"]])
+
+    def test_every_listed_primitive_and_prop_exists_in_the_kit(self):
+        for row in scenecraft.PRIMITIVES:
+            path = os.path.join(scenecraft.KIT, os.path.basename(row["file"]))
+            with open(path, encoding="utf-8") as handle:
+                source = handle.read()
+            self.assertIn("export const %s" % row["name"], source, row["name"])
+            for prop in row["props"]:
+                self.assertRegex(source, r"\b%s\??:" % prop, "%s.%s" % (row["name"], prop))
+
+    def test_the_handle_rule_is_the_one_the_checker_enforces(self):
+        for handle in ("footage_a", "a", "a1_b2"):
+            self.assertRegex(handle, scenecraft.HANDLE_PATTERN)
+        for handle in ("footage-a", "Footage", "a.mp4", "", "a" * 40, "assets/x"):
+            self.assertNotRegex(handle, scenecraft.HANDLE_PATTERN)
+
+    def test_three_looks_are_start_middle_impact(self):
+        self.assertEqual(scenecraft.still_frames(192),
+                         [{"look": "start", "frame": 0}, {"look": "middle", "frame": 48},
+                          {"look": "impact", "frame": 144}])
+        self.assertEqual([row["frame"] for row in scenecraft.still_frames(1)], [0, 0, 0])
+
+    def test_the_real_checker_rejects_a_bad_scene_and_accepts_the_example(self):
+        folder = guard.ensure_dir(os.path.join(guard.OUT, "scene_check_test"))
+        good = os.path.join(scenecraft.REMOTION, "src", "scenes", "directed_shot.tsx")
+        bad = os.path.join(folder, "bad_scene.tsx")
+        guard.write_text(bad, "import fs from 'node:fs';\nimport React from 'react';\n"
+                              "import {AbsoluteFill} from 'remotion';\n"
+                              "export const cost: 'low' | 'medium' | 'high' = 'low';\n"
+                              "const Bad: React.FC = () => <AbsoluteFill>{String(fs)}</AbsoluteFill>;\n"
+                              "export default Bad;\n")
+        try:
+            data = scenecraft.check([good, bad], ["footage_a"])
+        except scenecraft.SceneError as exc:          # node missing on a bare machine
+            self.skipTest("node/typescript unavailable: %s" % exc)
+        self.assertFalse(data["ok"])
+        self.assertEqual(data["scenes"]["directed_shot"]["errors"], [])
+        self.assertTrue(data["scenes"]["bad_scene"]["errors"])
+        self.assertIn("node:fs", data["scenes"]["bad_scene"]["errors"][0]["message"])
 
 
 if __name__ == "__main__":

@@ -32,6 +32,11 @@ HOW_TO_RUN = ("python -m cutwright validate <manifest> --json  ->  "
 # what it answers. `tests/test_engine_registry.py` checks these against the live argparse parser,
 # so a renamed flag fails a test instead of silently misinforming an agent.
 COMMANDS = {
+    "scene": {"usage": "python -m cutwright scene brief [--handle H] [--composition ID] [--json]"
+                       " | scene check <file...> [--handle H] [--json]",
+              "args": (), "flags": ("--handle", "--composition", "--duration", "--json"),
+              "description": "authoring: the four primitives + handle rule + critic checks, then "
+                             "the real TypeScript static check"},
     "tools": {"usage": "python -m cutwright tools list|describe <op>|envelope --stage <stage> [--json]",
               "args": (), "flags": ("--stage", "--json"),
               "description": "discovery: every op, one op in full, or one stage in focus"},
@@ -84,8 +89,9 @@ STAGE_FOCUS = {
         "commands": (),
     },
     "graphics": {
-        "why": "draw over the picture: burn captions, render ONE still to look at, render a range",
-        "commands": ("recap",),
+        "why": "draw over the picture: write a scene from the brief, burn captions, render ONE "
+               "still to look at, render a range",
+        "commands": ("scene", "recap"),
     },
     "review": {
         "why": "judge the result before it ships: validate the plan, read the run state, grade the "

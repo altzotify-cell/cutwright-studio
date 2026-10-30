@@ -1504,6 +1504,74 @@ TESTED     - the digest rules (task 3) : 6 new tests, `... tests.test_engine_man
              handle tables flattened to "assets[footage_a]").
 FAILED     - downloading the clip, twice : `Invoke-WebRequest` -> "429, Too many requests ... Wikimedia"
              (also with a custom User-Agent), and images-api.nasa.gov -> "403 Forbidden". Worked:
+
+## 2026-10-30 | M7 - the G4 render line closed, and the agent-authored scene through the vision critic
+
+TESTED     - the G4 render line M6 left open (phase 7A), each step detached with its exit code in a
+             file, checked once : `python -m cutwright recap timeline --project m6probe --json` ->
+             "\"ok\": true", "\"exit_code\": 0", "\"seconds\": 118.1", "files_changed_count": 50, and
+             timeline.json {"fps":24,"totalFrames":514,"width":1920,"height":1080}; then
+             `... recap remotion --project m6probe --json` -> "\"exit_code\": 0", "\"seconds\": 202.0".
+             `ffprobe` on recap_remotion.mp4 -> "codec_name=h264 / width=1920 / height=1080 /
+             avg_frame_rate=24/1 / nb_frames=514", audio "codec_name=aac", "duration=21.419000",
+             "size=11628341". 514 frames = the timeline's totalFrames.
+             Numbers: docs/evidence/m7_render_line.json.
+TESTED     - the authoring tool, task 2 : `python -m cutwright scene brief --handle footage_a
+             --composition bench-descent-beat --json` -> 4 primitives with the props the kit really
+             exports; "stills start@0, middle@48, impact@144"; 6 critic checks; handle pattern
+             ^[a-z][a-z0-9_]{0,31}$. `python -m cutwright tools envelope --stage graphics --json` ->
+             "\"tools\": 5" (3 ops + scene + recap), cap 10. The brief is DATA checked against kit/**:
+             5 new tests, `python -m unittest tests.test_engine_registry.SceneBriefTest -v` ->
+             "Ran 5 tests in 8.318s" / "OK" (every listed primitive and prop must exist in kit/**, and
+             the node checker must reject a scene importing node:fs while accepting directed_shot).
+TESTED     - the scene written from that brief : `python -m cutwright scene check
+             recapstudio/remotion/src/scenes/descent_beat.tsx --handle footage_a --json` ->
+             "\"errors\": []", "\"warnings\": []", "\"cost\": \"medium\"", "\"hasDefault\": true",
+             2.672s. First attempt warned "no `export const cost = 'low' | 'medium' | 'high'`" -
+             `as const` hides the literal from the AST; fixed to a typed literal.
+TESTED     - 3 stills through the batch executor, THREE passes : `python -m cutwright run
+             out\m7\batch_descent.json` -> "3 of 3 done", each "ok size measured [1920, 1080]";
+             passes 2 and 3 ran all three steps with "cache key changed (inputs, params or executor
+             version)", so editing the scene file invalidates its stills. Bytes 1,788,451 / 2,011,111
+             / 2,037,053 (pass 1) and 1,787,371 / 2,046,881 / 2,069,719 (pass 3).
+TESTED     - the vision critic loop, on the PNGs looked at directly : pass 1 -> D1 sub line at
+             safeBottom, inside the caption band (measured lowest text 49 / 43 / 1 px from the bottom
+             edge at f000/f048/f144; captions sit at captionBottom 97 px and reach ~157 px up, and at
+             f144 the line was clipped by the frame edge); D2 rail labels 18 px at 60 % and yellow
+             numbers over bright cloud with no backing (rail region mean luma 70.1, stdev 40.0);
+             D3 the 1.16 camera push cropped "Seven" and "It" at the LEFT edge (left block at
+             safeSide 115 px -> ~-20 px at 1.16); D4 f000 opened on bare sky. Revision 1 fixed all
+             four. Pass 2 looked right; MEASUREMENT then caught a regression the eye did not: the
+             remaining downward drift still sank the sub to 169 / 167 / 135 px from the bottom, i.e.
+             inside the band at f144. Revision 2 (base = captionBottom + 124u, panY 0 -> -14 so the
+             camera rises) -> pass 3: lowest text 210 / 211 / 205 px, caption-band strip stdev
+             38.0 -> 12.5, rail region mean 70.1 -> 52.8 with stdev 40.0 -> 47.8. Two revisions = the
+             loop's maximum. Numbers + verdict: docs/evidence/m7_descent.json.
+TESTED     - the targeted suites : `python -m unittest tests.test_engine_cli
+             tests.test_engine_registry tests.test_engine_remotion -v` -> "Ran 107 tests in 38.949s" /
+             "OK", exit 0. Run detached: the same command in the foreground hit the 30 s cap once and
+             was killed, which is why it is a file, not a terminal tail.
+FAILED     - two self-inflicted command bugs : the desktop command that recorded a detached run's
+             exit code used `echo 0> file`, which cmd parsed as a redirect of handle 0, so the first
+             exit file came out empty (the run itself was fine - its JSON said "ok": true); fixed with
+             a space before `>`. And `scene check` first answered "the checker wrote no report (exit
+             0)" because tools/check_scenes.mjs resolves `out` against ITS cwd; the manifest now
+             carries an absolute report path.
+NOT TESTED - the 8 s in motion: three stills, not a rendered range, and not the 30 fps clip inside a
+             24 fps composition. The 9:16 shape of this shot. A render with captions actually burned
+             over it - the caption band was cleared by measurement (>=181 px target, 205 px actual),
+             not by looking at a captioned frame.
+NOT TESTED - G5's own "Done when" harness (three demo briefs, >= 2 scenes passing first try, pass
+             counts). This milestone proved the loop on ONE beat, which is what the owner scoped; the
+             3-scene count is listed as a gap in ROADMAP M7.
+DECISIONS  - the authoring brief is data checked against kit/** by tests, not prose: a renamed prop
+             now fails a test instead of misinforming the next agent. `scene check` reuses the SAME
+             node checker the `scenes` step runs (one implementation, no second truth) and forces an
+             absolute report path. The two planted flaws (D1, D2) are recorded as planted, so the
+             loop's hit rate stays honest: it caught both planted ones and 2 of 4 unaided.
+DECISIONS  - the cache behaved as designed after a scene edit: same manifest, same run folder, all
+             three steps re-ran with "cache key changed".
+
              `curl.exe -sSL -A "CutwrightBench/1.0"` -> "HTTP 200 bytes 6291118".
 FAILED     - one `python -m cutwright run` in the foreground : killed by the 30 s command cap mid-step 3
              ("running"). Recovered the honest way - `status` showed 2 done / 1 running, `resume` re-ran

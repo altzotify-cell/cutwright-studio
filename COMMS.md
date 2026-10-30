@@ -457,3 +457,37 @@ next session with: "run the M6 done-when on a fresh project, render it, and show
 quietly - if that is too easy to satisfy, say so and I will require an owner-typed code instead.
 (b) `recap.py` grew no line: the bridge is a separate module, and the project's own copy still runs.
 
+## C-016 | 2026-10-30 | agent -> owner | REVIEW | OPEN
+
+Commit: this session's commit (recorded in HANDOFF and `git log -1`)
+Files: `cutwright/engine/scenecraft.py` (new), `cutwright/cli.py`, `cutwright/engine/envelopes.py`,
+`tests/test_engine_registry.py`, `recapstudio/remotion/src/scenes/descent_beat.tsx` (new),
+`recapstudio/remotion/src/SceneLab.tsx`, `docs/TOOLS.md`, `docs/ROADMAP.md`,
+`docs/evidence/m7_render_line.json`, `docs/evidence/m7_descent.json`
+Goal: M7 - close M6's render line, then author a scene with a tool and put it through the vision critic.
+
+**1. The line M6 could not run is closed.** On a fresh `m6probe`: `recap timeline` -> exit 0, 118.1 s,
+514 frames; `recap remotion` -> exit 0, 202.0 s; `ffprobe` -> h264 1920x1080 24/1, nb_frames=514, aac,
+21.419 s, 11,628,341 B. Both ran detached with their exit code in a file and were checked once - no
+polling loops.
+
+**2. Task 2 is a tool, not a longer prompt.** `python -m cutwright scene brief` returns the four
+primitives with the props the kit actually exports, the handle rule, the three stills and six critic
+checks; `scene check <file...>` runs the SAME TypeScript checker the `scenes` step uses. The brief is
+data and 5 tests read `kit/**` to prove every primitive and prop still exists - a rename fails a test
+instead of misinforming the next agent. The graphics envelope grew from 4 to 5 tools (cap 10).
+
+**3. The loop caught more than it was given.** I planted two flaws (sub line in the caption band; rail
+labels 18 px/60 % over bright sky) and the critic found two I had not planted: the 1.16 camera push
+cropped "Seven" and "It" at the left edge on f144, and f000 opened on bare sky. Revision 1 fixed all
+four; measuring the fix then caught a regression the eye missed - the remaining camera drift sank the
+sub back into the caption band at f144 (135 px from the bottom edge). Revision 2 (higher block, camera
+rises instead of sinking) -> lowest text 210/211/205 px at f000/f048/f144. Two revisions = the cap.
+
+**4. One gap I did not paper over.** G5's own "Done when" wants THREE demo-brief scenes with pass
+counts. This session proved the loop on one beat, which is what you scoped. ROADMAP M7 records the gap;
+say the word if you want the 3-scene count run before M8.
+
+**5. Look at these if you want to judge for yourself:** `out/m7/stills/descent_f000|048|144.png` (pass 3)
+against `out/m7/stills_pass1/`. No answer is needed to start M8.
+

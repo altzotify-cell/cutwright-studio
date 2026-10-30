@@ -1,0 +1,60 @@
+{
+  "milestone": "M7 phase B - agent-authored scene + the vision critic loop",
+  "date": "2026-10-30",
+  "scene": "recapstudio/remotion/src/scenes/descent_beat.tsx",
+  "composition": "bench-descent-beat (registered in src/SceneLab.tsx)",
+  "primitives_used": ["Camera", "LayeredMedia", "KineticText", "MaskWipe"],
+  "asset_handle": {"handle": "footage_a", "file": "recapstudio/Projects/regress/footage/real_sample.mp4",
+                   "origin": "footage", "provenance": "docs/evidence/m55c_footage.md"},
+  "brief": "python -m cutwright scene brief --handle footage_a --composition bench-descent-beat --json",
+  "static_check": {"command": "python -m cutwright scene check recapstudio/remotion/src/scenes/descent_beat.tsx --handle footage_a --json",
+                   "errors": 0, "warnings": 0, "cost": "medium", "hasDefault": true, "seconds": 2.7},
+  "render": {"command": "python -m cutwright run out/m7/batch_descent.json",
+             "steps": 3, "done": 3, "exit_code": 0,
+             "sizes_reported": "size measured [1920, 1080] x3",
+             "pass1_bytes": [1788451, 2011111, 2037053],
+             "pass2_cache": "cache key changed (inputs, params or executor version) x3",
+             "pass3_bytes": [1787371, 2046881, 2069719]},
+  "critic": {
+    "how": "the three PNGs were looked at directly (vision), against docs/VISUAL_STANDARD.md section 1 and 4",
+    "pass1_defects": [
+      {"id": "D1", "planted": true,
+       "defect": "the sub line sat at safeBottom, inside the caption band",
+       "measured": "lowest text 49 / 43 / 1 px from the bottom edge at f000 / f048 / f144; captions sit at captionBottom = 97 px and reach ~157 px up; at f144 the line was clipped by the frame edge",
+       "fix": "the sub moved inside the left column, which ends at the column's bottom edge"},
+      {"id": "D2", "planted": true,
+       "defect": "instrument rail: 18 px labels at 60 % opacity and yellow numbers over the bright cloud column, no backing",
+       "measured": "rail region mean luma 70.1, stdev 40.0 (labels barely separable from the sky)",
+       "fix": "24 px labels at 85 %, plus a right-edge shade (linear-gradient 270deg, 0.66 -> 0) so the rail has its own plane"},
+      {"id": "D3", "planted": false,
+       "defect": "the 1.16 camera push cropped the headline and the sub at the LEFT edge on f144",
+       "measured": "left block starts at safeSide = 115 px; at 1.16 about the centre x -> -20 px, so 'Seven' and 'It' were cut",
+       "fix": "push 1.04 -> 1.10 and left = safeSide + 40u (x -> ~74 px after the push)"},
+      {"id": "D4", "planted": false,
+       "defect": "f000 opened on bare sky: kicker started at frame 3 and the headline at 12, so the 'start' look had no focal point",
+       "measured": "frame 0 carried only the stray sub line at 49 px",
+       "fix": "MaskWipe start=0, from=0.35 (a partial reveal at frame 0), headline start 12 kept"}
+    ],
+    "pass2_verification": [
+      {"defect": "D5 (found by measurement, not by eye)",
+       "detail": "the fix for D1 put the sub at captionBottom + 84u, but the camera's downward drift (panY +22 -> +14) still pushed it down: lowest text 169 / 167 / 135 px from the bottom edge, i.e. inside the caption band at f144",
+       "fix": "base = captionBottom + 124u and the camera now RISES (panY 0 -> -14) while it pushes"}
+    ],
+    "pass3_verification": {
+      "lowest_text_px_from_bottom": {"f000": 210, "f048": 211, "f144": 205},
+      "caption_band_strip_luma": {"pass1_f048_mean_stdev": [25.6, 38.0], "pass3_f048_mean_stdev": [16.0, 12.5],
+                                  "pass3_f144_mean_stdev": [19.8, 14.6]},
+      "rail_region_luma": {"pass1_f048_mean_stdev": [70.1, 40.0], "pass3_f048_mean_stdev": [52.8, 47.8],
+                           "pass3_f144_mean_stdev": [53.4, 42.3]},
+      "looked_at": "f000 / f048 / f144 again: no clipping, kicker and headline land, rail labels read over their own shade, three planes (ridge silhouette / cloud column / sky gradient), one accent word at >12:1",
+      "verdict": "pass; the shot reads as a directed beat, not a slide"
+    },
+    "revisions_used": 2,
+    "max_revisions": 2
+  },
+  "not_settled": [
+    "motion over the whole 8 s was judged on three stills, not on a rendered range",
+    "the 9:16 shape of this shot was not rendered",
+    "the on-screen position of burned captions was cleared by measurement (>=181 px target, 205 px actual), not by a render with captions on"
+  ]
+}
