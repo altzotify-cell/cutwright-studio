@@ -2,6 +2,16 @@
 > the old editor backend, its window automation and the demo `projects/` are deleted. `cutwright/engine/`
 > (M3) is the only layer that calls Kinocut or editing ffmpeg.
 > Line numbers for `recap.py` drift: re-grep before reading a range.
+>
+> **M8 additions (2026-10-30).** `cutwright/engine/blueprint.py` (~530 lines) - the Production
+> Blueprint: `generate()` (brief -> beats, frames measured from the narration's word timings),
+> `compile_document()`/`compile()` (blueprint -> validated manifest), `SHOTS` (the shot types, each
+> naming a scene file + composition). `tools/narrate.py` (~120 lines) - the ONE place that imports
+> edge-tts; called through subprocess so `cutwright/` stays stdlib-only. Scenes:
+> `recapstudio/remotion/src/scenes/m8_{layered_push,kinetic_reveal,directed_wipe}.tsx`, registered in
+> `src/SceneLab.tsx` as `bench-m8-*`. The production: `recapstudio/Projects/m8_feature/`
+> (`brief.json` -> `blueprint.json` -> `manifest.json` -> `m8_feature.mp4`), evidence in
+> `docs/evidence/m8_feature.json`.
 
 # Code map (read ranges, not whole files)
 

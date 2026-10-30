@@ -1,0 +1,53 @@
+{
+  "title": "Sol 738 - Awake Before the Sun",
+  "slug": "m8_feature",
+  "project": "recapstudio/Projects/m8_feature",
+  "fps": 24,
+  "size": [1920, 1080],
+  "voice": {
+    "voice": "en-US-ChristopherNeural",
+    "rate": "+0%",
+    "asset": "voice",
+    "narration": "recapstudio/Projects/m8_feature/audio/narration.wav",
+    "license": "synthetic voice (edge-tts), generated for this project"
+  },
+  "assets": {
+    "footage_a": {
+      "path": "recapstudio/Projects/regress/footage/real_sample.mp4",
+      "origin": "footage",
+      "license": "NASA/JPL-Caltech Perseverance footage, public domain (owner-supplied clip)"
+    },
+    "music": {
+      "path": "recapstudio/Projects/m4job/audio_trim/music_bed_24fps.wav",
+      "origin": "user_audio",
+      "license": "owner-supplied music bed (read only, never modified)"
+    }
+  },
+  "music": "music",
+  "duck": {"music_volume": 0.22, "threshold": 0.03, "ratio": 8, "attack": 5, "release": 260},
+  "normalize": {"lufs": -16, "true_peak": -1.5},
+  "beats": [
+    {
+      "id": "beat1",
+      "shot": "layered_push",
+      "say": "Before the sun clears the ridge line, the rover is already awake and listening.",
+      "uses": ["footage_a"]
+    },
+    {
+      "id": "beat2",
+      "shot": "kinetic_reveal",
+      "say": "Perseverance does not wait for daylight. It makes its own."
+    },
+    {
+      "id": "beat3",
+      "shot": "directed_mask",
+      "say": "Sol seven thirty eight. It reads the stone, and writes the dawn of another world.",
+      "uses": ["footage_a"]
+    }
+  ],
+  "deliver": {
+    "quality": "high",
+    "container": "mp4",
+    "output": "recapstudio/Projects/m8_feature/m8_feature.mp4"
+  }
+}

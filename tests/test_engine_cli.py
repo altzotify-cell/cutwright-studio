@@ -23,6 +23,7 @@ from unittest import mock
 
 from cutwright import cli, guard
 from cutwright import recap as bridge
+from cutwright.engine import blueprint, manifest, ops
 from tests import media_fixtures as mf
 
 WORK = os.path.join(guard.OUT, "engine_cli")
@@ -412,5 +413,136 @@ class RecapBridgeContractTest(unittest.TestCase):
         self.assertIn("timeline", ctx.exception.suggested)
 
 
+class BlueprintCliTest(unittest.TestCase):
+    """M8: a BRIEF becomes a blueprint (frame counts from the narration), which becomes a manifest.
+
+    No network here on purpose: the narration is a beep bed and `--no-tts` is passed, so the timing
+    falls back to the measured duration and a word-count split. The real production (edge-tts word
+    timings, three scenes, a full render) is `recapstudio/Projects/m8_feature`.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.work = guard.ensure_dir(os.path.join(WORK, "blueprint"))
+        cls.project = guard.ensure_dir(os.path.join(cls.work, "project"))
+        cls.clip = os.path.join(cls.work, "footage.mp4")
+        if not os.path.isfile(cls.clip):
+            mf.make_counter_clip(cls.clip, frames=48, fps=FPS, with_audio=False)
+        cls.voice = os.path.join(cls.project, "audio", "narration.wav")
+        guard.ensure_dir(os.path.dirname(cls.voice))
+        if not os.path.isfile(cls.voice):
+            mf.make_beep_bed(cls.voice, 6.0)
+        cls.music = os.path.join(cls.work, "bed.wav")
+        if not os.path.isfile(cls.music):
+            mf.make_beep_bed(cls.music, 8.0)
+
+    def brief(self, **extra):
+        """Two beats, real footage, a beep narration: the smallest brief that is a production."""
+        data = {"title": "Blueprint fixture", "slug": "bp_fixture",
+                "project": guard.rel(self.project), "fps": FPS, "size": [160, 90],
+                "voice": {"narration": guard.rel(self.voice)},
+                "assets": {"footage_a": {"path": guard.rel(self.clip), "origin": "footage"},
+                           "music": {"path": guard.rel(self.music), "origin": "user_audio"}},
+                "music": "music",
+                "beats": [{"id": "b1", "shot": "layered_push", "uses": ["footage_a"],
+                           "say": "one two three four five"},
+                          {"id": "b2", "shot": "kinetic_reveal",
+                           "say": "six seven eight nine ten eleven"}],
+                "deliver": {"output": guard.rel(os.path.join(self.project, "final.mp4"))}}
+        data.update(extra)
+        return data
+
+    def brief_file(self, name, **extra):
+        path = os.path.join(self.work, name + ".brief.json")
+        return guard.rel(guard.write_json(path, self.brief(**extra)))
+
+    def generate(self, name, **extra):
+        """Brief -> blueprint, into its own file. Returns (repo-relative path, JSON summary)."""
+        target = os.path.join(self.work, name + ".blueprint.json")
+        code, _text, data = run("blueprint", "generate", self.brief_file(name, **extra),
+                                "--no-tts", "--out", guard.rel(target), "--json")
+        self.assertEqual(code, 0, data)
+        return guard.rel(target), data
+
+    def test_every_shot_names_a_scene_that_exists_and_a_registered_composition(self):
+        """The blueprint is data; this pins it to the files that really render it."""
+        with open(os.path.join(guard.RECAP, "remotion", "src", "SceneLab.tsx"), "r",
+                  encoding="utf-8") as handle:
+            registered = handle.read()
+        for row in blueprint.SHOTS:
+            path = os.path.join(guard.ROOT, row["scene"].replace("/", os.sep))
+            self.assertTrue(os.path.isfile(path), row["scene"])
+            # SceneLab registers a bench entry as `bench-<slug of the file name>` (src/SceneLab.tsx).
+            stem = os.path.basename(row["scene"])[:-len(".tsx")]
+            self.assertEqual(row["composition"], "bench-" + stem.replace("_", "-"))
+            self.assertIn(stem, registered)
+
+    def test_generate_measures_the_beats_from_the_narration(self):
+        path, data = self.generate("measured")
+        self.assertEqual(len(data["beats"]), 2)
+        self.assertEqual(data["narration"]["engine"], "measured")
+        self.assertEqual(data["narration"]["timing"], "word-count estimate")
+        self.assertAlmostEqual(data["narration"]["seconds"], 6.0, places=2)
+        self.assertEqual(data["beats"][0]["starts_at"], 0)
+        self.assertEqual(data["beats"][1]["starts_at"], data["beats"][0]["frames"])
+        self.assertTrue(all(row["frames"] >= blueprint.MIN_BEAT_FRAMES for row in data["beats"]))
+        self.assertTrue(os.path.isfile(os.path.join(guard.ROOT, path)))
+
+    def test_compile_writes_a_manifest_the_engine_can_plan(self):
+        path, data = self.generate("compiled")
+        out = os.path.join(self.work, "compiled.manifest.json")
+        code, _text, compiled = run("blueprint", "compile", path, "--out", guard.rel(out),
+                                    "--json")
+        self.assertEqual(code, 0, compiled)
+        self.assertEqual(compiled["steps"], ["b1_render", "b2_render", "join", "voice_over",
+                                             "duck", "level", "export"])
+        plan = manifest.load_plan(out)
+        self.assertEqual([step.spec.name for step in plan.steps],
+                         ["render_range", "render_range", "concat", "overlay_audio",
+                          "duck_audio", "normalize_audio", "export_h264"])
+        for step in plan.steps:                       # the matrix's executor, never an override
+            self.assertEqual(step.executor, ops.get(step.spec.name).executor, step.id)
+        self.assertEqual(plan.steps[0].params["frames"], data["beats"][0]["frames"])
+        self.assertEqual(plan.steps[0].inputs["assets"],
+                         {"footage_a": manifest.resolve_path(self.clip)})
+        self.assertEqual(plan.steps[-1].outputs["video"],
+                         manifest.resolve_path(guard.rel(os.path.join(self.project,
+                                                                      "final.mp4"))))
+
+    def test_the_brief_must_use_a_shot_the_engine_knows(self):
+        brief = guard.read_json(self.brief_file("bad_shot"))
+        brief["beats"][0]["shot"] = "ken_burns"
+        path = guard.rel(guard.write_json(os.path.join(self.work, "bad_shot.brief.json"), brief))
+        code, _text, out = run("blueprint", "generate", path, "--no-tts", "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(out["code"], "bad_brief")
+        self.assertIn("unknown_shot", [row["code"] for row in out["details"]["errors"]])
+
+    def test_a_footage_shot_without_footage_is_refused(self):
+        brief = guard.read_json(self.brief_file("no_footage"))
+        brief["beats"][0].pop("uses")
+        path = guard.rel(guard.write_json(os.path.join(self.work, "no_footage.brief.json"),
+                                          brief))
+        code, _text, out = run("blueprint", "generate", path, "--no-tts", "--json")
+        self.assertEqual(code, 2)
+        self.assertIn("shot_needs_asset", [row["code"] for row in out["details"]["errors"]])
+
+    def test_without_tts_a_missing_narration_is_refused(self):
+        brief = guard.read_json(self.brief_file("no_voice"))
+        brief["voice"]["narration"] = guard.rel(os.path.join(self.work, "nothing.wav"))
+        path = guard.rel(guard.write_json(os.path.join(self.work, "no_voice.brief.json"), brief))
+        code, _text, out = run("blueprint", "generate", path, "--no-tts", "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(out["code"], "narration_missing")
+
+    def test_compile_refuses_a_blueprint_that_is_not_one(self):
+        path = guard.rel(guard.write_json(os.path.join(self.work, "storyboard.json"),
+                                          {"schema": 1, "kind": "storyboard", "beats": []}))
+        code, _text, out = run("blueprint", "compile", path, "--json")
+        self.assertEqual(code, 2)
+        self.assertEqual(out["code"], "bad_blueprint")
+
+
 if __name__ == "__main__":
     unittest.main()
+

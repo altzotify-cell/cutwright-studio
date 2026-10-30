@@ -54,6 +54,12 @@ recapstudio/models/
 recapstudio/Projects/*
 !recapstudio/Projects/.gitkeep
 !recapstudio/Projects/_projects_go_here.txt
+# M8: the m8_feature production is the milestone's evidence - its brief, blueprint, manifest, script
+# and the narration's WORD TIMINGS are committed; its media (narration wav/mp3, the final mp4) is not.
+!recapstudio/Projects/m8_feature/
+recapstudio/Projects/m8_feature/*.mp4
+recapstudio/Projects/m8_feature/audio/*.wav
+recapstudio/Projects/m8_feature/audio/*.mp3
 recapstudio/_voicelab/
 recapstudio/voices/*
 !recapstudio/voices/README.txt

@@ -32,6 +32,12 @@ HOW_TO_RUN = ("python -m cutwright validate <manifest> --json  ->  "
 # what it answers. `tests/test_engine_registry.py` checks these against the live argparse parser,
 # so a renamed flag fails a test instead of silently misinforming an agent.
 COMMANDS = {
+    "blueprint": {"usage": "python -m cutwright blueprint generate <brief.json> [--out FILE] "
+                           "[--narration FILE] [--no-tts] [--json] | blueprint compile "
+                           "<blueprint.json> [--json]",
+                  "args": (), "flags": ("--out", "--narration", "--no-tts", "--json"),
+                  "description": "design: beats + shot types + assets -> blueprint.json, then "
+                                 "compile it to a validated manifest.json"},
     "scene": {"usage": "python -m cutwright scene brief [--handle H] [--composition ID] [--json]"
                        " | scene check <file...> [--handle H] [--json]",
               "args": (), "flags": ("--handle", "--composition", "--duration", "--json"),
@@ -80,8 +86,8 @@ COMMANDS = {
 STAGE_FOCUS = {
     "plan": {
         "why": "read the source and choose the cut: what the file is, what it says, which moments "
-               "carry the story",
-        "commands": ("tools", "probe", "subs", "moments", "transcribe", "verify"),
+               "carry the story - then design the production as beats and compile it",
+        "commands": ("tools", "blueprint", "probe", "subs", "moments", "transcribe", "verify"),
     },
     "edit": {
         "why": "turn chosen moments into a frame-exact picture: cut, join, reframe, fit, mix and "

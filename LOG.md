@@ -1677,3 +1677,94 @@ Commit     - fcae302 "M6: the agent bridge (recap <step> --json) and one focused
              committed is the owner's call).
 ```
 
+## 2026-10-30 - M8: the production blueprint, and an autonomous end-to-end run (owner-scoped M8)
+
+Goal: take the hand-written manifest out of the agent's job. The agent says WHAT the video is
+(beats, shot types, which footage, which voice, which bed); `cutwright blueprint` turns that into a
+`ProductionBlueprint`, then into a manifest the engine runs unchanged. Then run one whole production
+from it, unattended, and measure the file.
+
+TESTED     - `python -m cutwright blueprint generate recapstudio/Projects/m8_feature/brief.json --json`
+             -> `"ok": true`, `"narration": {"seconds": 16.656, "words": 39, "engine": "edge",
+             "timing": "word timings"}`, beats `beat1 131 f (starts_at 0)`, `beat2 115 f
+             (starts_at 131)`, `beat3 161 f (starts_at 246)`. edge-tts produced 39 `WordBoundary`
+             cues (first word 0.100 s, last 15.775 s) through `tools/narrate.py`; the beat edges ARE
+             those cue times (`131/24 = 5.458 s` = where "Perseverance" starts), not an estimate.
+             Re-running the same verb is byte-identical (compared before/after: no diff).
+TESTED     - `python -m cutwright blueprint compile .../blueprint.json --json` -> `"ok": true`,
+             steps `beat1_render, beat2_render, beat3_render, join, voice_over, duck, level, export`,
+             `"frames": 407`, `"seconds": 16.958`; re-compile byte-identical. The step graph is
+             ops.py's: 3 x `render_range` (remotion) -> `concat` (kinocut) -> `overlay_audio`
+             (ffmpeg) -> `duck_audio` -> `normalize_audio` -> `export_h264` (kinocut), no executor
+             overrides.
+TESTED     - `python -m cutwright validate .../manifest.json --json` -> `"ok": true`, `"errors": []`,
+             `"steps": 8`, `"cost_usd": 0.0`, provenance ok for `footage_a` (footage), `voice` and
+             `music` (user_audio), each with file existence and a sha256.
+TESTED     - `python -m cutwright run .../manifest.json --json` (launched detached, exit code to a
+             file, checked once) -> `"ok": true`, every step `done`:
+             beat1_render 66.3 s / beat2_render 45.0 s / beat3_render 91.1 s / join 5.8 s /
+             voice_over 3.4 s / duck 4.3 s / level 11.3 s / export 40.6 s = 267.9 s total.
+             Every declared check passed: frame_count 131/115/161, size 1920x1080, constant_fps 24,
+             frame_count 407 on join/voice_over/duck/level/export, has_audio true after voice_over,
+             decodes_clean on join and export.
+TESTED     - the delivered file: `ffprobe` -> h264 1920x1080 24/1, `nb_frames`: 407, aac 48000 stereo,
+             video 16.958333 s, audio 16.661 s, 4,575,119 B; decoded frame count 407 = the
+             blueprint's 407; decodes clean.
+TESTED     - the cuts land on the beat frames: biggest luma step within +-3 frames is frame 131
+             (jump 71.9) and frame 246 (jump 27.0) - exactly `starts_at`.
+TESTED     - A/V sync: first voiced sample in the finished file 0.206 s; the same measurement on
+             `audio/narration.wav` gives 0.219 s, so the engine's shift is -0.013 s (the 0.106 s
+             vs edge-tts's 0.100 s cue is the phonetic onset, not a drift). Audio 16.661 s under a
+             16.958 s picture (the designed 0.3 s tail).
+TESTED     - no blank frames: per-frame contrast at 64x36, `flat_frames: 0`, min stdev 6.11 (pass 2
+             had 8 near-black frames at the beat-3 boundary; `from={0.14}` on the wipe removed them).
+TESTED     - `python -m unittest tests.test_engine_cli` -> 18 + 6 + 13 = 37 tests, "OK" (run per
+             class: the whole module exceeds the 30 s foreground cap); `tests.test_engine_manifest`
+             -> "Ran 46 tests in 10.171s / OK"; `tests.test_engine_remotion` -> 18 + 10 = 28 tests,
+             "OK". `tests.test_engine_registry.StageEnvelopeTest` -> "Ran 8 tests ... OK" (the new
+             `blueprint` command is checked against the live argparse parser).
+TESTED     - `scene check` on the three new scenes -> `"ok": true`, 0 errors, 0 warnings, cost medium
+             (run after every edit, 4 times).
+FAILED     - `validate.slideshow_risk` on the finished reel -> `"score": 0.867, "verdict": "high"`,
+             "352 of 406 frame pairs are identical", mean diff 0.944. The roadmap's M8 bar is
+             "below high" (SLIDESHOW_HIGH = 0.85), so this FAILS by 7 frame pairs. It is not a
+             regression: the same measurement was 0.914 / mean 0.546 before the grade, and the grade
+             nearly doubled the measured movement. The reel is three slow camera moves on a
+             low-motion pre-dawn plate; the metric counts pairs whose 64x36 change is under 1.0/255.
+             Options and the ask are in C-017 item 4.
+FAILED     - Kinocut `release_checkpoint` on the finished file -> ExecutorError
+             `quality_gate_failed`: "score 56.1 < 80.0. Video appears desaturated (estimated: 7.3%).
+             ... Color cast detected: red/yellow (max deviation: 22.8%)". After the grade it objects
+             to the WARMTH OF THE GRADE. Its thresholds are a heuristic (M2 already found it misses a
+             one-frame flash and a silence gap), and the engine's own checks pass, so this is recorded
+             as a conflict, not papered over.
+NOT TESTED - the three M8 scenes in 9:16 (`portrait: true`): this production is 16:9 only.
+NOT TESTED - G5's 3-demo-brief harness (deferred by the owner, C-016) and the G6 five-scene
+             benchmark: `docs/ROADMAP.md` M8 as written is that benchmark; this session built the
+             owner's M8 instead and left G6 as M8b.
+NOT TESTED - `tools/narrate.py` in the unit tests: it needs the network, so the tests run with
+             `--no-tts` and a fixture wav. The real call ran once, above, and its output is the
+             narration this production uses.
+DECISIONS  - 1. The narration is the clock. edge-tts reports one `WordBoundary` per word; the beat
+             edges are those offsets rounded once at the frame, so the beats add up to the total with
+             no drift. `blueprint.json` records `"timing": "word timings"`, and the declared-seconds
+             and word-count fallbacks are recorded the same way when they are used.
+             2. Narration synthesis lives in `tools/narrate.py`, not in `cutwright/`: assumption A8
+             keeps that package stdlib-only, and the engine reaches the script through `subprocess`
+             (the same boundary `scenecraft.py` uses for node).
+             3. The compiled graph uses only ops that already existed, each with its matrix executor.
+             No new op, no `executor_reason`, and the join is `concat` (a straight, frame-exact cut)
+             because the ANGLED wipe belongs in the scene, where the kit can draw a real angle - the
+             Kinocut `transition` op has no angle parameter.
+             4. The scene grade (brightness/contrast/saturate) is CSS on a wrapper inside `<Camera>`,
+             not a new kit prop: the kit's contract is tested by other tests, and the measurements
+             showed the plate needed exposure before anything else could be judged.
+             5. `KineticText`'s `lines` mode compares the WHOLE line against `emphasis`, so a
+             per-word accent can never fire there. The M8 scenes therefore use the default words
+             mode; this cost one render pass to notice (both "accent" words rendered white).
+             6. `recapstudio/Projects/*` is ignored; the M8 project's TEXT artefacts are re-included
+             by explicit rules in both `.gitignore` files (and its wav/mp3/mp4 stay local). Without
+             that, the milestone's own evidence would not be in the repo.
+Commit     - PENDING (filled in by the close-out commit below)
+
+

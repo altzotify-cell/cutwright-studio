@@ -367,6 +367,29 @@ Whoever wants the 3-scene count should say so before M8.
 Spec: `docs/GOALS.md` section G6 and `docs/VISUAL_STANDARD.md` unchanged. Output: five distinct benchmark scenes at 16:9 and 9:16 (`benchmark/scenes/*.tsx`, props, expected durations). The owner approves >= 4 of 5. The five scenes are the fixed input for M9.
 Acceptance: G6 "Done when". Also `python -m cutwright validate` reports slideshow_risk below the "high" threshold for the benchmark reel (thresholds defined in `engine/validate.py`, documented in the file header).
 
+**Result (2026-10-30): the OWNER-SCOPED M8 is DONE - and it is a different milestone from this
+spec, which stays OPEN as "M8b".** The owner scoped M8 as "Production Blueprint & Autonomous
+Manifest Execution" (C-016 resolution: the 3-demo-brief benchmark stays deferred). Built: the
+Production Blueprint (`cutwright/engine/blueprint.py`; `cutwright blueprint generate|compile`,
+stdlib, pinned by 7 tests) and one whole production run through it.
+`recapstudio/Projects/m8_feature` is a 3-beat, 16.96 s, 407-frame film made with no hand-written
+step: narration synthesised by edge-tts (`tools/narrate.py`, 39 word cues), beat edges measured from
+those cues (frames 0 / 131 / 246), compiled to 8 steps, executed by `cutwright run` -> exit 0 in
+267.9 s (three Remotion renders 66.3 + 45.0 + 91.1 s, Kinocut `concat` 5.8 s, FFmpeg
+`overlay_audio` 3.4 s, Kinocut `duck_audio` 4.3 + `normalize_audio` 11.3 s, `export_h264` 40.6 s).
+The file: h264 1920x1080 24/1, nb_frames 407, aac 48 kHz stereo, video 16.958 s / audio 16.661 s,
+4,575,119 B, decodes clean, 407 decoded = 407 blueprinted, 0 flat frames, cuts measured exactly on
+131 and 246, engine A/V shift -0.013 s. Tests: `test_engine_cli` 37, `test_engine_manifest` 46,
+`test_engine_remotion` 28, `test_engine_registry.StageEnvelopeTest` 8 - all green.
+Numbers: `docs/evidence/m8_feature.json`; quotes: LOG 2026-10-30.
+OPEN (recorded, not papered over): (a) `slideshow_risk` 0.867 = "high" - 7 frame pairs above the
+0.85 bar; the grade nearly doubled the measured movement (mean diff 0.546 -> 0.944) but the reel is
+three slow moves on a low-motion plate. (b) Kinocut's `release_checkpoint` scores 56.1/100 against its
+own 80 bar ("desaturated 7.3 %", "colour cast red/yellow 22.8 %") - after the grade it objects to the
+warmth the grade added. Ask in C-017 item 4.
+**STILL OPEN - this spec (G6/M8b):** five distinct benchmark scenes at 16:9 and 9:16, owner approves
+>= 4 of 5; that harness is the fixed input M9 wants, so settle M8b vs M9 before starting either.
+
 ## M9 - HyperFrames benchmark and renderer decision (evidence first)
 
 Objective: decide whether HyperFrames simplifies or complements Remotion. Remotion stays the renderer until the owner decides after this report.

@@ -1,0 +1,206 @@
+{
+  "ok": true,
+  "engine": "edge",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+0%",
+  "text": "Before the sun clears the ridge line, the rover is already awake and listening.\nPerseverance does not wait for daylight. It makes its own.\nSol seven thirty eight. It reads the stone, and writes the dawn of another world.",
+  "seconds": 16.656,
+  "source": "narration.mp3",
+  "words": [
+    {
+      "word": "Before",
+      "start": 0.1,
+      "end": 0.5
+    },
+    {
+      "word": "the",
+      "start": 0.5125,
+      "end": 0.6125
+    },
+    {
+      "word": "sun",
+      "start": 0.625,
+      "end": 0.975
+    },
+    {
+      "word": "clears",
+      "start": 0.9875,
+      "end": 1.3625
+    },
+    {
+      "word": "the",
+      "start": 1.375,
+      "end": 1.4875
+    },
+    {
+      "word": "ridge",
+      "start": 1.5,
+      "end": 1.7625
+    },
+    {
+      "word": "line",
+      "start": 1.775,
+      "end": 2.1375
+    },
+    {
+      "word": "the",
+      "start": 2.4125,
+      "end": 2.5
+    },
+    {
+      "word": "rover",
+      "start": 2.5125,
+      "end": 2.925
+    },
+    {
+      "word": "is",
+      "start": 2.9375,
+      "end": 3.0875
+    },
+    {
+      "word": "already",
+      "start": 3.1,
+      "end": 3.5125
+    },
+    {
+      "word": "awake",
+      "start": 3.525,
+      "end": 3.9375
+    },
+    {
+      "word": "and",
+      "start": 3.95,
+      "end": 4.0625
+    },
+    {
+      "word": "listening",
+      "start": 4.075,
+      "end": 4.6
+    },
+    {
+      "word": "Perseverance",
+      "start": 5.4625,
+      "end": 6.1375
+    },
+    {
+      "word": "does",
+      "start": 6.15,
+      "end": 6.3125
+    },
+    {
+      "word": "not",
+      "start": 6.325,
+      "end": 6.575
+    },
+    {
+      "word": "wait",
+      "start": 6.5875,
+      "end": 6.825
+    },
+    {
+      "word": "for",
+      "start": 6.8375,
+      "end": 6.9625
+    },
+    {
+      "word": "daylight",
+      "start": 6.975,
+      "end": 7.525
+    },
+    {
+      "word": "It",
+      "start": 8.3875,
+      "end": 8.525
+    },
+    {
+      "word": "makes",
+      "start": 8.5375,
+      "end": 8.825
+    },
+    {
+      "word": "its",
+      "start": 8.8375,
+      "end": 9.0
+    },
+    {
+      "word": "own",
+      "start": 9.0125,
+      "end": 9.3875
+    },
+    {
+      "word": "Sol",
+      "start": 10.25,
+      "end": 10.675
+    },
+    {
+      "word": "seven",
+      "start": 10.6875,
+      "end": 11.0375
+    },
+    {
+      "word": "thirty",
+      "start": 11.05,
+      "end": 11.3875
+    },
+    {
+      "word": "eight",
+      "start": 11.4,
+      "end": 11.75
+    },
+    {
+      "word": "It",
+      "start": 12.6125,
+      "end": 12.825
+    },
+    {
+      "word": "reads",
+      "start": 12.8375,
+      "end": 13.1125
+    },
+    {
+      "word": "the",
+      "start": 13.125,
+      "end": 13.225
+    },
+    {
+      "word": "stone",
+      "start": 13.2375,
+      "end": 13.7125
+    },
+    {
+      "word": "and",
+      "start": 13.925,
+      "end": 14.075
+    },
+    {
+      "word": "writes",
+      "start": 14.0875,
+      "end": 14.3875
+    },
+    {
+      "word": "the",
+      "start": 14.4,
+      "end": 14.525
+    },
+    {
+      "word": "dawn",
+      "start": 14.5375,
+      "end": 14.8375
+    },
+    {
+      "word": "of",
+      "start": 14.85,
+      "end": 14.9125
+    },
+    {
+      "word": "another",
+      "start": 14.925,
+      "end": 15.3
+    },
+    {
+      "word": "world",
+      "start": 15.3125,
+      "end": 15.775
+    }
+  ]
+}

@@ -119,11 +119,12 @@ first, because a 24-minute file turns a 30-second check into a 30-minute wait an
 
 | piece | status |
 |---|---|
-| agent bridge `recap <step> --json` + focused tool discovery | M6 |
-| agent-owned scene loop (3 scenes written by the agent, one revised after viewing frames) | M7 |
-| visual quality overhaul + 5-scene benchmark at 16:9 and 9:16 | M8 |
+| agent bridge `recap <step> --json` + focused tool discovery | M6 (done) |
+| agent-owned scene loop (3 scenes written by the agent, one revised after viewing frames) | M7 (done) |
+| production blueprint: brief -> beats -> validated manifest, plus a 3-beat production run end to end | M8 (done) |
+| visual quality overhaul + 5-scene benchmark at 16:9 and 9:16 (old G6) | M8b / before M9 - OPEN |
 | perception -> script for arbitrary footage | M10 |
-| blueprints / any-video profiles | M11 |
+| blueprints / any-video profiles (the rest of G8/G9) | M11 |
 | SFX engine | M12 |
 | true 9:16, speed, polish | M13 |
 | MCP server + portable skill | M14 |

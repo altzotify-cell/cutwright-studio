@@ -5,6 +5,9 @@ import {exampleScenes} from '../scenes_examples';
 import {generated, projectTheme} from './generated/registry';
 import {directedEntry} from './scenes/directed_shot';
 import {descentEntry} from './scenes/descent_beat';
+import {layeredPushEntry} from './scenes/m8_layered_push';
+import {kineticRevealEntry} from './scenes/m8_kinetic_reveal';
+import {directedWipeEntry} from './scenes/m8_directed_wipe';
 import {makeLayout} from './layout';
 import {LabEntry} from './sceneTypes';
 import {AssetScope, AssetTable, SceneFrame} from '../kit';
@@ -84,8 +87,14 @@ export const labCompositions = (): React.ReactElement[] => {
   Object.entries(exampleScenes).forEach(([id, entry]) => add('example', id, entry));
   // M5.5C: the directed benchmark shot (src/scenes/directed_shot.tsx) - the visual standard's evidence.
   // M7: the Descent beat (src/scenes/descent_beat.tsx) - the agent-authored narrative shot.
-  Object.entries({directed_shot: directedEntry, descent_beat: descentEntry})
-    .forEach(([id, entry]) => add('bench', id, entry));
+  // M8: the three beats of the m8_feature production (scenes/m8_*.tsx) - compiled from a blueprint.
+  Object.entries({
+    directed_shot: directedEntry,
+    descent_beat: descentEntry,
+    m8_layered_push: layeredPushEntry,
+    m8_kinetic_reveal: kineticRevealEntry,
+    m8_directed_wipe: directedWipeEntry,
+  }).forEach(([id, entry]) => add('bench', id, entry));
   out.push(
     <Composition
       key="empty-ref"

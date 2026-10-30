@@ -1,0 +1,17 @@
+{
+  "module": "m8_feature",
+  "topic": "Sol 738 - a Mars dawn, three beats",
+  "style": "blueprint",
+  "target_length": "00:17",
+  "platform": "youtube",
+  "tts_mode": "plain",
+  "voice_card": "en-US-ChristopherNeural",
+  "fact_check": "off",
+  "music": true,
+  "captions": false,
+  "character": {
+    "default": "",
+    "auto": "off"
+  },
+  "note": "M8: designed by `cutwright blueprint generate`, executed by `cutwright run manifest.json`. The pictures are Remotion scenes (recapstudio/remotion/src/scenes/m8_*.tsx); the edit and the audio are the engine's ops."
+}

@@ -1,0 +1,356 @@
+{
+  "milestone": "M8 - production blueprint and an autonomous end-to-end run",
+  "date": "2026-10-30",
+  "project": "recapstudio/Projects/m8_feature",
+  "why": "The agent designed the beats from a brief; the tool measured them against the narration; the engine executed the compiled manifest. These are the numbers that run actually produced.",
+  "commands": [
+    "python -m cutwright blueprint generate recapstudio/Projects/m8_feature/brief.json",
+    "python -m cutwright blueprint compile recapstudio/Projects/m8_feature/blueprint.json",
+    "python -m cutwright validate recapstudio/Projects/m8_feature/manifest.json --json",
+    "python -m cutwright run recapstudio/Projects/m8_feature/manifest.json --json",
+    "python out/m8/measure.py"
+  ],
+  "narration": {
+    "asset": "voice",
+    "seconds": 16.656,
+    "words": 39,
+    "engine": "edge",
+    "timing": "word timings",
+    "voice": "en-US-ChristopherNeural"
+  },
+  "blueprint_beats": [
+    {
+      "id": "beat1",
+      "shot": "layered_push",
+      "frames": 131,
+      "starts_at": 0,
+      "seconds": 5.458,
+      "composition": "bench-m8-layered-push",
+      "say": "Before the sun clears the ridge line, the rover is already awake and listening."
+    },
+    {
+      "id": "beat2",
+      "shot": "kinetic_reveal",
+      "frames": 115,
+      "starts_at": 131,
+      "seconds": 4.792,
+      "composition": "bench-m8-kinetic-reveal",
+      "say": "Perseverance does not wait for daylight. It makes its own."
+    },
+    {
+      "id": "beat3",
+      "shot": "directed_mask",
+      "frames": 161,
+      "starts_at": 246,
+      "seconds": 6.708,
+      "composition": "bench-m8-directed-wipe",
+      "say": "Sol seven thirty eight. It reads the stone, and writes the dawn of another world."
+    }
+  ],
+  "run": {
+    "ok": true,
+    "run_id": "m8_feature",
+    "run_dir": "out\\runs\\m8_feature",
+    "steps": [
+      {
+        "id": "beat1_render",
+        "op": "render_range",
+        "executor": "remotion",
+        "status": "done",
+        "seconds": 66.3,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 131
+          },
+          {
+            "check": "size",
+            "status": "pass",
+            "measured": [
+              1920,
+              1080
+            ]
+          },
+          {
+            "check": "constant_fps",
+            "status": "pass",
+            "measured": {
+              "frames": 131,
+              "interval": 0.041667,
+              "fps": 24.0,
+              "jitter": 1e-06
+            }
+          }
+        ]
+      },
+      {
+        "id": "beat2_render",
+        "op": "render_range",
+        "executor": "remotion",
+        "status": "done",
+        "seconds": 45.045,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 115
+          },
+          {
+            "check": "size",
+            "status": "pass",
+            "measured": [
+              1920,
+              1080
+            ]
+          },
+          {
+            "check": "constant_fps",
+            "status": "pass",
+            "measured": {
+              "frames": 115,
+              "interval": 0.041667,
+              "fps": 24.0,
+              "jitter": 1e-06
+            }
+          }
+        ]
+      },
+      {
+        "id": "beat3_render",
+        "op": "render_range",
+        "executor": "remotion",
+        "status": "done",
+        "seconds": 91.113,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 161
+          },
+          {
+            "check": "size",
+            "status": "pass",
+            "measured": [
+              1920,
+              1080
+            ]
+          },
+          {
+            "check": "constant_fps",
+            "status": "pass",
+            "measured": {
+              "frames": 161,
+              "interval": 0.041667,
+              "fps": 24.0,
+              "jitter": 1e-06
+            }
+          }
+        ]
+      },
+      {
+        "id": "join",
+        "op": "concat",
+        "executor": "kinocut",
+        "status": "done",
+        "seconds": 5.831,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 407
+          },
+          {
+            "check": "decodes_clean",
+            "status": "pass",
+            "measured": "clean"
+          }
+        ]
+      },
+      {
+        "id": "voice_over",
+        "op": "overlay_audio",
+        "executor": "ffmpeg",
+        "status": "done",
+        "seconds": 3.42,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 407
+          },
+          {
+            "check": "has_audio",
+            "status": "pass",
+            "measured": true
+          }
+        ]
+      },
+      {
+        "id": "duck",
+        "op": "duck_audio",
+        "executor": "kinocut",
+        "status": "done",
+        "seconds": 4.306,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 407
+          },
+          {
+            "check": "has_audio",
+            "status": "pass",
+            "measured": true
+          }
+        ]
+      },
+      {
+        "id": "level",
+        "op": "normalize_audio",
+        "executor": "kinocut",
+        "status": "done",
+        "seconds": 11.253,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 407
+          },
+          {
+            "check": "has_audio",
+            "status": "pass",
+            "measured": true
+          }
+        ]
+      },
+      {
+        "id": "export",
+        "op": "export_h264",
+        "executor": "kinocut",
+        "status": "done",
+        "seconds": 40.589,
+        "checks": [
+          {
+            "check": "frame_count",
+            "status": "pass",
+            "measured": 407
+          },
+          {
+            "check": "decodes_clean",
+            "status": "pass",
+            "measured": "clean"
+          },
+          {
+            "check": "has_audio",
+            "status": "pass",
+            "measured": true
+          }
+        ]
+      }
+    ],
+    "total_seconds": 267.9
+  },
+  "production_report": {
+    "ok": true,
+    "cost_usd": 0.0,
+    "tool_versions": {
+      "remotion": "4.0.539",
+      "kinocut": "Kinocut 1.16.4",
+      "ffmpeg": "7.1-full_build-www.gyan.dev"
+    },
+    "pending_gates": []
+  },
+  "measured": {
+    "ffprobe": {
+      "format": "mov,mp4,m4a,3gp,3g2,mj2",
+      "duration": "16.958333",
+      "bytes": "4575119",
+      "video": {
+        "codec_name": "h264",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "24/1",
+        "nb_frames": "407",
+        "duration": "16.958333"
+      },
+      "audio": {
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "duration": "16.661000"
+      }
+    },
+    "decoded_frames": 407,
+    "blueprint_frames": 407,
+    "decodes_clean": [
+      true,
+      ""
+    ],
+    "slideshow": {
+      "path": "recapstudio\\Projects\\m8_feature\\m8_feature.mp4",
+      "score": 0.867,
+      "frames": 407,
+      "pairs": 406,
+      "mean_diff": 0.944,
+      "verdict": "high",
+      "detail": "352 of 406 frame pairs are identical: this is a slideshow",
+      "static_pairs": 352
+    },
+    "cuts": [
+      {
+        "beat": "beat2",
+        "blueprint_frame": 131,
+        "measured_frame": 131,
+        "luma_jump": 71.92
+      },
+      {
+        "beat": "beat3",
+        "blueprint_frame": 246,
+        "measured_frame": 246,
+        "luma_jump": 27.01
+      }
+    ],
+    "sync": {
+      "narration_seconds": 16.656,
+      "first_word_at": 0.1,
+      "first_voice_in_file": 0.206,
+      "audio_duration": "16.661000",
+      "video_duration": "16.958333",
+      "offset_seconds": 0.106,
+      "first_voice_in_narration": 0.219,
+      "engine_shift_seconds": -0.013
+    },
+    "release_checkpoint": {
+      "ok": false,
+      "error": "ExecutorError: kinocut release-checkpoint failed (code quality_gate_failed): Quality gate failed: score 56.1 < 80.0. Video appears desaturated (estimated: 7.3%). Consider increasing saturation.; Color cast detected: red/yellow (max deviation: 22.8%). Consider white balance correction. -> Inspect storyboard/thumbnail, fix visual/audio issues, then rerun quality checks."
+    }
+  },
+  "blank": {
+    "frames": 407,
+    "flat_frames": 0,
+    "flat": [],
+    "min_stdev": 6.11,
+    "max_stdev": 69.46
+  },
+  "assets": [
+    {
+      "id": "footage_a",
+      "path": "recapstudio\\Projects\\regress\\footage\\real_sample.mp4",
+      "origin": "footage",
+      "license": "NASA/JPL-Caltech Perseverance footage, public domain (owner-supplied clip)"
+    },
+    {
+      "id": "music",
+      "path": "recapstudio\\Projects\\m4job\\audio_trim\\music_bed_24fps.wav",
+      "origin": "user_audio",
+      "license": "owner-supplied music bed (read only, never modified)"
+    },
+    {
+      "id": "voice",
+      "path": "recapstudio\\Projects\\m8_feature\\audio\\narration.wav",
+      "origin": "user_audio",
+      "license": "synthetic voice (edge-tts), generated for this project"
+    }
+  ]
+}

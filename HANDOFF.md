@@ -8,36 +8,35 @@ Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `doc
 ## Current status (you keep this block up to date)
 
 ```
-Current milestone : M7 "Agent-owned scene loop" COMPLETE (2026-10-30). Vision works here: stills were looked at
-                    directly. Phase A closed M6's open render line on a fresh `m6probe` project - `recap
-                    timeline` (exit 0, 118.1 s, 514 frames) then `recap remotion` (exit 0, 202.0 s) - and the
-                    file decodes to h264 1920x1080 24/1, nb_frames=514, aac, 21.419 s, 11,628,341 B. Phase B
-                    gave the agent a tool for authoring instead of memory: `python -m cutwright scene brief
-                    [--handle H] [--composition ID]` (cutwright/engine/scenecraft.py, stdlib) returns the four
-                    primitives - Camera, LayeredMedia, KineticText, MaskWipe - with the props the kit really
-                    exports, the handle rule, the three stills and six critic checks; `scene check <file...>`
-                    runs the SAME TypeScript checker the `scenes` step uses. Graphics envelope is now 5 tools.
-                    The new shot `src/scenes/descent_beat.tsx` (composition `bench-descent-beat`, real footage by
-                    handle `footage_a`) went through the loop: 3 planted/found defects + a regression caught by
-                    measurement, 2 revisions (the max), pass 3 clears the caption band at 205 px. Known gap:
-                    G5's 3-demo-brief harness was not run (one beat proved the loop instead). Before it: M6 DONE
-                    (bridge + stage envelopes), M5.5 DONE, M5 DONE (the old editor backend is out of the code).
-Last green commit : 43fa769 "M7: the render line closed, and scene authoring with a brief + critic loop" (13 files,
-                    +801/-41) on main, pushed to origin main; `git ls-remote origin refs/heads/main` ->
-                    43fa769318ef48cbe147268c5f47fc74efc295a1. The commit that follows it only records that
-                    hash in this line. Before it: d070fbb (M6 close-out), fcae302 (M6), 66c1b97 (M5.5C),
+Current milestone : M8 "Production blueprint + autonomous run" COMPLETE (2026-10-30, owner-scoped). The
+                    agent now says WHAT the video is and the tool writes the plan:
+                    `cutwright/engine/blueprint.py` -> `python -m cutwright blueprint generate <brief>`
+                    (beats + shot types + asset handles -> blueprint.json, beat frames MEASURED from
+                    edge-tts word cues via tools/narrate.py) and `blueprint compile <blueprint>`
+                    (-> manifest.json, validated before it is written, byte-identical on re-run). The
+                    production `recapstudio/Projects/m8_feature` ran end to end unattended: 3 beats,
+                    16.96 s, 407 frames, 8 steps (3 x render_range -> concat -> overlay_audio ->
+                    duck_audio -> normalize_audio -> export_h264), exit 0 in 267.9 s; the file is h264
+                    1920x1080 24/1, 407/407 frames, aac 48k stereo, decodes clean, 0 flat frames, cuts
+                    measured exactly on frames 131 and 246, engine A/V shift -0.013 s. Tests: 37 + 46 +
+                    28 + 8 green. TWO MEASUREMENTS STILL FAIL and are recorded, not hidden: slideshow_risk
+                    0.867 ("high", bar is <0.85) and Kinocut release_checkpoint 56.1/100 (its own bar is
+                    80). Ask: C-017 item 4. KNOWN GAP: `docs/ROADMAP.md` M8 as written (G6: five scenes,
+                    16:9 + 9:16, owner approves 4 of 5) is NOT done - it is now "M8b" in the roadmap.
+                    Before it: M7 DONE, M6 DONE, M5.5 DONE, M5 DONE.
+Last green commit : <filled by this close-out> (see `git log -1` and the line below it). Before it:
+                    f5b4328 (M7 close-out), 43fa769 (M7), d070fbb, fcae302 (M6), 66c1b97 (M5.5C),
                     20a5052, d55c114, 5dbda9e, facc015 (M5.5A), 2ae8f60, c97d7fd, 4528c51 (M5 close-out),
                     7a8184c, 0755d92, 498aed1, d072280.
-Next step         : M8 - visual quality overhaul and benchmark (old G6): five distinct benchmark scenes at
-                    16:9 and 9:16, the owner approves >= 4 of 5, `validate` keeps slideshow_risk below "high".
-                    Read `docs/ROADMAP.md` M8 and `docs/VISUAL_STANDARD.md` sections 2-9 first. Decide with the
-                    owner whether the G5 3-scene count is wanted before or after M8. M7 is verified: 107 tests
-                    green (`test_engine_cli + registry + remotion`), 3 stills rendered and looked at, render
-                    line decoded (quotes in LOG, numbers in docs/evidence/m7_*.json).
-Open COMMS        : C-016 (this session: the scene brief/check tools, the planted flaws, the gap, and the
-                    implemented C-015 decisions); C-015 resolved by the owner (rename + envelopes approved);
-                    C-014 BLOCKED (2026-10-27); C-012, C-011 (answered 2026-10-30), C-010..C-006 answered;
-                    C-013 closed (M5.5C, no answer needed).
+Next step         : the owner picks ONE of: (a) M8b = the G6 five-scene benchmark at 16:9 and 9:16
+                    (it is M9's fixed input, so it comes first if M9 is next), (b) M9 HyperFrames
+                    bake-off (needs those five scenes), (c) close M8's two open measurements first
+                    (C-017 item 4: accept, push motion/contrast, or a busier clip), (d) M10 perception
+                    -> script. Do not start two of them.
+Open COMMS        : C-017 (this session: the blueprint, the production, the four render passes, the two
+                    failing measurements, and the ROADMAP M8/G6 scope question); C-016 resolved by the
+                    owner (3-demo-brief benchmark deferred, M8 = blueprint + run); C-015 resolved;
+                    C-014 BLOCKED (2026-10-27); C-012, C-011 answered 2026-10-30; C-013 closed.
 Rules             : `.clinerules/` directory (00-core-workflow, 01-architecture-and-constraints,
                     02-testing-and-evidence, 03-session-boundaries). The old single `.clinerules` file no longer exists.
 
@@ -46,6 +45,13 @@ Known on this PC  : git 2.47.1, gh 2.103.0 (logged in as altzotify-cell), Python
                     Kinocut: INSTALLED in `.venvs\kinocut` = kinocut 1.16.4 on Python 3.11.9, doctor exit 0.
                     `.venvs/` and `out/` are gitignored. All M0 numbers: docs/ENVIRONMENT.md.
 Verified on this PC so far : M0 audit (facts in `docs/ENVIRONMENT.md`) + M1/M2/M3 (quotes in `LOG.md`):
+  - M8 (2026-10-30): the blueprint and the autonomous run. `blueprint generate` -> narration 16.656 s /
+    39 word cues / `"timing": "word timings"`, beats 131 / 115 / 161 frames; `blueprint compile` -> 8
+    steps, 407 frames, re-run byte-identical; `validate` -> ok, 0 errors, provenance ok;
+    `run` -> exit 0, all 8 steps done in 267.9 s; the file decodes to 407/407 frames (h264 1920x1080
+    24/1, aac 48k stereo, 4,575,119 B), 0 flat frames, cuts measured on frames 131 and 246, engine A/V
+    shift -0.013 s. `slideshow_risk` 0.867 "high" and Kinocut `release_checkpoint` 56.1/100 still fail
+    their bars - see C-017 item 4. Suites: 37 + 46 + 28 + 8 green.
   - M6 (2026-10-30): the agent bridge and the stage envelopes work. `recap projects --json` -> "count": 2;
     `recap new m6probe` -> "created": true; `recap demo --project m6probe` -> ok, 6.0 s, 14 files changed;
     `recap check` on a fresh copy -> exit 0, 2.2 s, files_changed ["STATE.md"]; `recap tts --force` and

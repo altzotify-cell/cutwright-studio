@@ -37,9 +37,11 @@ with `set RECAP_NONINTERACTIVE=1` (PowerShell: `$env:RECAP_NONINTERACTIVE=1`). A
 | `recap projects\|new\|status\|<step>` | non-interactive bridge: one project step, `--project`, `--json`; `--force`/`init`/`collect` refused without the gate | works (M6) |
 | `scene brief [--handle H] [--composition ID]` | the authoring brief: the 4 primitives + their real props, the handle rule, the 3 stills, the critic's checks | works (M7) |
 | `scene check <file...> [--handle H]` | the real TypeScript static check of scene files (same checker `scenes` uses), `--json` | works (M7) |
+| `blueprint generate <brief.json>` | brief (beats + shot types + asset handles) -> `blueprint.json`; beat frames measured from the narration's word timings; `--narration FILE`, `--no-tts`, `--out`, `--json` | works (M8) |
+| `blueprint compile <blueprint.json>` | `blueprint.json` -> `manifest.json` (render_range per beat, Kinocut concat, overlay_audio -> duck -> normalize -> export), validated BEFORE it is written; `--out`, `--json` | works (M8) |
 | `scene write/sheet/metrics` | the rest of the G5 loop (write into the project, contact sheet, numbers) | **G5 remainder** |
 | `analyze`, `script check`, `profile show` | perception pack, script validation, prompt profiles | **G7** |
-| `blueprint check`, `direct` | Production Blueprint validation; Director orchestration over backends | **G8** |
+| `blueprint check`, `direct` | Production Blueprint validation; Director orchestration over backends | **G8** (`blueprint generate/compile` is the M8 slice of it) |
 | `make "<request>" --profile` | one-line entry for any video kind | **G9** |
 
 ## Engine ops that DRAW (M5.5A, executor `remotion`)

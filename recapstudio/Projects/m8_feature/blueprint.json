@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "kind": "production_blueprint",
+  "title": "Sol 738 - Awake Before the Sun",
+  "slug": "m8_feature",
+  "project": "recapstudio\\Projects\\m8_feature",
+  "fps": 24.0,
+  "size": [
+    1920,
+    1080
+  ],
+  "budget": {
+    "mode": "cap",
+    "cap_usd": 0.0
+  },
+  "constraints": {
+    "ai_generated_images": false,
+    "allowed_asset_origins": [
+      "footage",
+      "user_image",
+      "code_graphic",
+      "stock_licensed"
+    ]
+  },
+  "assets": [
+    {
+      "id": "footage_a",
+      "path": "recapstudio\\Projects\\regress\\footage\\real_sample.mp4",
+      "origin": "footage",
+      "license": "NASA/JPL-Caltech Perseverance footage, public domain (owner-supplied clip)"
+    },
+    {
+      "id": "music",
+      "path": "recapstudio\\Projects\\m4job\\audio_trim\\music_bed_24fps.wav",
+      "origin": "user_audio",
+      "license": "owner-supplied music bed (read only, never modified)"
+    },
+    {
+      "id": "voice",
+      "path": "recapstudio\\Projects\\m8_feature\\audio\\narration.wav",
+      "origin": "user_audio",
+      "license": "synthetic voice (edge-tts), generated for this project"
+    }
+  ],
+  "narration": {
+    "asset": "voice",
+    "seconds": 16.656,
+    "words": 39,
+    "engine": "edge",
+    "timing": "word timings",
+    "voice": "en-US-ChristopherNeural"
+  },
+  "beats": [
+    {
+      "id": "beat1",
+      "shot": "layered_push",
+      "say": "Before the sun clears the ridge line, the rover is already awake and listening.",
+      "text": "Before the sun clears the ridge line, the rover is already awake and listening.",
+      "scene": "recapstudio/remotion/src/scenes/m8_layered_push.tsx",
+      "composition": "bench-m8-layered-push",
+      "assets": [
+        "footage_a"
+      ],
+      "starts_at": 0,
+      "frames": 131,
+      "seconds": 5.458,
+      "transition_in": "cut",
+      "note": "layered footage under a slow camera push - the shot that must not read as a slide"
+    },
+    {
+      "id": "beat2",
+      "shot": "kinetic_reveal",
+      "say": "Perseverance does not wait for daylight. It makes its own.",
+      "text": "Perseverance does not wait for daylight. It makes its own.",
+      "scene": "recapstudio/remotion/src/scenes/m8_kinetic_reveal.tsx",
+      "composition": "bench-m8-kinetic-reveal",
+      "assets": [],
+      "starts_at": 131,
+      "frames": 115,
+      "seconds": 4.792,
+      "transition_in": "cut",
+      "note": "high-impact kinetic typography: type that enters like a title, nothing else on screen"
+    },
+    {
+      "id": "beat3",
+      "shot": "directed_mask",
+      "say": "Sol seven thirty eight. It reads the stone, and writes the dawn of another world.",
+      "text": "Sol seven thirty eight. It reads the stone, and writes the dawn of another world.",
+      "scene": "recapstudio/remotion/src/scenes/m8_directed_wipe.tsx",
+      "composition": "bench-m8-directed-wipe",
+      "assets": [
+        "footage_a"
+      ],
+      "starts_at": 246,
+      "frames": 161,
+      "seconds": 6.708,
+      "transition_in": "cut",
+      "note": "a directed shot revealed by an angled mask wipe (the kit's MaskWipe, a real angle)"
+    }
+  ],
+  "audio": {
+    "music": "music",
+    "duck": {
+      "music_volume": 0.22,
+      "threshold": 0.03,
+      "ratio": 8,
+      "attack": 5,
+      "release": 260
+    },
+    "normalize": {
+      "lufs": -16,
+      "true_peak": -1.5
+    }
+  },
+  "deliver": {
+    "quality": "high",
+    "container": "mp4",
+    "output": "recapstudio/Projects/m8_feature/m8_feature.mp4"
+  },
+  "note": "Designed by `cutwright blueprint generate`, compiled by `blueprint compile`. The beat frames are measured from the narration (word timings), not chosen."
+}

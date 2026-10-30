@@ -1,0 +1,282 @@
+{
+  "schema": 1,
+  "run_id": "m8_feature",
+  "pipeline": "Sol 738 - Awake Before the Sun",
+  "fps": 24.0,
+  "size": [
+    1920,
+    1080
+  ],
+  "budget": {
+    "mode": "cap",
+    "cap_usd": 0.0
+  },
+  "constraints": {
+    "ai_generated_images": false,
+    "allowed_asset_origins": [
+      "footage",
+      "user_image",
+      "code_graphic",
+      "stock_licensed"
+    ]
+  },
+  "assets": [
+    {
+      "id": "footage_a",
+      "path": "recapstudio\\Projects\\regress\\footage\\real_sample.mp4",
+      "origin": "footage",
+      "license": "NASA/JPL-Caltech Perseverance footage, public domain (owner-supplied clip)"
+    },
+    {
+      "id": "music",
+      "path": "recapstudio\\Projects\\m4job\\audio_trim\\music_bed_24fps.wav",
+      "origin": "user_audio",
+      "license": "owner-supplied music bed (read only, never modified)"
+    },
+    {
+      "id": "voice",
+      "path": "recapstudio\\Projects\\m8_feature\\audio\\narration.wav",
+      "origin": "user_audio",
+      "license": "synthetic voice (edge-tts), generated for this project"
+    }
+  ],
+  "gates": [],
+  "steps": [
+    {
+      "id": "beat1_render",
+      "op": "render_range",
+      "inputs": {
+        "scene": "recapstudio/remotion/src/scenes/m8_layered_push.tsx",
+        "assets": {
+          "footage_a": "@asset.footage_a"
+        }
+      },
+      "params": {
+        "composition": "bench-m8-layered-push",
+        "start": 0,
+        "frames": 131,
+        "portrait": false,
+        "crf": 18
+      },
+      "outputs": {
+        "video": "out/runs/m8_feature/work/beat1.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 131
+        },
+        {
+          "check": "size",
+          "expect": [
+            1920,
+            1080
+          ]
+        },
+        {
+          "check": "constant_fps",
+          "expect": 24.0
+        }
+      ]
+    },
+    {
+      "id": "beat2_render",
+      "op": "render_range",
+      "inputs": {
+        "scene": "recapstudio/remotion/src/scenes/m8_kinetic_reveal.tsx"
+      },
+      "params": {
+        "composition": "bench-m8-kinetic-reveal",
+        "start": 0,
+        "frames": 115,
+        "portrait": false,
+        "crf": 18
+      },
+      "outputs": {
+        "video": "out/runs/m8_feature/work/beat2.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 115
+        },
+        {
+          "check": "size",
+          "expect": [
+            1920,
+            1080
+          ]
+        },
+        {
+          "check": "constant_fps",
+          "expect": 24.0
+        }
+      ]
+    },
+    {
+      "id": "beat3_render",
+      "op": "render_range",
+      "inputs": {
+        "scene": "recapstudio/remotion/src/scenes/m8_directed_wipe.tsx",
+        "assets": {
+          "footage_a": "@asset.footage_a"
+        }
+      },
+      "params": {
+        "composition": "bench-m8-directed-wipe",
+        "start": 0,
+        "frames": 161,
+        "portrait": false,
+        "crf": 18
+      },
+      "outputs": {
+        "video": "out/runs/m8_feature/work/beat3.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 161
+        },
+        {
+          "check": "size",
+          "expect": [
+            1920,
+            1080
+          ]
+        },
+        {
+          "check": "constant_fps",
+          "expect": 24.0
+        }
+      ]
+    },
+    {
+      "id": "join",
+      "op": "concat",
+      "inputs": {
+        "sources": [
+          "@beat1_render.video",
+          "@beat2_render.video",
+          "@beat3_render.video"
+        ]
+      },
+      "outputs": {
+        "video": "out/runs/m8_feature/work/joined.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 407
+        },
+        {
+          "check": "decodes_clean"
+        }
+      ]
+    },
+    {
+      "id": "voice_over",
+      "op": "overlay_audio",
+      "inputs": {
+        "video": "@join.video",
+        "audio": "@asset.voice"
+      },
+      "params": {
+        "duration": 16.958333,
+        "bitrate": "192k"
+      },
+      "outputs": {
+        "video": "out/runs/m8_feature/work/voiced.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 407
+        },
+        {
+          "check": "has_audio",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "duck",
+      "op": "duck_audio",
+      "inputs": {
+        "src": "@voice_over.video",
+        "music": "@asset.music"
+      },
+      "params": {
+        "music_volume": 0.22,
+        "threshold": 0.03,
+        "ratio": 8,
+        "attack": 5,
+        "release": 260
+      },
+      "outputs": {
+        "video": "out/runs/m8_feature/work/ducked.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 407
+        },
+        {
+          "check": "has_audio",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "level",
+      "op": "normalize_audio",
+      "inputs": {
+        "src": "@duck.video"
+      },
+      "params": {
+        "lufs": -16,
+        "true_peak": -1.5
+      },
+      "outputs": {
+        "video": "out/runs/m8_feature/work/leveled.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 407
+        },
+        {
+          "check": "has_audio",
+          "expect": true
+        }
+      ]
+    },
+    {
+      "id": "export",
+      "op": "export_h264",
+      "inputs": {
+        "src": "@level.video"
+      },
+      "params": {
+        "quality": "high",
+        "container": "mp4"
+      },
+      "outputs": {
+        "video": "recapstudio/Projects/m8_feature/m8_feature.mp4"
+      },
+      "validation": [
+        {
+          "check": "frame_count",
+          "expect": 407
+        },
+        {
+          "check": "decodes_clean"
+        },
+        {
+          "check": "has_audio",
+          "expect": true
+        }
+      ]
+    }
+  ],
+  "note": "Compiled from the project's blueprint.json by `cutwright blueprint compile`: the beats, assets and checks are the blueprint's, the ops and executors are ops.py's (docs/CAPABILITY_MATRIX.md)."
+}

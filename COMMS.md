@@ -491,3 +491,62 @@ say the word if you want the 3-scene count run before M8.
 **5. Look at these if you want to judge for yourself:** `out/m7/stills/descent_f000|048|144.png` (pass 3)
 against `out/m7/stills_pass1/`. No answer is needed to start M8.
 
+## C-017 | 2026-10-30 | agent -> owner | REVIEW | OPEN
+
+Commit: this session's commit (recorded in HANDOFF and `git log -1`)
+Files: `cutwright/engine/blueprint.py` (new), `tools/narrate.py` (new),
+`recapstudio/remotion/src/scenes/m8_{layered_push,kinetic_reveal,directed_wipe}.tsx` (new),
+`recapstudio/remotion/src/SceneLab.tsx`, `recapstudio/Projects/m8_feature/` (new: brief, blueprint,
+manifest, script, project), `cutwright/cli.py`, `cutwright/engine/envelopes.py`,
+`tests/test_engine_cli.py`, `docs/{TOOLS,CODEMAP,ROADMAP}.md`, `docs/evidence/m8_feature.json`,
+`HANDOFF.md`, both `.gitignore`s.
+Goal: M8 as you scoped it - the agent designs a production as BEATS, the tool compiles it to a
+manifest, and the engine runs the whole thing end to end with no hand-written steps.
+
+**1. The hand-written manifest is out of the agent's job.** `blueprint generate <brief.json>` takes
+the intent (title, beats, shot type per beat, the words spoken, the asset handles) and writes a
+`ProductionBlueprint`; `blueprint compile` turns it into `manifest.json` and refuses to write one that
+`manifest.validate` rejects. The frame counts are not chosen: edge-tts streams `WordBoundary` cues
+(one per word, in order) through `tools/narrate.py`, and each beat ends where its own sentence ends -
+beat 2 starts on the frame the word "Perseverance" starts. Re-running either verb is byte-identical,
+so a plan can be regenerated and diffed. 7 tests pin the loop (a brief with an unknown shot, a
+footage shot with no footage, a missing narration, a blueprint that is not a blueprint, the compiled
+step graph and its executors, and the shot table against the scene files that really render it).
+
+**2. The production ran unattended.** `recapstudio/Projects/m8_feature`: 3 beats (layered footage +
+subtle push / kinetic typography / directed shot with an angled mask wipe), 16.66 s of narration,
+407 frames at 24 fps, 8 steps - three Remotion renders, Kinocut `concat`, FFmpeg `overlay_audio`,
+Kinocut `duck_audio`, `normalize_audio`, `export_h264`. Exit 0, every step `done`, every declared
+check `pass`. Numbers and quoted output: `LOG.md`, `docs/evidence/m8_feature.json`.
+
+**3. Four render passes, because the frames kept disagreeing with the numbers.** (a) pass 1 was
+murky: the plate is a pre-dawn Mars sky (mean luma ~10/255) and my scrims made it worse. (b) pass 2
+had 8 near-black frames at the beat-3 boundary (a wipe starting from zero) and both "accent" words
+rendered white - `KineticText`'s `lines` mode compares the WHOLE line against `emphasis`, so a
+per-word accent can never fire there; words mode fixed it. (c) pass 3 graded the plate (brightness
+1.5 / contrast 1.22 / saturate 1.7) and the dawn appeared. (d) pass 4 fixed what the stills showed
+last: the 1.18 push cropped "Reads" against the frame edge, and beat 2's emphasis array still said
+`['light']` while its line said "daylight". I looked at a still at each pass - the defects that
+mattered were all visible, none of them were in the JSON.
+
+**4. Two of the project's own measurements still fail, and I am not going to dress that up.**
+(i) `validate.slideshow_risk` reports 0.86 - "high". It counts frame pairs whose mean change at 64x36
+is under 1.0/255, and this reel is three slow camera moves on a low-motion plate; the grade nearly
+doubled the measured movement (mean diff 0.546 -> 0.944) but the verdict did not flip. (ii) Kinocut's
+`release-checkpoint` gate scores the file 56.5/100 against its own 80 bar: "desaturated 7.2 %",
+"colour cast red/yellow 22.2 %". After the grade it now objects to the WARMTH the grade added - a
+golden-dawn plate is a colour cast to that gate. Both are heuristics; the hard checks pass (407/407
+frames, clean decode, 0 flat frames, cuts exactly on the beat frames, audio in sync within 13 ms of
+the narration file). Say which you want: (a) accept the number and record the gap, (b) let me push
+motion/contrast harder and re-measure, or (c) give the reel a busier clip and re-run - the metric is
+measuring the plate as much as the edit.
+
+**5. One scope mismatch to settle.** `docs/ROADMAP.md` M8 is "visual quality overhaul and benchmark
+(old G6)": five benchmark scenes, 16:9 and 9:16, owner approves >= 4 of 5. Your M8 was the blueprint
+and the end-to-end run. I built yours and recorded the other as still open (M8b in the roadmap's M8
+section), because silently redefining a milestone is worse than a visible gap. Tell me whether G6's
+five-scene benchmark comes before M9 (the HyperFrames bake-off wants five scenes as its fixed input).
+
+**6. Untested on purpose.** The three M8 scenes in 9:16 (the kit's `portrait` path) - nothing in this
+production asked for it; the C-016 3-demo-brief harness is still deferred, as you decided.
+

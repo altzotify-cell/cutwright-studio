@@ -15,6 +15,7 @@ Engine verbs (M3 -- every decision lives in cutwright/engine/, these only parse 
   resume   Continue a run from its checkpoint
   status   What a run folder's checkpoint says, step by step
   approve  Write the approval file that opens a gate in a run folder
+  blueprint generate|compile   Design the beats from a brief, compile them to a manifest (M8)
 
 Recap Studio bridge (M6 -- logic in cutwright/recap.py, refusals included):
   recap    projects | new <name> | status --project X | <step> --project X     (all --json)
@@ -37,7 +38,8 @@ from . import probe
 from . import recap as bridge
 from . import subs
 from . import transcribe
-from .engine import checkpoint, gates, manifest, ops, registry, report, scenecraft, validate
+from .engine import (blueprint, checkpoint, gates, manifest, ops, registry, report,
+                     scenecraft, validate)
 from .engine.executors import kinocut as kino
 
 VERSION = "0.1.0"
@@ -858,6 +860,77 @@ def _print_run(data):
     rule()
 
 
+def cmd_blueprint(args):
+    """The production blueprint (M8): design the beats from a brief, then compile them to a manifest."""
+    action = getattr(args, "action", "") or "generate"
+    try:
+        if action == "compile":
+            data = blueprint.compile(args.blueprint, getattr(args, "out", "") or "")
+            data["blueprint"] = args.blueprint
+            if _json_mode(args):
+                _dump(data)
+            else:
+                _print_compiled(data)
+            return 0
+        brief = guard.read_json(args.brief, default=None)
+        if not isinstance(brief, dict):
+            raise blueprint.BlueprintError("not a brief: %s" % args.brief, code="not_json",
+                                           suggested="a brief is a JSON object "
+                                                     "(title, project, assets, beats)")
+        document, path = blueprint.generate(
+            brief, out=getattr(args, "out", "") or "",
+            narration=getattr(args, "narration", "") or "",
+            tts=False if getattr(args, "no_tts", False) else None)
+    except blueprint.BlueprintError as exc:
+        return _reject(args, "blueprint", exc)
+    data = {"ok": True, "blueprint": guard.rel(path), "title": document["title"],
+            "slug": document["slug"], "fps": document["fps"], "size": document["size"],
+            "narration": document["narration"], "beats": document["beats"],
+            "assets": document["assets"], "audio": document["audio"],
+            "deliver": document["deliver"]}
+    if _json_mode(args):
+        _dump(data)
+    else:
+        _print_blueprint(data)
+    return 0
+
+
+def _print_blueprint(data):
+    rule()
+    print("BLUEPRINT  %s  (%s)" % (data["title"] or data["slug"], data["blueprint"]))
+    rule()
+    narration = data["narration"]
+    print("  narration  %.2fs, %d words, %s, timing %s"
+          % (narration["seconds"], narration["words"], narration["engine"], narration["timing"]))
+    for order, row in enumerate(data["beats"], start=1):
+        print("  beat %-2d %-12s %-16s f%04d-%04d  %5.2fs  %s"
+              % (order, row["id"], row["shot"], row["starts_at"],
+                 row["starts_at"] + row["frames"] - 1, row["seconds"], row["composition"]))
+        print("          %s" % row["say"])
+        if row.get("assets"):
+            print("          assets %s" % ", ".join(row["assets"]))
+    for row in data["assets"]:
+        print("  asset      %-12s %-12s %s" % (row["id"], row["origin"], row["path"]))
+    print("  audio      music %s   duck %s" % (data["audio"]["music"] or "(none)",
+                                               data["audio"]["duck"] or "(defaults)"))
+    print("  deliver    %s" % data["deliver"]["output"])
+    rule()
+
+
+def _print_compiled(data):
+    rule()
+    print("MANIFEST   %s   %d steps, %d frames, %.2fs"
+          % (data["manifest"], len(data["steps"]), data["frames"], data["seconds"]))
+    rule()
+    for row in data["beats"]:
+        print("  %-12s %-16s f%04d +%d" % (row["id"], row["shot"], row["starts_at"],
+                                           row["frames"]))
+    print("  steps      %s" % " -> ".join(data["steps"]))
+    print("  output     %s" % data["output"])
+    print("  next       python -m cutwright validate %s --json" % data["manifest"])
+    rule()
+
+
 def cmd_run(args):
     dry = bool(getattr(args, "dry_run", False))
     try:
@@ -1200,6 +1273,24 @@ def build_parser():
     q.add_argument("--json", action="store_true", help="print JSON")
     q.set_defaults(func=cmd_tools)
     p.set_defaults(action="list")
+
+    p = sub.add_parser("blueprint", help="design a production (beats) and compile it to a manifest")
+    bsub = p.add_subparsers(dest="action", metavar="ACTION")
+    bsub.required = True
+    q = bsub.add_parser("generate", help="brief (beats + shots + assets) -> blueprint.json")
+    q.add_argument("brief", help="the brief: title, project, assets, beats (see docs/TOOLS.md)")
+    q.add_argument("--out", metavar="FILE", help="where to write the blueprint")
+    q.add_argument("--narration", metavar="FILE",
+                   help="use this narration file instead of synthesising one")
+    q.add_argument("--no-tts", action="store_true", dest="no_tts",
+                   help="never synthesise: the narration file must already exist")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_blueprint)
+    q = bsub.add_parser("compile", help="blueprint.json -> manifest.json (validated before writing)")
+    q.add_argument("blueprint", help="the blueprint file `blueprint generate` wrote")
+    q.add_argument("--out", metavar="FILE", help="where to write the manifest")
+    q.add_argument("--json", action="store_true", help="print JSON")
+    q.set_defaults(func=cmd_blueprint)
 
     p = sub.add_parser("validate", help="pre-render check of a manifest: plan + asset provenance")
     p.add_argument("manifest")

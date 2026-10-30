@@ -10,6 +10,12 @@ models/
 # your work
 Projects/*
 !Projects/.gitkeep
+# M8: the m8_feature production IS the evidence for the milestone - its brief, blueprint, manifest,
+# script and the narration's word timings are committed; its media (wav/mp3, the final mp4) is not.
+!Projects/m8_feature/
+Projects/m8_feature/*.mp4
+Projects/m8_feature/audio/*.wav
+Projects/m8_feature/audio/*.mp3
 _voicelab/
 
 # reference voices you cloned (personal recordings)
