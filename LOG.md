@@ -1190,6 +1190,11 @@ FAILED     - the first measured `render_still` run : `python -m cutwright run
              (the docstring now says so) and re-run. The same failed attempt exposed two smaller
              defects, both fixed: the error text carried ANSI colour escapes (now stripped) and the
              props file was written before the availability check (now after it).
+FAILED     - one of my own commit messages : I wrote `msg.txt` with `Set-Content`, which
+             `.clinerules/00-core-workflow.md` forbids precisely because it adds a BOM;
+             `git cat-file commit HEAD` showed `\xef\xbb\xbf` before the subject while
+             `git log --format=%s` hid it. Fixed by rewriting the file with the editor and
+             `git commit --amend -F msg.txt`; the raw object now reads `+0000\n\nM5.5A docs...`.
 FAILED     - my own probe one-liners, not the project : `python -c "..."` was mangled by PowerShell
              quoting twice ("SyntaxError: '(' was never closed") and once the `>&2` traceback was
              swallowed by the pipe; fixed by putting every probe in a script file under `out\m55\`.
@@ -1311,7 +1316,9 @@ DECISIONS  - 1. The executor calls the pinned CLI as `node
              into the regress project's three scenes + "demo noir" theme). Neither is an M5.5A edit.
              The next session will see both reappear the moment it runs the pack or the suite; that is
              expected, not a regression.
-Commit     - see the closing docs commit of this session (the C-009/C-010 pattern: the code commit
-             lands first, then one small docs commit records its hash here and in HANDOFF/COMMS).
+Commit     - facc015 "M5.5A: a Remotion executor (render_still, render_range), measured" (14 files,
+             +1065/-25) on main, pushed to origin main; `git ls-remote origin refs/heads/main` ->
+             facc015c8a349864148347dabf9beab4590b351a. Before it in this session: 2ae8f60 (docs only).
+             The commit that follows this entry only records that hash in HANDOFF.md and COMMS.md.
 ```
 

@@ -24,10 +24,12 @@ Current milestone : M5.5 "Creative rendering slice" - a NEW milestone the owner 
                     `git grep` for the removed backend's name over code -> no matches. The recapstudio
                     regression pack (roadmap M5 acceptance line 3) was NOT re-run in the M5 session; it was
                     re-run in M5.5A and is byte-identical (see the M5.5A line below).
-Last green commit : 4528c51 (M5 close-out; the message is in `LOG.md` and `git log -1`, not repeated here so
-                    the M5 acceptance grep stays empty), pushed to origin main - verified with
-                    `git ls-remote`. Before it: 7a8184c, 0755d92, 498aed1, d072280. This session's own
-                    commits are recorded in the closing docs commit and in `LOG.md`.
+Last green commit : facc015 (M5.5A - the Remotion executor), pushed to origin main; verified with
+                    `git ls-remote origin refs/heads/main` -> facc015c8a349864148347dabf9beab4590b351a.
+                    Before it: 2ae8f60 (M5.5 docs), c97d7fd (M5 close-out docs), 4528c51 (M5 close-out,
+                    whose message is in `LOG.md` and `git log -1` rather than here so the M5 acceptance
+                    grep stays empty), 7a8184c, 0755d92, 498aed1, d072280. This session's own commits
+                    are recorded in this line and in `LOG.md`.
 Next step         : M5.5B - footage/stills handle + scene primitives + the look-at-the-frame critic loop
                     (`docs/ROADMAP.md` M5.5). Not started; the owner's go starts it. M6-M9 keep their
                     order after M5.5; M10-M16 are a PARKING LOT (owner decision ii: do not start or

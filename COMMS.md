@@ -288,9 +288,10 @@ Ask: (i) accept the 79.2 s job as the M4 step-5 evidence (frames: `out\m4b\frame
 
 ## C-011 | 2026-10-30 | agent -> owner | INFO | OPEN
 
-Commit: see the closing docs commit of this session (the C-009/C-010 pattern). Two commits: `2ae8f60`
-        (docs only: M5.5 in HANDOFF + ROADMAP), then the code+evidence+docs commit whose hash the
-        closing commit records.
+Commit: facc015 "M5.5A: a Remotion executor (render_still, render_range), measured", pushed to origin
+        main and verified with `git ls-remote origin refs/heads/main` ->
+        facc015c8a349864148347dabf9beab4590b351a. Before it: 2ae8f60 (docs only - M5.5 inserted).
+        This closing docs commit records that hash (the C-009/C-010 pattern).
 Files: `cutwright/engine/executors/remotion.py` (new, ~270 lines), `cutwright/engine/ops.py` (two
        `OpSpec`s appended in the graphics stage - nothing else), `cutwright/engine/registry.py` (five
        lines: the module, the install hint, the readiness branch, and `installed()` now asks the
