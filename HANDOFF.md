@@ -3,7 +3,9 @@
 Revised 2026-10-30 (after M5). The older handoff (an editor application as primary backend, goals G0-G16) is
 superseded; its goal specs survive only where `docs/ROADMAP.md` points at them. This file = status + rules + order.
 Detail lives in: `docs/ROADMAP.md` (milestones, acceptance, test commands), `docs/ARCHITECTURE.md`,
-`docs/MIGRATION_CHECKLIST.md`, `docs/REFERENCES.md`. Progress goes in `LOG.md`; questions/blocks in `COMMS.md`.
+`docs/MIGRATION_CHECKLIST.md`, `docs/REFERENCES.md`. Progress goes in `LOG.md`; questions/blocks in `COMMS.md`. The consultant's 2026-10-31 wrapper (work
+items W0-W5: plan-first storyboard gate, motion plates, engine merge, look budget, baseline) is merged as its own
+section after the milestone table.
 
 ## Current status (you keep this block up to date)
 
@@ -36,6 +38,10 @@ Next step         : the owner picks ONE of: (a) M8b = the G6 five-scene benchmar
                     bake-off (needs those five scenes), (c) close M8's two open measurements first
                     (C-017 item 4: accept, push motion/contrast, or a busier clip), (d) M10 perception
                     -> script. Do not start two of them.
+Wrapper handoff   : 2026-10-31 consultant plan W0-W5 (storyboard gate before any render, motion plates,
+                    engine reconciliation, look budget + rubric, plain-agent baseline). Order W0 -> W1 -> W2 ->
+                    W3 -> W5; W4 is a note. Section "## Wrapper handoff W0-W5" sits after the milestone table.
+                    M8b and M9 stay open and the owner chooses when; do not start two items at once.
 Open COMMS        : C-017 (this session: the blueprint, the production, the four render passes, the two
                     failing measurements, and the ROADMAP M8/G6 scope question); C-016 resolved by the
                     owner (3-demo-brief benchmark deferred, M8 = blueprint + run); C-015 resolved;
@@ -210,6 +216,106 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 
 Order: M0..M5 done, then **M5.5** (the one insertion, before M6), then **M6** (done 2026-10-30), then **M7** (done 2026-10-30), then M8, M9. M10-M16 are a
 PARKING LOT (owner decision, 2026-10-30): do not start or expand them.
+
+## Wrapper handoff W0-W5 (consultant, 2026-10-31: plan before build, motion plates, one engine)
+
+Written 2026-10-31 by the consultant for the owner, merged into this file 2026-10-31. It adds work items W0-W5
+and does NOT replace the milestone table above; read it after this file's status block and `.clinerules/`.
+Names of new files and verbs below are **proposals**: check `docs/CODEMAP.md` and
+`python -m cutwright tools list` first and reuse what exists. This section contains no code on purpose: every
+item starts with a short plan to the owner, then waits for the go.
+
+### 0. Why this exists (decisions already made by the owner)
+
+1. **The owner wants to see and tweak the plan before the video is built** ("the plan before it goes end to end"). Especially for motion-graphic explainers: the agent presents a storyboard, the owner changes it in plain language, only then does anything render.
+2. **Motion plates** (term from a transcript the owner watched): a self-contained animated clip of about 3-8 s, picture-in-picture or alpha overlay, laid over footage at a timecode. Full-screen cards are what makes a film look like slides.
+3. **One engine, two wrappers.** CutWright's `recapstudio/` (kit/3: `LayeredMedia`, `Camera`, `KineticText`, `MaskWipe`, string-literal asset handles, bundle cache) and the standalone Recap Studio (owner's free-chatbot product) have diverged. Recap Studio now has composition modes `overlay | inset | replace`, `<Footage>` / `<Still>` handles, `motion.assets` stills, a three-part contract (`CONTRACT.md` rules, `KIT.md` reference, `STYLE_GUIDE.md` advice) and boxless captions. CutWright must not build the same things a second time in a different grammar.
+4. **Title / chapter cards are never mandatory.** Movie recaps use none; documentary-style formats may. A blueprint adds a title shot only if the brief asks for it.
+5. **Every segment/beat can override** its shot, captions style, transition and theme patch.
+6. **Taste needs a human in the loop.** `slideshow_risk` is a guard, not a judge. The owner approves at defined gates.
+7. **Verified fact:** DeepSeek through Cline can see images (HANDOFF, M5.5A). Whether it *judges* layout well is not verified; W3 and W5 measure it.
+8. Evidence from a video the owner watched (Opus 5.5, ~6 h, ~20 takes, plan/contact sheet first, short script, motion plates over a human-recorded A-roll): quality came from a look-and-fix loop and a plan step, not from a bigger prompt. Treat that as a hypothesis to test here, not a result.
+
+### 1. Rules for this handoff (in addition to `.clinerules/`)
+
+- Report only what you ran: TESTED (command + quoted result), FAILED, NOT TESTED (why). No "it should work".
+- Start each W item with a **plan of at most 10 lines + list of files to change**, post it, and wait for the owner's go.
+- Small edits, stdlib-only agent layer (assumption A8), no new npm packages, Remotion stays 4.0.539, no AI-generated images/video, never print keys. Two failed attempts at the same problem = `COMMS.md` BLOCKED entry and stop.
+- **Do not game a threshold.** `slideshow_risk` 0.867 and Kinocut `release_checkpoint` 56.1 are open and recorded (C-017 item 4). Do not change either bar to make a run pass; improve the film or ask the owner.
+- Order: **W0 -> W1 -> W2 -> W3 -> W5**. W4 is a note. M8b and M9 stay open and the owner chooses when (do not start two milestones at once).
+
+### W0. Engine reconciliation (analysis only, no code)
+
+Objective: one engine source of truth, decided on evidence, before more features are built twice.
+Depends on: the owner supplying the standalone Recap Studio zip (`RecapStudio-phase3.5.zip`) into an ignored folder, e.g. `bench/recapstudio_standalone/` (not in git).
+Read first: `docs/ASSET_HANDLES.md`, `recapstudio/remotion/kit/` (read only the file list and exports), the standalone `remotion/kit/CONTRACT.md`, `KIT.md`, `STYLE_GUIDE.md`, `scenes.py`, `sceneassets.py`.
+Deliver `docs/ENGINE_MERGE.md` with:
+1. A feature table, one row per capability, columns: CutWright / standalone / winner / why. Rows at least: asset handle grammar (`asset="footage_a"` vs `<Still id>` and `<Footage>`), camera and layered media, kinetic text, mask wipe, composition modes, `motion.assets` stills (frame of the film / of the clip / project image), `camera` export, kit versioning, bundle cache, static checker rules, fallback policy (plain footage vs keywords), prompt/contract layout.
+2. A **single handle grammar proposal** (one way a scene names footage or a still) and what each side must change to adopt it.
+3. A migration plan for ONE direction: standalone becomes a thin wrapper over the shared engine, or CutWright vendors the standalone engine. State which and why. Include a drift guard (a test that fails if the two kits' exported names diverge).
+4. What is NOT shared and stays in each wrapper: CutWright = manifest, ops, gates, agent verbs; Recap Studio = paste workflow, web UI, packs.
+Acceptance: the document exists, every claim cites a file path, owner picks the direction. NOT TESTED items are listed, not guessed.
+
+### W1. Storyboard gate: plan before build
+
+Objective: after the agent designs the blueprint and before any render, the owner reads a storyboard, tweaks it in plain language, and approves. Nothing expensive runs until approval.
+Depends on: W0 decision on the handle grammar (the storyboard names assets by handle). Existing pieces: `engine/blueprint.py` (`generate`, `compile`, `gates: []` is empty today), `engine/gates.py` and `approve <run-dir> <gate>`, `engine/manifest.py` (`_blocking_gate`), `render_still` (about 5-8 s a still).
+Build (proposal, adapt to the code):
+1. A `storyboard` view of a blueprint (new module `engine/storyboard.py`, stdlib): `storyboard.md` for the owner (readable) and `storyboard.json` for the machine. Per beat: id, time range and frame count from the real word timings, the narration line, **medium** (footage, still with camera, kinetic type, data graphic, plain cut; `motion.medium` in VISUAL_STANDARD section 2), shot type, composition (`overlay | pip/inset | full`), 1-3 sentences "what appears, what moves, what lands on which spoken word", assets with provenance, SFX notes, estimated render seconds and a risk flag (heavy footage + grade, many layers). Plates (W2) show their window (start-end seconds).
+2. **Two tiers.** Tier A (free, instant): the table only. Tier B: one cheap still per beat (the beat's strongest frame, 16:9, low res) assembled into a contact sheet PNG, cached by content hash, so a tweak re-renders only the changed beat's still. The agent attaches the sheet itself when it reviews (vision works).
+3. **Tweaking = conversation.** The owner says "beat 3: picture-in-picture, number lands on 'seventy'" in Cline; the agent edits the blueprint, regenerates the storyboard, and shows a short **diff** (beats changed, stills re-rendered). Also allow direct edits of `storyboard.json` fields, re-read by a verb (`blueprint storyboard --reread`). Never silently drop an owner change; list rejected edits with the reason (for example a shot that needs footage the beat does not have).
+4. **The gate.** `blueprint compile` declares gate `storyboard` before the first render step. A run without approval stops with a plain message naming the gate and the command (`python -m cutwright approve <run-dir> storyboard`). Approval records the storyboard hash; if the blueprint changes afterwards, the approval no longer matches and the run says so (a stale approval must not release a changed plan). Optional switch for fully unattended runs: a recorded `--auto-approve storyboard` that writes who/why into the checkpoint (the owner's explicit choice, never default).
+5. Titles: a title beat exists only if the brief or the owner asked for one.
+Acceptance (quote the output):
+- `blueprint generate` then `blueprint storyboard` writes both files; `run` before approval exits with the gate message; `approve` releases it.
+- A tweak to one beat re-renders exactly one still (cache evidence) and the diff names it.
+- Changing the blueprint after approval blocks the run until re-approved (test).
+- Unit tests for: gate blocking, stale approval, diff, rejected edit. Existing suites stay green; `recap.py video` byte-identical.
+Traps: do not render full beats for the storyboard (stills only); do not let `compile` write a runnable manifest when the gate is absent; keep the approval file written atomically like `gates.py` does.
+
+### W2. Motion plates
+
+Objective: make the plate a first-class unit: a 3-8 s self-contained clip placed over footage by timecode, as picture-in-picture or an alpha overlay, rendered and cached separately.
+Depends on: W0, W1 (plates appear in the storyboard).
+Build (proposal):
+1. Blueprint field `plate`: `{start_s, end_s, mode: overlay | pip | full, alpha: true|false}`. Enforce 3-8 s (warn above 8 s, reject below 0.5 s: `MIN_BEAT_FRAMES`). `mode` maps to the Recap Studio composition modes: overlay = overlay, pip = inset, full = replace.
+2. New shot types (start with two): `pip_plate` (footage in a rounded or slanted window beside a graphic, entrance and exit) and `overlay_plate` (graphic with transparency over the running footage: label, number landing on a word, kinetic words). Reuse `Camera`, `LayeredMedia`, `KineticText`, `MaskWipe`. Avoid solid-colour and generic-gradient backgrounds when a real film frame or graded clip is available (owner's dislike).
+3. **Alpha output: verify, do not assume.** Find on this PC which format Remotion 4.0.539 can render with alpha (ProRes 4444, qtrle, VP9 alpha, PNG sequence), what Kinocut `composite-layers` accepts (it is video-only per the matrix: audio needs the separate pass), and what Premiere / VideoPad import. Record the measured table in `docs/ENVIRONMENT.md` or `CAPABILITY_MATRIX.md`.
+4. Each plate is its own manifest step with its own cache key (scene file + props + handle digests), so editing one plate re-renders only that plate. Composite step places plates by frame; verify frame counts and that the composite is frame-exact against the plan.
+5. Exportability: plates must be placeable in the Premiere XML / VideoPad exports as an overlay track at their timecodes (keep it possible; implement only if cheap, otherwise record the gap).
+Acceptance: 3 plates (one `pip`, one `overlay`, one `full`) over a 20 s clip; changing one plate re-renders only that plate (quoted cache lines); composite frame count equals plan; a plate longer than 8 s produces the warning; ffprobe numbers quoted.
+Traps: alpha can silently flatten on the way through a codec; check the pixel format on the produced file and a real alpha pixel, not the extension.
+
+### W3. Look-and-fix loop: budget and rubric
+
+Objective: more iterations where they are cheap, and a rubric the model must answer instead of "does this look good".
+Build:
+1. Replace the fixed "two revisions" with a **budget**: default 6 looks per scene, hard cap 10, stop early when the rubric passes. Every look logs: seconds of render, tokens used (if available from Cline, else NOT MEASURED), rubric result. Owner can raise or lower the budget per run.
+2. **Rubric** (answered as JSON, one yes/no plus a one-line reason per item, from `VISUAL_STANDARD.md` section 4 and Recap Studio `STYLE_GUIDE.md`): graphics sit on the picture (not a card on a flat background); at least three layers; strong scale contrast; more than one kind of motion; text inside the safe zone and not in the caption band; footage visible and graded for legibility; key word lands on the spoken word; no generic gradient/stock-template look; one idea. Numeric measures (luma, caption-band distance, flat frames) stay as guards.
+3. **Human checkpoints:** the `storyboard` gate (W1) and a `plates` gate before the final composite: the agent presents the contact sheet of all plate stills; the owner approves, or names plates to redo. Only named plates are revised.
+4. Regression guard from the M7 log: after each revision re-measure everything, not only what changed (a camera drift sank the sub line back into the caption band once).
+Acceptance: one real scene improved across at least 3 looks with the rubric rows and the cost table in `LOG.md`; the `plates` gate blocks and releases; no threshold changed.
+
+### W4. Notes (no work now)
+
+- Open measurements (`slideshow_risk`, `release_checkpoint`): address through W1-W3, not by editing thresholds.
+- Kinocut: do not deepen. Keep it only where the matrix says it won; the executor layer is frozen except for bug fixes.
+- M10-M16 stay parked. The owner will later specify a character-animation path (an animation tool producing transparent clips by timecode); keep the plate format (alpha clip + timecode + handle) compatible with that, and design nothing for it now.
+
+### W5. Baseline: does the engine earn its place?
+
+Objective: evidence for "plain agent + ffmpeg + Remotion, no CutWright" versus CutWright.
+Protocol (write it into `docs/BASELINE_plain_agent.md` BEFORE running): one 20 s brief, the same footage, the same narration file, the same model (DeepSeek in Cline), the same look budget. Run A: plain agent with ffmpeg, whisper and Remotion only, no `cutwright` verbs. Run B: CutWright with W1-W3. Measure: wall time, tokens if available, number of looks, rubric score on the final stills, frame-exactness of cuts and caption timing, number of silent failures (a step that claimed success but was wrong), owner blind verdict (A/B, not told which). Time-box it (one session per run).
+Deliverable: the table and a one-paragraph recommendation: what the engine saves, what it costs, what to cut. Then the owner decides about M9 (HyperFrames bake-off: only with the same loop, same rubric, time-boxed).
+
+### 2. Definition of done for this handoff
+
+- `docs/ENGINE_MERGE.md` exists and the owner has picked a direction (W0).
+- A production run stops at the `storyboard` gate, the owner tweaks one beat in plain language, approves, and the run completes with only the changed beat re-rendered (W1).
+- A film with at least three plates (pip / overlay / full) renders, with plate-level caching and a frame-exact composite (W2).
+- The loop runs on a budget with a logged rubric and an owner `plates` gate (W3).
+- The baseline table exists (W5).
+- LOG entries use TESTED / FAILED / NOT TESTED; HANDOFF status block and milestone table updated; one commit per item; the owner told to start a new session after each.
 
 ## Provisional decisions made for you (verify each on this PC; table with fallbacks: `docs/ROADMAP.md`)
 
