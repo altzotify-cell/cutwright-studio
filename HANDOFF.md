@@ -41,7 +41,9 @@ Next step         : the owner picks ONE of: (a) M8b = the G6 five-scene benchmar
 Wrapper handoff   : 2026-10-31 consultant plan W0-W5 (storyboard gate before any render, motion plates,
                     engine reconciliation, look budget + rubric, plain-agent baseline). Order W0 -> W1 -> W2 ->
                     W3 -> W5; W4 is a note. Section "## Wrapper handoff W0-W5" sits after the milestone table.
-                    M8b and M9 stay open and the owner chooses when; do not start two items at once.
+                    M8b and M9 stay open and the owner chooses when; do not start two items at once. W0's input
+                    (the standalone Recap Studio zip, phase 3.5 or later - whatever is current) is still
+                    missing: ask the owner for it before starting W0.
 Open COMMS        : C-017 (this session: the blueprint, the production, the four render passes, the two
                     failing measurements, and the ROADMAP M8/G6 scope question); C-016 resolved by the
                     owner (3-demo-brief benchmark deferred, M8 = blueprint + run); C-015 resolved;
@@ -225,6 +227,16 @@ Names of new files and verbs below are **proposals**: check `docs/CODEMAP.md` an
 `python -m cutwright tools list` first and reuse what exists. This section contains no code on purpose: every
 item starts with a short plan to the owner, then waits for the go.
 
+### First ask for the next session (W0's input, from the owner)
+
+W0 cannot start without the standalone Recap Studio source. At the start of the session, ask the owner once:
+"drop the current Recap Studio zip into `bench\recapstudio_standalone\` (it is gitignored, so it cannot be
+committed)". Take whatever version is current: phase **3.5 or later**. The wrapper text below names
+`RecapStudio-phase3.5.zip` because that was the latest on 2026-10-31; by the time W0 runs the standalone may be
+finished or further along (phase 4, a release build, a git bundle). In that case use THAT file, and record its real
+name and version in `docs/ENGINE_MERGE.md` and in the LOG entry. Never refuse a newer zip for not being 3.5, never
+download or reconstruct the standalone yourself, and never guess its API: W0 reads the zip it is given.
+
 ### 0. Why this exists (decisions already made by the owner)
 
 1. **The owner wants to see and tweak the plan before the video is built** ("the plan before it goes end to end"). Especially for motion-graphic explainers: the agent presents a storyboard, the owner changes it in plain language, only then does anything render.
@@ -352,6 +364,8 @@ DECISIONS  - <what you chose, which assumption it relied on, how it was verified
 New session. Read `.clinerules/` (4 files: 00-03), then HANDOFF.md, then the last 3 entries of COMMS.md and the last 40 lines of LOG.md.
 Tell me in 3 lines: current milestone, next step, anything blocked. Wait for my go.
 Then read only the current milestone's section of docs/ROADMAP.md.
+If the next item is W0 (HANDOFF section "Wrapper handoff W0-W5"): before planning anything, ask me to drop the
+current standalone Recap Studio zip into bench\recapstudio_standalone\ - phase 3.5 or later, whatever is current.
 ```
 
 ## Where the detail is

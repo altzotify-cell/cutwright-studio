@@ -1773,4 +1773,54 @@ Commit     - c6548b4 "M8: the production blueprint, and one production executed 
              committed is the owner's call). The project's media (narration wav/mp3, the final mp4)
              is gitignored by explicit rules; its brief/blueprint/manifest/script/word timings are in.
 
+## 2026-10-31 - docs: the consultant's W0-W5 wrapper merged into HANDOFF, and W0's missing input written down
+
+Goal: keep the consultant's wrapper handoff (dated 2026-10-31) inside the project's own record instead of as a
+loose attachment: merged into HANDOFF.md as a section, with the milestone table, rules and status lines untouched,
+and with the one thing W0 cannot start without (the standalone Recap Studio source) stated where the next
+session will actually see it.
+
+TESTED     - merge fidelity: a throwaway script (in %TEMP%, deleted afterwards, never in the repo) compared the
+             merged section against the source attachment line by line, the attachment's `##` headings
+             normalised to `###` -> `attachment body lines : 91`, `handoff section lines : 91`,
+             `VERDICT: IDENTICAL`, `leftover placeholders: 0`, `BOM: False`.
+TESTED     - `git diff --numstat` for the merge -> `107  1  HANDOFF.md`. The one deleted line is the file's
+             intro line; its text reappears unchanged inside the new 3-line intro (a reflow, not a rewrite).
+             The milestone table, the hard constraints, the status lines and the reporting format are untouched:
+             nothing was written over the owner's text.
+TESTED     - the two edited code blocks still render: reading HANDOFF.md, the status block opens at line 12 and
+             closes at line 119 with the new `Wrapper handoff   :` entry inside it (lines 41-46), and the kickoff
+             block opens at 363 and closes at 369 with the new W0 ask line inside it (367-368). Both blocks
+             gained lines and lost none.
+TESTED     - push: `git ls-remote origin refs/heads/main` before -> d5a5537... = local HEAD;
+             `git push origin main` -> `d5a5537..dc76c8d  main -> main`, `push_exit=0`; after ->
+             `dc76c8d1c51c71412824a8ecf719efc87796e625` = local HEAD. A fast-forward push; no `--force`
+             was used at any point.
+TESTED     - `Select-String -Path .gitignore -Pattern 'bench'` -> `83: /bench/`, so
+             `bench/recapstudio_standalone/` is already ignored and the zip cannot be committed by accident.
+NOT TESTED - everything the wrapper asks for (storyboard gate, motion plates, engine merge, look budget,
+             plain-agent baseline): this session was documentation only, on the owner's instruction. No verb
+             was run, no media produced, no threshold read or changed.
+NOT TESTED - W0 itself: the standalone zip has not been supplied, so no file of it was opened. The wrapper's
+             claims about the standalone (composition modes, `<Footage>`/`<Still>`, CONTRACT/KIT/STYLE_GUIDE)
+             stay the consultant's, uncited by me; W0 is where they get checked against the real files.
+DECISIONS  - 1. Merged in place instead of keeping a second handoff file: the owner asked for it in HANDOFF.md,
+             and two handoff files compete for "what do I read first". Two mechanical adaptations only, both
+             named in the commit message: `##` -> `###` (the wrapper now sits under a `##` section) and the
+             wrapper's "read AFTER HANDOFF.md" sentence -> "read after this file's status block", because a file
+             cannot tell the reader to read it after itself.
+             2. The status block gained one line and lost none: the owner's "Next step" options (a)-(d) stand
+             exactly as written; the new line only records the wrapper's own order W0 -> W1 -> W2 -> W3 -> W5
+             (W4 is a note, M8b and M9 stay open). Merging documentation is not the place to re-decide the
+             owner's next step.
+             3. The zip version is pinned as "phase 3.5 OR LATER": the consultant wrote 3.5 because that was
+             current on 2026-10-31, but the standalone may be finished or further along before W0 runs. That is
+             now said in three places (status block, the wrapper section's "First ask for the next session",
+             the kickoff text), with the instruction to record the real file name and version instead of
+             rejecting a newer zip, and never to download or reconstruct the standalone.
+Commit     - dc76c8d "HANDOFF: merge the consultant's W0-W5 wrapper (2026-10-31)" (1 file, +107/-1) on main,
+             pushed to origin main; `git ls-remote` -> dc76c8d1c51c71412824a8ecf719efc87796e625. The commit
+             that follows this entry only adds this LOG entry and the W0 "ask" text in HANDOFF.md. Left
+             untracked on purpose: recapstudio/remotion/package-lock.json (owner's call, untouched here).
+
 
