@@ -1834,8 +1834,10 @@ TESTED     - merge fidelity, the same check as the first merge: merged body agai
              The 11 subsections run `### 0.` to `### 2.` and include `### W1b. Cut-list gate` and
              `### W3b. Draft review stop`.
 TESTED     - splice mechanics: the script replaced HANDOFF lines 222-330 (109 lines) with 134 -> the file went from
-             378 to 404 lines, newline still `'\n'`, `BOM was: False`, and the top-level `##` list is unchanged
-             apart from the wrapper heading (status 10, milestones 195, wrapper 222, provisional decisions 357).
+             378 to 403 lines (+25), newline still `'\n'`, `BOM was: False`. The script's own count printed 404
+             because it counts the trailing newline as a line; `(Get-Content HANDOFF.md).Count` is the 403 here.
+             The top-level `##` list is unchanged apart from the wrapper heading (status 10, milestones 195,
+             wrapper 222, provisional decisions 357).
 TESTED     - `git diff --numstat` for this commit -> `45  17  HANDOFF.md`; the status block opens at line 12 and
              still closes at 122 (it grew by three lines and lost none). The owner's own next-step options (a)-(d)
              are untouched.
