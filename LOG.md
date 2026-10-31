@@ -1823,4 +1823,41 @@ Commit     - dc76c8d "HANDOFF: merge the consultant's W0-W5 wrapper (2026-10-31)
              that follows this entry only adds this LOG entry and the W0 "ask" text in HANDOFF.md. Left
              untracked on purpose: recapstudio/remotion/package-lock.json (owner's call, untouched here).
 
+## 2026-10-31 (rev 2) - docs: the wrapper's rev 2 merged (cut list, draft review, four review stops)
+
+Goal: the consultant sent a second version of the wrapper the same day. Replace the merged section with it instead
+of patching the old one, so HANDOFF holds exactly one wrapper and the new items (W1b cut list, W3b draft review) and
+the four owner review stops are in the plan the next session reads.
+
+TESTED     - merge fidelity, the same check as the first merge: merged body against the source attachment with its
+             `##` headings normalised to `###` -> `attachment lines: 115 handoff lines: 115`, `VERDICT: IDENTICAL`.
+             The 11 subsections run `### 0.` to `### 2.` and include `### W1b. Cut-list gate` and
+             `### W3b. Draft review stop`.
+TESTED     - splice mechanics: the script replaced HANDOFF lines 222-330 (109 lines) with 134 -> the file went from
+             378 to 404 lines, newline still `'\n'`, `BOM was: False`, and the top-level `##` list is unchanged
+             apart from the wrapper heading (status 10, milestones 195, wrapper 222, provisional decisions 357).
+TESTED     - `git diff --numstat` for this commit -> `45  17  HANDOFF.md`; the status block opens at line 12 and
+             still closes at 122 (it grew by three lines and lost none). The owner's own next-step options (a)-(d)
+             are untouched.
+TESTED     - carried over verbatim, not retyped: the "### First ask for the next session (W0's input, from the
+             owner)" block (9 lines) was lifted out of the old section by the script and re-inserted after the new
+             intro, so the "phase 3.5 or later, whatever is current" instruction survived the rewrite.
+NOT TESTED - every W item: documentation only, again. No verb run, no media produced, no measurement taken.
+NOT TESTED - W0: the standalone zip is still not on this machine.
+DECISIONS  - 1. Replaced the section wholesale rather than patching the two versions together: rev 2 rewrote
+             section 0, the rules, W1 and section 2, added two items and shifted the numbering. A patch merge would
+             leave the reader guessing which sentence is current. One section, one source, verified identical to it.
+             2. The four review stops are now the first thing the status block says about the wrapper, because they
+             change how work is scheduled: no run passes a stop without the owner, so the order is no longer
+             "cheapest item first" - it is cut list, storyboard, plates, draft, and only then the build order
+             W0 -> W1 -> W1b -> W2 -> W3 -> W3b -> W5.
+             3. The wrapper's "do not game a threshold" rule is echoed in the status block with the two real numbers
+             (`slideshow_risk` 0.867, Kinocut `release_checkpoint` 56.1) so a fresh session sees the bars and knows
+             they are not to be moved to make a run pass.
+             4. The kickoff line and the "First ask" block are kept unchanged: rev 2 still names
+             `RecapStudio-phase3.5.zip`, so nothing about W0's input changed.
+Commit     - e50e2c4 "HANDOFF: merge the consultant's wrapper rev 2 (W1b cut list, W3b draft review, four review
+             stops)" (1 file, +45/-17) on main. The commit that follows this entry only adds this LOG entry; both
+             are pushed. Left untracked on purpose: recapstudio/remotion/package-lock.json.
+
 
