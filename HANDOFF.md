@@ -38,12 +38,15 @@ Next step         : the owner picks ONE of: (a) M8b = the G6 five-scene benchmar
                     bake-off (needs those five scenes), (c) close M8's two open measurements first
                     (C-017 item 4: accept, push motion/contrast, or a busier clip), (d) M10 perception
                     -> script. Do not start two of them.
-Wrapper handoff   : 2026-10-31 consultant plan W0-W5 (storyboard gate before any render, motion plates,
-                    engine reconciliation, look budget + rubric, plain-agent baseline). Order W0 -> W1 -> W2 ->
-                    W3 -> W5; W4 is a note. Section "## Wrapper handoff W0-W5" sits after the milestone table.
-                    M8b and M9 stay open and the owner chooses when; do not start two items at once. W0's input
-                    (the standalone Recap Studio zip, phase 3.5 or later - whatever is current) is still
-                    missing: ask the owner for it before starting W0.
+Wrapper handoff   : 2026-10-31 consultant plan W0-W5, rev 2 (cut list and storyboard before any render, motion
+                    plates, engine reconciliation, look budget + rubric, draft review, plain-agent baseline).
+                    Four owner review stops, always in this order: cut list -> storyboard -> plates -> draft.
+                    Build order W0 -> W1 -> W1b -> W2 -> W3 -> W3b -> W5; W4 is a note. Section "## Wrapper
+                    handoff W0-W5" sits after the milestone table. Never move a threshold to pass a run
+                    (slideshow_risk 0.867, release_checkpoint 56.1 stay). M8b and M9 stay open and the owner
+                    chooses when; do not start two items at once. W0's input (the standalone Recap Studio zip,
+                    phase 3.5 or later - whatever is current) is still missing: ask the owner for it before
+                    starting W0.
 Open COMMS        : C-017 (this session: the blueprint, the production, the four render passes, the two
                     failing measurements, and the ROADMAP M8/G6 scope question); C-016 resolved by the
                     owner (3-demo-brief benchmark deferred, M8 = blueprint + run); C-015 resolved;
@@ -219,13 +222,14 @@ If the remote differs from `altzotify-cell/cutwright`, say so and do not push un
 Order: M0..M5 done, then **M5.5** (the one insertion, before M6), then **M6** (done 2026-10-30), then **M7** (done 2026-10-30), then M8, M9. M10-M16 are a
 PARKING LOT (owner decision, 2026-10-30): do not start or expand them.
 
-## Wrapper handoff W0-W5 (consultant, 2026-10-31: plan before build, motion plates, one engine)
+## Wrapper handoff W0-W5 (consultant, 2026-10-31 rev 2: four review stops, cut list, draft review)
 
-Written 2026-10-31 by the consultant for the owner, merged into this file 2026-10-31. It adds work items W0-W5
-and does NOT replace the milestone table above; read it after this file's status block and `.clinerules/`.
-Names of new files and verbs below are **proposals**: check `docs/CODEMAP.md` and
-`python -m cutwright tools list` first and reuse what exists. This section contains no code on purpose: every
-item starts with a short plan to the owner, then waits for the go.
+Written 2026-10-31 by the consultant for the owner. Rev 2 of the same day added W1b (the cut list), W3b (the
+draft review) and the four owner review stops; rev 2 is what is merged here. It adds work items W0-W5 and does
+NOT replace the milestone table above; read it after this file's status block and `.clinerules/`. Names of new
+files and verbs below are **proposals**: check `docs/CODEMAP.md` and `python -m cutwright tools list` first and
+reuse what exists. This section contains no code on purpose: every item starts with a short plan to the owner,
+then waits for the go.
 
 ### First ask for the next session (W0's input, from the owner)
 
@@ -245,8 +249,9 @@ download or reconstruct the standalone yourself, and never guess its API: W0 rea
 4. **Title / chapter cards are never mandatory.** Movie recaps use none; documentary-style formats may. A blueprint adds a title shot only if the brief asks for it.
 5. **Every segment/beat can override** its shot, captions style, transition and theme patch.
 6. **Taste needs a human in the loop.** `slideshow_risk` is a guard, not a judge. The owner approves at defined gates.
-7. **Verified fact:** DeepSeek through Cline can see images (HANDOFF, M5.5A). Whether it *judges* layout well is not verified; W3 and W5 measure it.
-8. Evidence from a video the owner watched (Opus 5.5, ~6 h, ~20 takes, plan/contact sheet first, short script, motion plates over a human-recorded A-roll): quality came from a look-and-fix loop and a plan step, not from a bigger prompt. Treat that as a hypothesis to test here, not a result.
+7. **Four owner review stops, in this order** (the agent never runs past one without approval): (a) the **cut list** (which clip goes with which line), (b) the **storyboard** (what appears and moves, including transitions), (c) the **plates** contact sheet, (d) the **draft review** (a rendered rough cut with all plates in place). The video the owner watched had the same stops: he reviewed storyboards and contact sheets, then a draft with plates inserted at timecodes.
+8. **Verified fact:** DeepSeek through Cline can see images (HANDOFF, M5.5A). Whether it *judges* layout well is not verified; W3 and W5 measure it.
+9. Evidence from a video the owner watched (Opus 5.5, ~6 h, ~20 takes, plan/contact sheet first, short script, motion plates over a human-recorded A-roll): quality came from a look-and-fix loop and a plan step, not from a bigger prompt. Treat that as a hypothesis to test here, not a result.
 
 ### 1. Rules for this handoff (in addition to `.clinerules/`)
 
@@ -254,7 +259,7 @@ download or reconstruct the standalone yourself, and never guess its API: W0 rea
 - Start each W item with a **plan of at most 10 lines + list of files to change**, post it, and wait for the owner's go.
 - Small edits, stdlib-only agent layer (assumption A8), no new npm packages, Remotion stays 4.0.539, no AI-generated images/video, never print keys. Two failed attempts at the same problem = `COMMS.md` BLOCKED entry and stop.
 - **Do not game a threshold.** `slideshow_risk` 0.867 and Kinocut `release_checkpoint` 56.1 are open and recorded (C-017 item 4). Do not change either bar to make a run pass; improve the film or ask the owner.
-- Order: **W0 -> W1 -> W2 -> W3 -> W5**. W4 is a note. M8b and M9 stay open and the owner chooses when (do not start two milestones at once).
+- Order: **W0 -> W1 -> W1b -> W2 -> W3 -> W3b -> W5**. W4 is a note. M8b and M9 stay open and the owner chooses when (do not start two milestones at once).
 
 ### W0. Engine reconciliation (analysis only, no code)
 
@@ -273,6 +278,7 @@ Acceptance: the document exists, every claim cites a file path, owner picks the 
 Objective: after the agent designs the blueprint and before any render, the owner reads a storyboard, tweaks it in plain language, and approves. Nothing expensive runs until approval.
 Depends on: W0 decision on the handle grammar (the storyboard names assets by handle). Existing pieces: `engine/blueprint.py` (`generate`, `compile`, `gates: []` is empty today), `engine/gates.py` and `approve <run-dir> <gate>`, `engine/manifest.py` (`_blocking_gate`), `render_still` (about 5-8 s a still).
 Build (proposal, adapt to the code):
+0. **Transitions are part of the storyboard.** Between every two beats the storyboard shows the transition (cut, crossfade, wipe, whip, flash: only those the engine has measured, Kinocut crossfade/wipe per the matrix) and its length in frames, so the owner can change it in the same plain-language tweak. Default is a plain cut; a transition the engine cannot produce is refused with the reason.
 1. A `storyboard` view of a blueprint (new module `engine/storyboard.py`, stdlib): `storyboard.md` for the owner (readable) and `storyboard.json` for the machine. Per beat: id, time range and frame count from the real word timings, the narration line, **medium** (footage, still with camera, kinetic type, data graphic, plain cut; `motion.medium` in VISUAL_STANDARD section 2), shot type, composition (`overlay | pip/inset | full`), 1-3 sentences "what appears, what moves, what lands on which spoken word", assets with provenance, SFX notes, estimated render seconds and a risk flag (heavy footage + grade, many layers). Plates (W2) show their window (start-end seconds).
 2. **Two tiers.** Tier A (free, instant): the table only. Tier B: one cheap still per beat (the beat's strongest frame, 16:9, low res) assembled into a contact sheet PNG, cached by content hash, so a tweak re-renders only the changed beat's still. The agent attaches the sheet itself when it reviews (vision works).
 3. **Tweaking = conversation.** The owner says "beat 3: picture-in-picture, number lands on 'seventy'" in Cline; the agent edits the blueprint, regenerates the storyboard, and shows a short **diff** (beats changed, stills re-rendered). Also allow direct edits of `storyboard.json` fields, re-read by a verb (`blueprint storyboard --reread`). Never silently drop an owner change; list rejected edits with the reason (for example a shot that needs footage the beat does not have).
@@ -284,6 +290,19 @@ Acceptance (quote the output):
 - Changing the blueprint after approval blocks the run until re-approved (test).
 - Unit tests for: gate blocking, stale approval, diff, rejected edit. Existing suites stay green; `recap.py video` byte-identical.
 Traps: do not render full beats for the storyboard (stills only); do not let `compile` write a runnable manifest when the gate is absent; keep the approval file written atomically like `gates.py` does.
+
+### W1b. Cut-list gate: which clip goes with which line
+
+Objective: before any plate or render, the owner sees and approves the chosen footage. This is where a recap goes wrong most often (a clip that does not match the line, a wrong scene, a spoiler).
+Depends on: W1 (same gate mechanism). Existing pieces: `moments`, `verify` (grades picks against frames: verified / retimed / replaced), `frames.py`, `subs`.
+Build (proposal):
+1. A `cutlist` view (in `engine/storyboard.py` or a sibling): one row per beat with the narration line, the chosen source file and in/out times, the frame count, and **one or two frames** (start and strongest) from the chosen clip as a contact sheet. Cached by (file, time).
+2. **Confidence flags.** The agent marks a pick `sure`, `unsure` or `replaced` using `verify`; for every `unsure` or `replaced` pick it shows extra frames (3-4 across the clip) and a one-line reason ("subtitle says the heist, frame shows a dinner"). The owner sees the unsure ones first.
+3. Owner actions in plain language: approve all, swap a beat's clip ("beat 5: use the rooftop scene around 01:12:30"), retime, or drop. The agent re-verifies the new pick against frames before accepting it and shows the new frames.
+4. Gate `cutlist` before the storyboard gate; approval records a hash of the cut list. A changed cut list invalidates the later approvals (storyboard, plates) and says so.
+5. Spoiler/ending flag: if the narration order and the film order disagree, list the beats where it jumps (information only).
+Acceptance: a 6-beat list with at least one `unsure` pick shows extra frames; swapping one clip re-verifies it and re-renders only that beat's frames (cache evidence); approving releases the storyboard step; changing a clip after approval blocks later gates until re-approved (test). Quote outputs.
+Traps: frames come from the original file at the exact time (frame-accurate seek, as `frames.py` does); never show a frame from a re-encoded proxy without saying so.
 
 ### W2. Motion plates
 
@@ -308,6 +327,14 @@ Build:
 4. Regression guard from the M7 log: after each revision re-measure everything, not only what changed (a camera drift sank the sub line back into the caption band once).
 Acceptance: one real scene improved across at least 3 looks with the rubric rows and the cost table in `LOG.md`; the `plates` gate blocks and releases; no threshold changed.
 
+### W3b. Draft review stop
+
+Objective: before the final export, the owner sees a rendered rough cut with every plate in place and can send back changes by beat, as in the video ("a first montage with all the shots inserted at timecodes for review").
+Depends on: W2, W3.
+Build (proposal): a `draft` step that renders a low-cost review file (for example 720p, burned-in beat numbers and timecodes, final sound mix not required) through the normal manifest; gate `draft` before `export_h264`. The owner's notes are plain language per beat ("beat 4 plate too long, drop the transition at beat 6"). The agent maps each note to a blueprint change, shows the diff, and re-renders only the affected plates and the draft. After approval the final export runs.
+Acceptance: a draft file with beat numbers is produced; a note on one beat re-renders only that beat (cache evidence); the final export refuses to run before the `draft` gate is approved. Quote outputs.
+Traps: the review file must come from the same manifest as the final (no separate pipeline that can drift); burned-in numbers are for review only and must not appear in the final.
+
 ### W4. Notes (no work now)
 
 - Open measurements (`slideshow_risk`, `release_checkpoint`): address through W1-W3, not by editing thresholds.
@@ -323,9 +350,10 @@ Deliverable: the table and a one-paragraph recommendation: what the engine saves
 ### 2. Definition of done for this handoff
 
 - `docs/ENGINE_MERGE.md` exists and the owner has picked a direction (W0).
-- A production run stops at the `storyboard` gate, the owner tweaks one beat in plain language, approves, and the run completes with only the changed beat re-rendered (W1).
+- A production run stops at the `cutlist` gate and then the `storyboard` gate, the owner tweaks one beat in plain language, approves, and the run completes with only the changed beat re-rendered (W1).
 - A film with at least three plates (pip / overlay / full) renders, with plate-level caching and a frame-exact composite (W2).
-- The loop runs on a budget with a logged rubric and an owner `plates` gate (W3).
+- The loop runs on a budget with a logged rubric and an owner `plates` gate (W3), followed by a `draft` review stop (W3b).
+- A production stops at four owner stops in order, `cutlist` -> `storyboard` -> `plates` -> `draft`, and each approval is invalidated by a later change to anything before it (W1, W1b, W3, W3b).
 - The baseline table exists (W5).
 - LOG entries use TESTED / FAILED / NOT TESTED; HANDOFF status block and milestone table updated; one commit per item; the owner told to start a new session after each.
 
